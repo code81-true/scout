@@ -204,12 +204,12 @@ async function sendMessage(message) {
   const scoutEl = addMessage("scout");
   const tw = new TypeWriter(scoutEl);
 
-  tw.onFinish = () => {
-    // Detect YAML = interview complete
-    const text = scoutEl.textContent;
-    if (text.includes("```yaml") && text.includes("spine:")) {
-      // Don't unlock — session is done
+  let sessionComplete = false;
+
+  tw.onFinish = async () => {
+    if (sessionComplete) {
       userInput.placeholder = "Session complete.";
+      triggerGenerate();
     } else {
       unlock();
     }
@@ -236,12 +236,82 @@ async function sendMessage(message) {
         if (!line.startsWith("data: ")) continue;
         const payload = JSON.parse(line.slice(6));
         if (payload.text) tw.append(payload.text);
+        if (payload.session_complete) sessionComplete = true;
         if (payload.done) tw.finish();
       }
     }
   } catch (err) {
     scoutEl.textContent += "\n[Connection error]";
     unlock();
+  }
+}
+
+// --- Post-session generation ---
+
+async function triggerGenerate() {
+  // Show assembling message
+  const statusEl = addMessage("scout");
+  statusEl.textContent = "Assembling your spine. This takes a moment.";
+  conversation.scrollTop = conversation.scrollHeight;
+
+  try {
+    const resp = await fetch("/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    const data = await resp.json();
+
+    // Store portrait for the portrait page
+    sessionStorage.setItem("portrait", data.portrait);
+    // Store YAML for download
+    sessionStorage.setItem("yaml", data.yaml);
+
+    // Replace assembling message with action buttons
+    statusEl.innerHTML = "";
+    statusEl.style.display = "flex";
+    statusEl.style.gap = "12px";
+    statusEl.style.background = "transparent";
+    statusEl.style.borderLeft = "none";
+    statusEl.style.padding = "14px 0";
+
+    const dlBtn = document.createElement("button");
+    dlBtn.textContent = "Download Spine";
+    dlBtn.style.cssText = "background:#1a1a1a;color:#e8e8e8;border:1px solid #333;border-radius:6px;padding:10px 20px;font-family:inherit;font-size:14px;cursor:pointer;";
+    dlBtn.addEventListener("click", () => {
+      const blob = new Blob([data.yaml], { type: "text/yaml" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "spine.yaml";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    const viewBtn = document.createElement("button");
+    viewBtn.textContent = "View Portrait";
+    viewBtn.style.cssText = "background:#1a1a1a;color:#e8e8e8;border:1px solid #333;border-radius:6px;padding:10px 20px;font-family:inherit;font-size:14px;cursor:pointer;";
+    viewBtn.addEventListener("click", () => {
+      // POST to /portrait to set session data, then navigate
+      fetch("/portrait", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pseudonym: "Anonymous",
+          date: new Date().toISOString().slice(0, 10),
+          user_id: "",
+        }),
+      }).then(resp => resp.text()).then(html => {
+        document.open();
+        document.write(html);
+        document.close();
+      });
+    });
+
+    statusEl.appendChild(dlBtn);
+    statusEl.appendChild(viewBtn);
+    conversation.scrollTop = conversation.scrollHeight;
+  } catch (err) {
+    statusEl.textContent = "Generation failed. " + err.message;
   }
 }
 

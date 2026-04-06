@@ -68,7 +68,11 @@ def chat():
             yield f"data: {json.dumps({'text': chunk})}\n\n"
         full_reply = "".join(collected)
         session.add_assistant(full_reply)
-        yield f"data: {json.dumps({'done': True})}\n\n"
+        complete = (
+            "Give me a moment" in full_reply
+            and len(session.transcript) >= 40
+        )
+        yield f"data: {json.dumps({'done': True, 'session_complete': complete})}\n\n"
 
     return Response(generate(), mimetype="text/event-stream")
 
@@ -76,8 +80,21 @@ def chat():
 @app.route("/generate", methods=["POST"])
 def generate_spine():
     """Generate the spine.yaml and portrait after the interview ends."""
+    import os
+    from datetime import datetime
+
     yaml_doc = generate_yaml_sections(client, session.transcript)
     portrait = generate_portrait(client, session.transcript)
+
+    # Save YAML to filesystem
+    user_id = flask_session.get("user_id") or datetime.now().strftime("%Y%m%d_%H%M%S")
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    spine_dir = "/home/scout/spines"
+    os.makedirs(spine_dir, exist_ok=True)
+    filepath = os.path.join(spine_dir, f"{user_id}_{date_str}.yaml")
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(yaml_doc)
+
     return {"yaml": yaml_doc, "portrait": portrait}
 
 
