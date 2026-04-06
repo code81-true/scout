@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portrait — {{ pseudonym }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garant:ital,wght@0,400;0,500;1,400&family=Cormorant+SC:wght@400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #F5F0E8;
+    color: #1C1917;
+    font-family: "Cormorant Garant", "Georgia", serif;
+    font-size: 19px;
+    line-height: 1.9;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 120px 24px 80px;
+  }
+
+  .pseudonym {
+    text-align: center;
+    font-family: "Allura", cursive;
+    font-size: 52px;
+    color: #B8965A;
+    line-height: 1.2;
+    margin-bottom: 24px;
+  }
+
+  .rule {
+    border: none;
+    border-top: 1px solid #B8965A;
+    width: 100%;
+    margin-bottom: 64px;
+  }
+
+  .portrait-text p {
+    margin-bottom: 2em;
+  }
+
+  .portrait-text p:last-child {
+    margin-bottom: 0;
+  }
+
+  .colophon {
+    text-align: center;
+    font-family: "Cormorant SC", serif;
+    font-size: 10px;
+    color: #B8965A;
+    letter-spacing: 0.15em;
+    margin-top: 80px;
+    line-height: 1.8;
+  }
+
+  .save-btn {
+    display: block;
+    margin: 40px auto 0;
+    background: transparent;
+    color: #B8965A;
+    border: 1px solid #B8965A;
+    padding: 10px 32px;
+    font-family: "Cormorant SC", serif;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .save-btn:hover {
+    background: #B8965A;
+    color: #F5F0E8;
+  }
+
+  @media (max-width: 600px) {
+    .container { padding: 40px 20px 60px; }
+    .pseudonym { font-size: 38px; }
+    .rule { margin-bottom: 40px; }
+  }
+
+  @media print {
+    .save-btn { display: none; }
+    .container { padding: 40px 0; }
+    body { background: #fff; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="pseudonym">{{ pseudonym }}</div>
+  <hr class="rule">
+  <div class="portrait-text" id="portrait-text">
+    <p>Loading portrait...</p>
+  </div>
+  <div class="colophon">
+    Composed by Scout &middot; {{ date }} &middot; {{ user_id }} &middot; This document belongs to {{ pseudonym }} alone.
+  </div>
+  <button class="save-btn" onclick="window.print()">Save Portrait</button>
+</div>
+
+<script>
+  // Portrait text is passed from the /generate call via sessionStorage
+  const raw = sessionStorage.getItem("portrait");
+  if (raw) {
+    const el = document.getElementById("portrait-text");
+    // Split on double newlines into paragraphs
+    const paragraphs = raw.split(/\n\n+/).filter(p => p.trim());
+    el.innerHTML = paragraphs.map(p => "<p>" + p.replace(/\n/g, " ") + "</p>").join("");
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,70 @@
+[
+  {
+    "role": "user",
+    "content": "Begin."
+  },
+  {
+    "role": "assistant",
+    "content": "I'm Scout. I'm here to help you put words around the things that matter most to you — the non-negotiables, the commitments, the lines you won't cross. By the end, we'll have a draft of your personal spine. Let's start with you. Not your job, not your roles — who are you when all of that is stripped away?"
+  },
+  {
+    "role": "user",
+    "content": "I'm a father first. That's the one that never comes off. I also run a small architecture practice — twelve people, mostly residential. And I'm a son, though that's got complicated since my mother's health declined. I suppose I'm also the person my friends call when something goes wrong, which I'm not sure I chose."
+  },
+  {
+    "role": "assistant",
+    "content": "You listed four roles and then said you're not sure you chose one of them. Which of those would you miss most if it disappeared tomorrow?"
+  },
+  {
+    "role": "user",
+    "content": "Father. Without question. The practice could close tomorrow and I'd grieve it, but I'd recover. If I lost the relationship with my daughters — that's not recoverable. That's the one that actually is me, not something I do."
+  },
+  {
+    "role": "assistant",
+    "content": "That landed differently from how you said it the first time. The first time, father was the first item on a list. Just now it was the floor under everything else. You mentioned your mother's health making things complicated. You moved past that quickly. Tell me about what that looks like right now — the unedited version."
+  },
+  {
+    "role": "user",
+    "content": "She has dementia. Early-to-mid stage. My father died six years ago and I'm the only child, so it all lands on me. I visit twice a week and each time I leave I feel like I've failed her somehow. She doesn't always know who I am now. I sort of carry that around all the time but I don't really talk about it."
+  },
+  {
+    "role": "assistant",
+    "content": "That is a long time to carry something without putting it down. You said you feel like you've failed her each time you leave. What sits behind that feeling — what would not-failing look like, if you could describe it?"
+  },
+  {
+    "role": "user",
+    "content": "I think not-failing would mean being there more. But I can't be there more without the practice suffering, and the practice is how I pay for her care. So I'm trapped in a loop where the thing that funds her care is the thing that keeps me from being present for it. I haven't said that out loud before."
+  },
+  {
+    "role": "assistant",
+    "content": "You have given me a picture of your roles. Let us go deeper into what you stand for. What would you not compromise on, even when it costs you something?"
+  },
+  {
+    "role": "user",
+    "content": "Honesty. Even when it's expensive. Three years ago I told a client their project was unbuildable at the budget they had. They were our biggest account — forty percent of revenue that quarter. My business partner wanted to find a way to make it work. I said no, we tell them the truth, and if they walk, they walk. They walked. It nearly broke us. We lost two staff. But I'd do it again."
+  },
+  {
+    "role": "assistant",
+    "content": "That cost you forty percent of a quarter's revenue, two staff members, and nearly the practice itself. That is not an abstract value. What is the gap between who you are and who you want to be?"
+  },
+  {
+    "role": "user",
+    "content": "I'm impatient. Not in the way people say it to sound driven — genuinely impatient in a way that costs the people around me. My associate told me once that people stop bringing ideas to me because I decide too fast and they feel like they never got heard. My older daughter said something similar last year, that I finish her sentences. That one landed harder."
+  },
+  {
+    "role": "assistant",
+    "content": "Your daughter and your associate both told you the same thing from different parts of your life. The people closest to you experience your speed as a door that closes before they've walked through it. What does success look like for you — the real version, not the one you would say in a job interview?"
+  },
+  {
+    "role": "user",
+    "content": "I want to build something that outlasts me. Not the practice specifically — I want to have designed spaces that changed how people lived. Twenty years from now I want someone to walk into a building I made and feel something they can't name. And honestly, underneath that — I'm terrified that I'll get to seventy and realise I spent all my time on the business of architecture and none on the architecture itself."
+  },
+  {
+    "role": "assistant",
+    "content": "That fear — spending a life on the business of the thing rather than the thing itself — has been sitting underneath several of your answers today. What question did you wish I had asked you?"
+  },
+  {
+    "role": "user",
+    "content": "I wish you'd asked me whether I'm happy. Because I don't think anyone has, directly, in a long time. And I'm not sure what I'd say."
+  }
+]
