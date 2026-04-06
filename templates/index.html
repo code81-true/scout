@@ -4,17 +4,221 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Scout</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garant:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Cormorant+SC:wght@300;400&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    background: #0a0a0a;
+    background: #0D0B0A;
     color: #e8e8e8;
-    font-family: "SF Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
-    font-size: 15px;
-    line-height: 1.6;
+    font-family: "Cormorant Garant", Georgia, serif;
     height: 100dvh;
+    overflow: hidden;
+  }
+
+  .state { display: none; height: 100dvh; }
+  .state.active { display: flex; }
+
+  /* ========================================
+     STATE 1 — Landing
+     ======================================== */
+
+  #landing {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 24px;
+  }
+
+  .landing-statement {
+    font-family: "Cormorant Garant", Georgia, serif;
+    font-weight: 300;
+    font-size: 16px;
+    line-height: 2.0;
+    color: #5a5550;
+    margin-bottom: 48px;
+  }
+
+  .landing-statement p {
+    margin-bottom: 4px;
+  }
+
+  .wordmark {
+    font-family: "Cormorant Garant", Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(96px, 14vw, 172px);
+    line-height: 1.0;
+    margin-bottom: 40px;
+    background: linear-gradient(
+      108deg,
+      #2A1800 0%, #5A3410 6%, #8C5C20 12%,
+      #C48030 18%, #E8AA50 23%, #F8D080 27%,
+      #FFDF90 30%, #F0C060 34%, #C88030 40%,
+      #8C5818 48%, #6A4010 54%, #9A6828 60%,
+      #CCA048 66%, #EEC868 70%, #F8D880 73%,
+      #E0B050 78%, #A07028 85%, #6A4412 92%,
+      #3A2008 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  @keyframes breathe {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1.0; }
+  }
+
+  .breathe {
+    animation: breathe 2s ease-in-out infinite;
+  }
+
+  .breathe-delayed {
+    animation: breathe 2s ease-in-out infinite;
+    animation-delay: 0.5s;
+  }
+
+  .guide-link {
+    font-family: "Cormorant SC", serif;
+    font-size: 13px;
+    letter-spacing: 0.15em;
+    color: #8A8078;
+    cursor: pointer;
+    margin-bottom: 48px;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .guide-link:hover { color: #7a7570; }
+
+  .key-console {
     display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .key-label {
+    font-family: "Cormorant SC", serif;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    color: #7A7068;
+  }
+
+  .key-input {
+    background: rgba(255,255,255,0.02);
+    border: none;
+    border-bottom: 1px solid #3A3028;
+    color: #e8e8e8;
+    font-family: "Cormorant Garant", Georgia, serif;
+    font-size: 19px;
+    text-align: center;
+    padding: 8px 0;
+    width: 100%;
+    outline: none;
+    letter-spacing: 0.3em;
+  }
+
+  .key-input::placeholder { color: #3A3028; }
+
+  .key-input:focus { border-bottom-color: #B8965A; }
+
+  .key-error {
+    font-family: "Cormorant Garant", Georgia, serif;
+    font-style: italic;
+    font-size: 13px;
+    color: #6b2020;
+    min-height: 20px;
+    visibility: hidden;
+  }
+
+  .key-error.visible { visibility: visible; }
+
+  .reveal-btn {
+    font-family: "Cormorant SC", serif;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    color: #8A8078;
+    background: transparent;
+    border: 1px solid #3A3028;
+    padding: 10px 32px;
+    cursor: pointer;
+    transition: color 0.3s, border-color 0.3s;
+  }
+
+  .reveal-btn:hover {
+    color: #8a8580;
+    border-color: #4a4540;
+  }
+
+  .colophon-landing {
+    position: absolute;
+    bottom: 32px;
+    font-family: "Cormorant SC", serif;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: #1e1c1a;
+  }
+
+  /* ========================================
+     STATE 2 — Guide
+     ======================================== */
+
+  #guide {
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 60px 24px 80px;
+  }
+
+  .guide-back {
+    font-family: "Cormorant SC", serif;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: #4a4540;
+    cursor: pointer;
+    text-decoration: none;
+    margin-bottom: 60px;
+    align-self: flex-start;
+    transition: color 0.3s;
+  }
+
+  .guide-back:hover { color: #7a7570; }
+
+  .guide-content {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .guide-section-title {
+    font-family: "Cormorant SC", serif;
+    font-size: 13px;
+    letter-spacing: 0.3em;
+    color: #B8965A;
+    margin-bottom: 24px;
+  }
+
+  .guide-body {
+    font-family: "Cormorant Garant", Georgia, serif;
+    font-weight: 300;
+    font-size: 17px;
+    line-height: 1.9;
+    color: #8A8480;
+    margin-bottom: 56px;
+  }
+
+  .guide-body p { margin-bottom: 1.4em; }
+
+  /* ========================================
+     STATE 3 — Conversation
+     ======================================== */
+
+  #scout-session {
     flex-direction: column;
   }
 
@@ -33,6 +237,9 @@
     border-radius: 8px;
     white-space: pre-wrap;
     word-wrap: break-word;
+    font-family: "SF Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
+    font-size: 15px;
+    line-height: 1.6;
   }
 
   .message.scout {
@@ -64,7 +271,7 @@
     border: 1px solid #333;
     border-radius: 6px;
     padding: 12px 14px;
-    font-family: inherit;
+    font-family: "SF Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
     font-size: 15px;
     line-height: 1.5;
     resize: none;
@@ -82,7 +289,7 @@
     border: 1px solid #333;
     border-radius: 6px;
     padding: 12px 20px;
-    font-family: inherit;
+    font-family: "SF Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
     font-size: 14px;
     cursor: pointer;
     white-space: nowrap;
@@ -98,25 +305,151 @@
   @media (max-width: 600px) {
     .message { max-width: 100%; }
     #input-area { padding: 12px; }
+    .landing-statement { font-size: 14px; }
   }
 </style>
 </head>
 <body>
 
-<div id="conversation"></div>
+<!-- ====== STATE 1 — Landing ====== -->
+<div id="landing" class="state active">
+  <div class="landing-statement">
+    <p>99.99% will never truly know who they are.</p>
+    <p>You are here because someone believes you are ready.</p>
+  </div>
+  <div class="wordmark">Scout</div>
+  <a class="guide-link breathe" id="guide-link">Before you begin — read this</a>
+  <div class="key-console">
+    <div class="key-label breathe">Key</div>
+    <input type="password" class="key-input" id="key-input" autocomplete="off" spellcheck="false">
+    <div class="key-error" id="key-error"></div>
+    <button class="reveal-btn breathe-delayed" id="reveal-btn">Reveal</button>
+  </div>
+  <div class="colophon-landing">By invitation only</div>
+</div>
 
-<div id="input-area">
-  <textarea id="user-input" rows="1" placeholder="Say something..." disabled></textarea>
-  <button id="send-btn" disabled>Send</button>
+<!-- ====== STATE 2 — Guide ====== -->
+<div id="guide" class="state">
+  <a class="guide-back" id="guide-back">&larr; Back</a>
+  <div class="guide-content">
+    <div class="guide-section-title">Technically</div>
+    <div class="guide-body">
+      <p>Scout is an AI interviewer. It will ask you questions — one at a time, carefully — about who you are, what you value, what you are building, and what you are afraid of.</p>
+      <p>At the end, it will produce a structured document called a spine — a personal constitution that captures the real version of you, not the performed one.</p>
+      <p>The conversation takes between 30 and 60 minutes. There are no right answers. There is no scoring. Nothing you say here is stored after your session ends. The spine belongs to you alone.</p>
+      <p>If your connection drops or your browser closes mid-session, your progress is not lost. Your session is held in a temporary file — like a document that saves itself while you write. When you return with the same key, Scout picks up exactly where you left off. The moment your spine is delivered and you close this window, that file is deleted permanently. Nothing is kept after that point. Nothing.</p>
+      <p>You will need your single-use key to begin. It expires the moment your spine is delivered. There are no second sessions.</p>
+    </div>
+    <div class="guide-section-title">With truth</div>
+    <div class="guide-body">
+      <p>This will only work if you are honest. Not performatively honest — not the version of honesty that sounds good. The kind that costs something to say out loud.</p>
+      <p>Scout will not judge you. It will not give you advice. It will not tell you what to do. It will listen with more precision than most humans are capable of, and it will reflect back what it hears — including the things you did not quite say.</p>
+      <p>The people who get the most from this are the ones who stop editing themselves. The ones who say the thing they have never said to anyone. The ones who let the silence sit rather than filling it with noise.</p>
+      <p>If you are ready for that — enter your key.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== STATE 3 — Scout Conversation ====== -->
+<div id="scout-session" class="state">
+  <div id="conversation"></div>
+  <div id="input-area">
+    <textarea id="user-input" rows="1" placeholder="Say something..." disabled></textarea>
+    <button id="send-btn" disabled>Send</button>
+  </div>
 </div>
 
 <script>
+// ========================================
+// State management
+// ========================================
+
+function showState(id) {
+  document.querySelectorAll(".state").forEach(el => el.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+// Guide link
+document.getElementById("guide-link").addEventListener("click", () => showState("guide"));
+document.getElementById("guide-back").addEventListener("click", () => showState("landing"));
+
+// ========================================
+// Auth
+// ========================================
+
+const keyInput = document.getElementById("key-input");
+const keyError = document.getElementById("key-error");
+const revealBtn = document.getElementById("reveal-btn");
+
+revealBtn.addEventListener("click", authenticate);
+keyInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); authenticate(); }
+});
+
+async function authenticate() {
+  const key = keyInput.value.trim();
+  if (!key) return;
+
+  keyError.classList.remove("visible");
+  revealBtn.disabled = true;
+
+  try {
+    const resp = await fetch("/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key }),
+    });
+    const data = await resp.json();
+
+    if (data.success) {
+      showState("scout-session");
+      initConversation();
+    } else if (data.reason === "expired") {
+      keyError.textContent = "This session has already been completed.";
+      keyError.classList.add("visible");
+    } else {
+      keyError.textContent = "This key is not recognised.";
+      keyError.classList.add("visible");
+    }
+  } catch (err) {
+    keyError.textContent = "Connection error. Try again.";
+    keyError.classList.add("visible");
+  }
+
+  revealBtn.disabled = false;
+}
+
+// ========================================
+// Exit warning (activates after /burn)
+// ========================================
+
+let exitWarningActive = false;
+
+function activateExitWarning() {
+  exitWarningActive = true;
+  window.addEventListener("beforeunload", onBeforeUnload);
+}
+
+function deactivateExitWarning() {
+  exitWarningActive = false;
+  window.removeEventListener("beforeunload", onBeforeUnload);
+}
+
+function onBeforeUnload(e) {
+  e.preventDefault();
+  e.returnValue = "Your key expires when you close this window. Download your spine before leaving — it cannot be retrieved.";
+  return e.returnValue;
+}
+
+// ========================================
+// Conversation engine (State 3)
+// ========================================
+
 const conversation = document.getElementById("conversation");
 const userInput = document.getElementById("user-input");
 const sendBtn = document.getElementById("send-btn");
 
 let locked = true;
-let started = false;
 
 // --- Typing delay logic (client-side) ---
 
@@ -138,7 +471,6 @@ function charDelay(ch, nextCh) {
   return delay;
 }
 
-// Buffer incoming chunks; drain them character-by-character with delays
 class TypeWriter {
   constructor(el) {
     this.el = el;
@@ -166,7 +498,6 @@ class TypeWriter {
       const nextCh = this.buffer[this.pos + 1] || "";
       this.el.textContent += ch;
       this.pos++;
-      // Auto-scroll
       conversation.scrollTop = conversation.scrollHeight;
       const delay = charDelay(ch, nextCh);
       await new Promise(r => setTimeout(r, delay));
@@ -249,7 +580,6 @@ async function sendMessage(message) {
 // --- Post-session generation ---
 
 async function triggerGenerate() {
-  // Show assembling message
   const statusEl = addMessage("scout");
   statusEl.textContent = "Assembling your spine. This takes a moment.";
   conversation.scrollTop = conversation.scrollHeight;
@@ -262,9 +592,12 @@ async function triggerGenerate() {
     });
     const data = await resp.json();
 
+    // Burn the key
+    await fetch("/burn", { method: "POST" });
+    activateExitWarning();
+
     // Store portrait for the portrait page
     sessionStorage.setItem("portrait", data.portrait);
-    // Store YAML for download
     sessionStorage.setItem("yaml", data.yaml);
 
     // Replace assembling message with action buttons
@@ -285,13 +618,13 @@ async function triggerGenerate() {
       a.download = "spine.yaml";
       a.click();
       URL.revokeObjectURL(a.href);
+      deactivateExitWarning();
     });
 
     const viewBtn = document.createElement("button");
     viewBtn.textContent = "View Portrait";
     viewBtn.style.cssText = "background:#1a1a1a;color:#e8e8e8;border:1px solid #333;border-radius:6px;padding:10px 20px;font-family:inherit;font-size:14px;cursor:pointer;";
     viewBtn.addEventListener("click", () => {
-      // POST to /portrait to set session data, then navigate
       fetch("/portrait", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -315,11 +648,10 @@ async function triggerGenerate() {
   }
 }
 
-// --- Init: request Scout's opening ---
+// --- Init conversation (called only after auth succeeds) ---
 
-async function init() {
-  await sendMessage("__init__");
-  started = true;
+function initConversation() {
+  sendMessage("__init__");
 }
 
 // --- Input handling ---
@@ -344,15 +676,11 @@ userInput.addEventListener("keydown", (e) => {
   }
 });
 
-// Auto-resize textarea
 function autoResize() {
   userInput.style.height = "auto";
   userInput.style.height = Math.min(userInput.scrollHeight, 200) + "px";
 }
 userInput.addEventListener("input", autoResize);
-
-// Start
-init();
 </script>
 </body>
 </html>

@@ -103,3 +103,25 @@ Wait for explicit approval.
 - Refactor within an already-approved structure
 - Fix bugs in already-approved code
 - Run python commands to test already-approved code
+
+## Status tracking
+At the end of every CC session, update STATUS.md:
+- Mark completed items as done
+- Add any new design decisions
+- Add any changes made during the session
+- Update Next Session Priorities
+This file is the single source of truth for project status.
+Never let it go stale.
+
+Before every git commit and push, update STATUS.md. Mark
+completed items, add any new design decisions made in this
+session, add any changes based on review, update Known Gaps,
+and update Next Session Priorities. STATUS.md must be current
+at the moment of every commit. Never commit without updating
+it first.
+
+Before committing, review STATUS.md as a whole document.
+Check that it is internally coherent and does not contradict
+itself — e.g. an item listed as complete in one section but
+as a known gap in another, or a design decision that conflicts
+with a later change. Fix any contradictions before committing.

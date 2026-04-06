@@ -7,6 +7,8 @@ import anthropic
 from scout.prompt import SYSTEM_PROMPT
 
 MODEL = "claude-sonnet-4-5"
+OPUS_MODEL = "claude-opus-4-6"
+TEST_MODEL = "claude-haiku-4-5-20251001"
 MAX_TOKENS = 5000
 TEMPERATURE = 1.0
 
@@ -40,6 +42,7 @@ def send_message(
 def generate_portrait(
     client: anthropic.Anthropic,
     transcript: list[dict[str, str]],
+    model: str | None = None,
 ) -> str:
     """Make a separate API call using the Chronicler prompt to write the portrait.
 
@@ -56,7 +59,7 @@ def generate_portrait(
     transcript_text = "\n\n".join(lines)
 
     response = client.messages.create(
-        model=MODEL,
+        model=model or OPUS_MODEL,
         max_tokens=10000,
         temperature=TEMPERATURE,
         system=CHRONICLER_PROMPT,
@@ -76,6 +79,7 @@ def generate_portrait(
 def generate_yaml_sections(
     client: anthropic.Anthropic,
     transcript: list[dict[str, str]],
+    model: str | None = None,
 ) -> str:
     """Run four sequential API calls to build the spine.yaml in sections.
 
@@ -110,7 +114,7 @@ def generate_yaml_sections(
             {"role": "user", "content": directive},
         ]
         response = client.messages.create(
-            model=MODEL,
+            model=model or MODEL,
             max_tokens=4000,
             temperature=TEMPERATURE,
             system=SYSTEM_PROMPT,
@@ -165,6 +169,8 @@ def _stitch_yaml_sections(parts: list[str]) -> str:
 def send_message_stream(
     client: anthropic.Anthropic,
     transcript: list[dict[str, str]],
+    system_prompt: str | None = None,
+    model: str | None = None,
 ):
     """Stream the full transcript to Claude, yielding text chunks.
 
@@ -172,10 +178,10 @@ def send_message_stream(
     strings as they arrive from the model.
     """
     with client.messages.stream(
-        model=MODEL,
+        model=model or MODEL,
         max_tokens=MAX_TOKENS,
         temperature=TEMPERATURE,
-        system=SYSTEM_PROMPT,
+        system=system_prompt or SYSTEM_PROMPT,
         messages=transcript,
     ) as stream:
         for text in stream.text_stream:

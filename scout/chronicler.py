@@ -70,6 +70,16 @@ White space only between movements —
 a single blank line where the emotional register shifts.
 Use it sparingly. Four to six movements maximum.
 
+When writing the shadow passage, wrap it in:
+[SHADOW]...[/SHADOW]
+
+When writing each surprise moment, wrap it in:
+[SURPRISE]...[/SURPRISE]
+
+These markers are stripped from the displayed text
+but used to apply the correct visual treatment.
+Do not use these markers anywhere else in the portrait.
+
 ---
 
 ## The opening

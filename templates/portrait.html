@@ -6,40 +6,68 @@
 <title>Portrait — {{ pseudonym }}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garant:ital,wght@0,400;0,500;1,400&family=Cormorant+SC:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;1,400&family=Cormorant+Garant:ital,wght@0,300;0,400;1,300;1,400&family=Cormorant+SC:wght@300;400&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
     background: #F5F0E8;
     color: #1C1917;
-    font-family: "Cormorant Garant", "Georgia", serif;
+    font-family: "Cormorant Garant", Georgia, serif;
+    font-weight: 300;
     font-size: 19px;
-    line-height: 1.9;
+    line-height: 1.95;
     -webkit-font-smoothing: antialiased;
   }
 
   .container {
     max-width: 720px;
     margin: 0 auto;
-    padding: 120px 24px 80px;
+    padding: 80px 100px 80px;
+    position: relative;
+  }
+
+  /* --- Header --- */
+
+  .header {
+    position: relative;
+    text-align: center;
+    padding: 40px 0 32px;
+    margin-bottom: 48px;
+  }
+
+  .compass-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 220px;
+    height: 220px;
+    opacity: 0.07;
+    z-index: 0;
   }
 
   .pseudonym {
-    text-align: center;
-    font-family: "Allura", cursive;
-    font-size: 52px;
+    position: relative;
+    z-index: 1;
+    font-family: "Bodoni Moda", serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 58px;
     color: #B8965A;
     line-height: 1.2;
     margin-bottom: 24px;
   }
 
-  .rule {
+  .gold-rule {
     border: none;
-    border-top: 1px solid #B8965A;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, #B8965A 30%, #B8965A 70%, transparent 100%);
+    opacity: 0.5;
     width: 100%;
-    margin-bottom: 64px;
   }
+
+  /* --- Portrait body --- */
 
   .portrait-text p {
     margin-bottom: 2em;
@@ -49,39 +77,138 @@
     margin-bottom: 0;
   }
 
+  /* Drop capital on first paragraph */
+  .portrait-text p.drop-cap::first-letter {
+    font-family: "Bodoni Moda", serif;
+    font-style: italic;
+    font-size: 52px;
+    float: left;
+    color: #B8965A;
+    line-height: 0.8;
+    padding-right: 8px;
+    padding-top: 6px;
+  }
+
+  /* Movement break */
+  .movement-break {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: 2.5em 0;
+    opacity: 0.25;
+  }
+
+  .movement-break .line {
+    width: 40px;
+    height: 1px;
+    background: #B8965A;
+  }
+
+  .movement-break .diamond {
+    width: 8px;
+    height: 8px;
+    border: 1px solid #B8965A;
+    transform: rotate(45deg);
+  }
+
+  /* Shadow passage */
+  .portrait-text p.shadow-passage {
+    font-style: italic;
+    border-left: 1px solid #B8965A;
+    padding-left: 28px;
+    margin-left: 0;
+  }
+
+  /* Surprise moment */
+  .portrait-text p.surprise-moment {
+    font-weight: 400;
+    font-size: 19.5px;
+    border-left: 2px solid #B8965A;
+    padding-left: 28px;
+    background: rgba(184, 150, 90, 0.04);
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  /* --- Closing --- */
+
+  .closing-section {
+    text-align: center;
+    margin-top: 3em;
+  }
+
+  .north-needle {
+    display: block;
+    margin: 0 auto 16px;
+    width: 24px;
+    opacity: 0.35;
+  }
+
+  .final-line {
+    font-style: italic;
+    font-size: 19px;
+    text-align: center;
+    margin-bottom: 0;
+  }
+
+  /* --- Colophon --- */
+
+  .colophon-rule {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, #B8965A 30%, #B8965A 70%, transparent 100%);
+    opacity: 0.25;
+    width: 100%;
+    margin-top: 64px;
+  }
+
   .colophon {
     text-align: center;
     font-family: "Cormorant SC", serif;
     font-size: 10px;
+    letter-spacing: 0.22em;
     color: #B8965A;
-    letter-spacing: 0.15em;
-    margin-top: 80px;
+    opacity: 0.55;
+    margin-top: 20px;
     line-height: 1.8;
   }
 
+  /* --- Save button --- */
+
   .save-btn {
     display: block;
-    margin: 40px auto 0;
+    margin: 32px auto 0;
     background: transparent;
     color: #B8965A;
-    border: 1px solid #B8965A;
+    border: 1px solid rgba(184, 150, 90, 0.4);
     padding: 10px 32px;
     font-family: "Cormorant SC", serif;
-    font-size: 12px;
-    letter-spacing: 0.12em;
+    font-size: 10px;
+    letter-spacing: 0.3em;
     cursor: pointer;
-    transition: background 0.2s, color 0.2s;
+    transition: background 0.3s;
   }
 
   .save-btn:hover {
-    background: #B8965A;
-    color: #F5F0E8;
+    background: rgba(184, 150, 90, 0.08);
   }
 
+  /* --- Empty state --- */
+
+  .empty-state {
+    text-align: center;
+    font-style: italic;
+    color: #8A8480;
+    padding: 80px 0;
+  }
+
+  /* --- Responsive --- */
+
   @media (max-width: 600px) {
-    .container { padding: 40px 20px 60px; }
+    .container { padding: 48px 28px 60px; }
     .pseudonym { font-size: 38px; }
-    .rule { margin-bottom: 40px; }
+    .compass-watermark { width: 160px; height: 160px; }
   }
 
   @media print {
@@ -94,26 +221,204 @@
 <body>
 
 <div class="container">
-  <div class="pseudonym">{{ pseudonym }}</div>
-  <hr class="rule">
-  <div class="portrait-text" id="portrait-text">
-    <p>Loading portrait...</p>
+
+  <!-- Header with compass watermark -->
+  <div class="header">
+    <svg class="compass-watermark" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+      <!-- Outer ring -->
+      <circle cx="110" cy="110" r="105" fill="none" stroke="#8C5C20" stroke-width="1.5"/>
+      <circle cx="110" cy="110" r="98" fill="none" stroke="#6A4010" stroke-width="0.5"/>
+      <!-- Degree tick marks -->
+      <g stroke="#6A4010" stroke-width="0.5">
+        <!-- Major ticks every 30 degrees -->
+        <line x1="110" y1="8" x2="110" y2="18" transform="rotate(0 110 110)"/>
+        <line x1="110" y1="8" x2="110" y2="18" transform="rotate(30 110 110)"/>
+        <line x1="110" y1="8" x2="110" y2="18" transform="rotate(60 110 110)"/>
+        <line x1="110" y1="8" x2="110" y2="18" transform="rotate(90 110 110)"/>
+        <line x1="110" y1="8" x2="110" y2="18" transform="rotate(120 110 110)"/>
+        <line x1="110" y1="8" x2="110" y2="18" transform="rotate(150 110 110)"/>
+        <line x1="110" y1="8" x2="110" y2="18" transform="rotate(180 110 110)"/>
+        <line x1="110" y1="8" x2="110" y2="18" transform="rotate(210 110 110)"/>
+        <line x1="110" y1="8" x2="110" y2="18" transform="rotate(240 110 110)"/>
+        <line x1="110" y1="8" x2="110" y2="18" transform="rotate(270 110 110)"/>
+        <line x1="110" y1="8" x2="110" y2="18" transform="rotate(300 110 110)"/>
+        <line x1="110" y1="8" x2="110" y2="18" transform="rotate(330 110 110)"/>
+      </g>
+      <g stroke="#6A4010" stroke-width="0.3">
+        <!-- Minor ticks every 15 degrees (offset from majors) -->
+        <line x1="110" y1="10" x2="110" y2="16" transform="rotate(15 110 110)"/>
+        <line x1="110" y1="10" x2="110" y2="16" transform="rotate(45 110 110)"/>
+        <line x1="110" y1="10" x2="110" y2="16" transform="rotate(75 110 110)"/>
+        <line x1="110" y1="10" x2="110" y2="16" transform="rotate(105 110 110)"/>
+        <line x1="110" y1="10" x2="110" y2="16" transform="rotate(135 110 110)"/>
+        <line x1="110" y1="10" x2="110" y2="16" transform="rotate(165 110 110)"/>
+        <line x1="110" y1="10" x2="110" y2="16" transform="rotate(195 110 110)"/>
+        <line x1="110" y1="10" x2="110" y2="16" transform="rotate(225 110 110)"/>
+        <line x1="110" y1="10" x2="110" y2="16" transform="rotate(255 110 110)"/>
+        <line x1="110" y1="10" x2="110" y2="16" transform="rotate(285 110 110)"/>
+        <line x1="110" y1="10" x2="110" y2="16" transform="rotate(315 110 110)"/>
+        <line x1="110" y1="10" x2="110" y2="16" transform="rotate(345 110 110)"/>
+      </g>
+      <!-- 8-point compass rose -->
+      <g fill="#8C5C20" opacity="0.6">
+        <!-- N -->
+        <polygon points="110,30 104,110 116,110"/>
+        <!-- S -->
+        <polygon points="110,190 104,110 116,110"/>
+        <!-- E -->
+        <polygon points="190,110 110,104 110,116"/>
+        <!-- W -->
+        <polygon points="30,110 110,104 110,116"/>
+      </g>
+      <g fill="#6A4010" opacity="0.35">
+        <!-- NE -->
+        <polygon points="166,44 108,106 114,112"/>
+        <!-- SE -->
+        <polygon points="166,176 108,114 114,108"/>
+        <!-- SW -->
+        <polygon points="54,176 106,114 112,108"/>
+        <!-- NW -->
+        <polygon points="54,44 106,108 112,114"/>
+      </g>
+      <!-- Cardinal letters -->
+      <g font-family="Cormorant SC, serif" font-size="11" fill="#8C5C20" text-anchor="middle" opacity="0.7">
+        <text x="110" y="28">N</text>
+        <text x="110" y="202">S</text>
+        <text x="198" y="114">E</text>
+        <text x="22" y="114">W</text>
+      </g>
+      <!-- Centre dot -->
+      <circle cx="110" cy="110" r="3" fill="#8C5C20" opacity="0.5"/>
+    </svg>
+    <div class="pseudonym">{{ pseudonym }}</div>
   </div>
+
+  <hr class="gold-rule">
+
+  <!-- Portrait text -->
+  <div class="portrait-text" id="portrait-text">
+    <p class="empty-state">Loading portrait...</p>
+  </div>
+
+  <!-- Closing -->
+  <div class="closing-section" id="closing-section" style="display:none;">
+    <svg class="north-needle" viewBox="0 0 24 60" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="12,0 8,30 16,30" fill="#B8965A"/>
+      <polygon points="12,60 8,30 16,30" fill="none" stroke="#B8965A" stroke-width="0.75"/>
+    </svg>
+    <p class="final-line" id="final-line"></p>
+  </div>
+
+  <!-- Colophon -->
+  <hr class="colophon-rule">
   <div class="colophon">
     Composed by Scout &middot; {{ date }} &middot; {{ user_id }} &middot; This document belongs to {{ pseudonym }} alone.
   </div>
   <button class="save-btn" onclick="window.print()">Save Portrait</button>
+
 </div>
 
 <script>
-  // Portrait text is passed from the /generate call via sessionStorage
-  const raw = sessionStorage.getItem("portrait");
-  if (raw) {
-    const el = document.getElementById("portrait-text");
-    // Split on double newlines into paragraphs
-    const paragraphs = raw.split(/\n\n+/).filter(p => p.trim());
-    el.innerHTML = paragraphs.map(p => "<p>" + p.replace(/\n/g, " ") + "</p>").join("");
+const raw = sessionStorage.getItem("portrait");
+const textEl = document.getElementById("portrait-text");
+const closingEl = document.getElementById("closing-section");
+const finalLineEl = document.getElementById("final-line");
+
+if (!raw) {
+  textEl.innerHTML = '<p class="empty-state">Portrait not available. Please return to your session.</p>';
+} else {
+  // Parse markers: [SHADOW]...[/SHADOW] and [SURPRISE]...[/SURPRISE]
+  // Split into typed blocks: {type: "normal"|"shadow"|"surprise", text: string}
+  const blocks = [];
+  let remaining = raw;
+
+  while (remaining.length > 0) {
+    const shadowStart = remaining.indexOf("[SHADOW]");
+    const surpriseStart = remaining.indexOf("[SURPRISE]");
+
+    // Find the nearest marker
+    let nearest = -1;
+    let markerType = "";
+    let openTag = "";
+    let closeTag = "";
+
+    if (shadowStart !== -1 && (surpriseStart === -1 || shadowStart < surpriseStart)) {
+      nearest = shadowStart;
+      markerType = "shadow";
+      openTag = "[SHADOW]";
+      closeTag = "[/SHADOW]";
+    } else if (surpriseStart !== -1) {
+      nearest = surpriseStart;
+      markerType = "surprise";
+      openTag = "[SURPRISE]";
+      closeTag = "[/SURPRISE]";
+    }
+
+    if (nearest === -1) {
+      // No more markers — rest is normal text
+      if (remaining.trim()) blocks.push({ type: "normal", text: remaining.trim() });
+      break;
+    }
+
+    // Text before the marker
+    const before = remaining.substring(0, nearest).trim();
+    if (before) blocks.push({ type: "normal", text: before });
+
+    // Find closing tag
+    const afterOpen = remaining.substring(nearest + openTag.length);
+    const closeIdx = afterOpen.indexOf(closeTag);
+    if (closeIdx === -1) {
+      // Malformed — treat rest as normal
+      if (afterOpen.trim()) blocks.push({ type: "normal", text: afterOpen.trim() });
+      break;
+    }
+
+    const markedText = afterOpen.substring(0, closeIdx).trim();
+    if (markedText) blocks.push({ type: markerType, text: markedText });
+
+    remaining = afterOpen.substring(closeIdx + closeTag.length);
   }
+
+  // Flatten blocks into paragraphs with type annotation
+  const typedParagraphs = [];
+  blocks.forEach(block => {
+    const paras = block.text.split(/\n\n+/).filter(p => p.trim());
+    paras.forEach(p => {
+      typedParagraphs.push({ type: block.type, text: p.replace(/\n/g, " ").trim() });
+    });
+  });
+
+  if (typedParagraphs.length === 0) {
+    textEl.innerHTML = '<p class="empty-state">Portrait not available. Please return to your session.</p>';
+  } else {
+    let html = "";
+    let normalCount = 0;
+
+    typedParagraphs.forEach((p, i) => {
+      // Last paragraph becomes the final line in closing section
+      if (i === typedParagraphs.length - 1 && typedParagraphs.length > 3) {
+        finalLineEl.textContent = p.text;
+        closingEl.style.display = "block";
+        return;
+      }
+
+      // Movement break every ~4 normal paragraphs
+      if (p.type === "normal") normalCount++;
+      if (normalCount > 1 && normalCount % 4 === 1 && p.type === "normal") {
+        html += '<div class="movement-break"><div class="line"></div><div class="diamond"></div><div class="line"></div></div>';
+      }
+
+      let cls = "";
+      if (i === 0) cls = "drop-cap";
+      else if (p.type === "shadow") cls = "shadow-passage";
+      else if (p.type === "surprise") cls = "surprise-moment";
+
+      html += '<p' + (cls ? ' class="' + cls + '"' : '') + '>' + p.text + '</p>';
+    });
+
+    textEl.innerHTML = html;
+  }
+}
 </script>
 
 </body>
