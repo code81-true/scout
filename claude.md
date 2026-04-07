@@ -134,3 +134,10 @@ The access/ directory is sensitive territory.
 - Never commit anything from access/ except keys_generate.py
 - If uncertain whether something belongs in access/ — it doesn't
 - Keys, credentials, tokens, secrets — VPS .env only, never git
+
+## Next session priorities (as of 2026-04-07)
+1. First real user session — monitor and note any issues
+2. Post-session Chronicler output review
+3. Gunicorn production WSGI server — replace Flask dev server
+4. SSH key authentication on VPS — replace password auth
+5. Prompt compression — CC analysis report ready, awaiting implementation
