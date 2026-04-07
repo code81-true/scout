@@ -135,6 +135,8 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 21. **Guide page rewrite** — Pope replaced all guide page copy with pristine version. Removed "AI interviewer" framing, replaced with conversation framing. Contradictions removed. Closing line changed to "When you are ready — enter your key."
 
+22. **CSS/layout audit fixes and conversation restyling** — Colophon overlap fixed (absolute → margin), conversation height fixed (min-height → height), contrast improved on age notice, error messages, and guide-back link. Portrait colophon and save button increased to 11px. Portrait padding reduced with intermediate breakpoint. Guide page bottom nav added (scroll-top + return button). Scout messages restyled to Cormorant Garant italic gold. User messages restyled to system sans-serif. YAML blocks in Scout messages post-rendered to monospace green-grey on dark background.
+
 ---
 
 ## Changes Based on User Testing

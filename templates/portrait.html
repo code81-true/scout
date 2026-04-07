@@ -23,7 +23,7 @@
   .container {
     max-width: 720px;
     margin: 0 auto;
-    padding: 80px 100px 80px;
+    padding: 80px 60px 80px;
     position: relative;
   }
 
@@ -166,10 +166,10 @@
   .colophon {
     text-align: center;
     font-family: "Cormorant SC", serif;
-    font-size: 10px;
+    font-size: 11px;
     letter-spacing: 0.22em;
     color: #B8965A;
-    opacity: 0.55;
+    opacity: 0.65;
     margin-top: 20px;
     line-height: 1.8;
   }
@@ -184,7 +184,7 @@
     border: 1px solid rgba(184, 150, 90, 0.4);
     padding: 10px 32px;
     font-family: "Cormorant SC", serif;
-    font-size: 10px;
+    font-size: 11px;
     letter-spacing: 0.3em;
     cursor: pointer;
     transition: background 0.3s;
@@ -204,6 +204,10 @@
   }
 
   /* --- Responsive --- */
+
+  @media (max-width: 720px) {
+    .container { padding: 60px 32px 60px; }
+  }
 
   @media (max-width: 600px) {
     .container { padding: 48px 28px 60px; }

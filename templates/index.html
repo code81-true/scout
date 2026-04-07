@@ -149,7 +149,7 @@
     font-family: 'Cormorant Garant', serif;
     font-size: 12px;
     font-style: italic;
-    color: #38322A;
+    color: #6A6560;
     text-align: center;
     margin-bottom: 20px;
     line-height: 1.6;
@@ -177,7 +177,7 @@
     font-family: "Cormorant Garant", Georgia, serif;
     font-style: italic;
     font-size: 13px;
-    color: #6b2020;
+    color: #a03030;
     min-height: 20px;
     visibility: hidden;
   }
@@ -202,8 +202,7 @@
   }
 
   .colophon-landing {
-    position: absolute;
-    bottom: 32px;
+    margin-top: 32px;
     font-family: "Cormorant SC", serif;
     font-size: 11px;
     letter-spacing: 0.2em;
@@ -224,7 +223,7 @@
     font-family: "Cormorant SC", serif;
     font-size: 11px;
     letter-spacing: 0.12em;
-    color: #4a4540;
+    color: #6A6560;
     cursor: pointer;
     text-decoration: none;
     margin-bottom: 60px;
@@ -258,12 +257,59 @@
 
   .guide-body p { margin-bottom: 1.4em; }
 
+  .guide-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 48px;
+    padding-bottom: 48px;
+    gap: 32px;
+    position: relative;
+  }
+
+  .guide-scroll-top {
+    position: absolute;
+    left: 0;
+    background: transparent;
+    border: 1px solid #2A2520;
+    color: #6A6560;
+    font-size: 16px;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .guide-scroll-top:hover {
+    border-color: #B8965A;
+    color: #B8965A;
+  }
+
+  .guide-return {
+    background: transparent;
+    border: 1px solid #2A2520;
+    color: #6A6560;
+    font-family: 'Cormorant SC', serif;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    padding: 12px 36px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.4s;
+  }
+
+  .guide-return:hover {
+    border-color: #B8965A;
+    color: #B8965A;
+  }
+
   /* ========================================
      STATE 3 — Conversation
      ======================================== */
 
   #scout-session {
     flex-direction: column;
+    height: 100dvh;
   }
 
   #conversation {
@@ -290,13 +336,24 @@
     align-self: flex-start;
     background: #1a1a1a;
     border-left: 3px solid #3a3a3a;
+    font-family: "Cormorant Garant", Georgia, serif;
+    font-style: italic;
+    font-size: 18px;
+    font-weight: 300;
+    color: #B8965A;
+    line-height: 1.9;
   }
 
   .message.user {
     align-self: flex-end;
     background: #1a2a1a;
     border-right: 3px solid #2a4a2a;
-    text-align: left;
+    text-align: right;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    color: #E8E4DC;
+    opacity: 0.85;
   }
 
   #input-area {
@@ -345,6 +402,20 @@
   #conversation::-webkit-scrollbar { width: 6px; }
   #conversation::-webkit-scrollbar-track { background: transparent; }
   #conversation::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+  .message.scout .yaml-block {
+    font-family: "SF Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
+    font-style: normal;
+    font-size: 12px;
+    color: #8A9A8A;
+    background: #111;
+    padding: 16px;
+    border-radius: 4px;
+    margin-top: 12px;
+    white-space: pre-wrap;
+    line-height: 1.5;
+    display: block;
+  }
 
   .generating-message {
     font-family: 'Cormorant Garant', serif;
@@ -415,6 +486,10 @@
       <p>Scout works best when you are in a stable place. If you are currently experiencing significant mental health difficulties — or if you are in active treatment for a mental health condition — this is not the right moment for this kind of work. Not because anything is wrong with you. Because this process goes deep, and deep is not always what is needed right now. Please speak with your therapist or doctor before proceeding.</p>
       <p>If you want to explore sexual or relational complexity — Scout will acknowledge it and note it. But this is territory that deserves a human specialist. Scout will point you there.</p>
       <p>When you are ready — enter your key.</p>
+    </div>
+    <div class="guide-nav">
+      <button class="guide-scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+      <button class="guide-return" onclick="showState('landing')">Return to Scout</button>
     </div>
   </div>
 </div>
@@ -626,6 +701,19 @@ async function sendMessage(message) {
   let sessionComplete = false;
 
   tw.onFinish = async () => {
+    // Post-render: style YAML blocks in monospace
+    const rawText = scoutEl.textContent;
+    if (rawText.includes('```yaml')) {
+      const parts = rawText.split(/(```yaml[\s\S]*?```)/);
+      scoutEl.innerHTML = parts.map(part => {
+        if (part.startsWith('```yaml')) {
+          const code = part.replace(/^```yaml\s*/, '').replace(/\s*```$/, '');
+          return '<span class="yaml-block">' + code.replace(/</g, '&lt;') + '</span>';
+        }
+        return part.replace(/</g, '&lt;').replace(/\n/g, '<br>');
+      }).join('');
+    }
+
     if (sessionComplete) {
       userInput.placeholder = "Session complete.";
       triggerGenerate();
