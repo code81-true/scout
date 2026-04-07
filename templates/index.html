@@ -53,6 +53,8 @@
     font-size: clamp(96px, 14vw, 172px);
     line-height: 1.0;
     margin-bottom: 40px;
+    cursor: crosshair;
+    transition: letter-spacing 0.8s ease-in-out;
     background: linear-gradient(
       108deg,
       #2A1800 0%, #5A3410 6%, #8C5C20 12%,
@@ -82,6 +84,38 @@
     animation-delay: 0.5s;
   }
 
+  .wordmark:hover {
+    letter-spacing: 0.06em;
+  }
+
+  @keyframes vignette-pulse {
+    0%, 100% { box-shadow: inset 0 0 120px rgba(0,0,0,0.4); }
+    50% { box-shadow: inset 0 0 180px rgba(0,0,0,0.7); }
+  }
+
+  .page-landing {
+    animation: vignette-pulse 12s ease-in-out infinite;
+  }
+
+  .fade-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: #000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1.5s ease-in-out;
+    z-index: 9999;
+  }
+
+  .fade-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .landing-statement { transition: opacity 0.8s ease-in-out; }
+  .wordmark-wrap { transition: opacity 0.8s ease-in-out; }
+
   .guide-link {
     font-family: "Cormorant SC", serif;
     font-size: 13px;
@@ -90,7 +124,7 @@
     cursor: pointer;
     margin-bottom: 48px;
     text-decoration: none;
-    transition: color 0.3s;
+    transition: color 0.3s, opacity 0.8s ease-in-out;
   }
 
   .guide-link:hover { color: #7a7570; }
@@ -312,6 +346,25 @@
   #conversation::-webkit-scrollbar-track { background: transparent; }
   #conversation::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
 
+  .generating-message {
+    font-family: 'Cormorant Garant', serif;
+    font-size: 22px;
+    font-style: italic;
+    font-weight: 300;
+    color: #B8965A;
+    text-align: center;
+    line-height: 1.8;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+  }
+
+  .generating-message.visible {
+    opacity: 1;
+  }
+
   @media (max-width: 600px) {
     .message { max-width: 100%; }
     #input-area { padding: 12px; }
@@ -321,13 +374,15 @@
 </head>
 <body>
 
+<div class="fade-overlay" id="fade-overlay"></div>
+
 <!-- ====== STATE 1 — Landing ====== -->
-<div id="landing" class="state active">
+<div id="landing" class="state active page-landing">
   <div class="landing-statement">
     <p>99.99% will never truly know who they are.</p>
     <p>You are here because someone believes you are ready.</p>
   </div>
-  <div class="wordmark">Scout</div>
+  <div class="wordmark-wrap"><div class="wordmark">Scout</div></div>
   <a class="guide-link breathe" id="guide-link">What you are about to enter — read this first</a>
   <div class="key-console">
     <div class="key-label breathe">Key</div>
@@ -346,21 +401,20 @@
     <div class="guide-section-title">Technically</div>
     <div class="guide-body">
       <p>Set aside two hours. Not ninety minutes. Two hours. The people who got the most from this gave it that.</p>
-      <p>Scout is an AI interviewer. It will ask you questions — one at a time, carefully — about who you are, what you value, what you are building, and what you are afraid of.</p>
-      <p>At the end, it will produce a structured document called a spine — a personal constitution that captures the real version of you, not the performed one.</p>
-      <p>The conversation takes between 30 and 60 minutes. There are no right answers. There is no scoring. Nothing you say here is stored after your session ends. The spine belongs to you alone.</p>
-      <p>If your connection drops or your browser closes mid-session, your progress is not lost. Your session is held in a temporary file — like a document that saves itself while you write. When you return with the same key, Scout picks up exactly where you left off. The moment your spine is delivered and you close this window, that file is deleted permanently. Nothing is kept after that point. Nothing.</p>
-      <p>You will need your single-use key to begin. It expires the moment your spine is delivered. There are no second sessions.</p>
+      <p>Scout will sit with you in a conversation that goes somewhere you always wanted to go, but never had the company — following what you say, and sometimes what you don't.</p>
+      <p>At the end, it will produce something called a spine — a personal constitution that captures the real version of you, not the performed one. It belongs to you alone.</p>
+      <p>During your session, your conversation is held in a temporary file — like a document that saves itself while you write. If your connection drops or your browser closes, you can return with the same key and Scout picks up exactly where you left off. The moment your spine is delivered and you close this window, that file is deleted permanently. Nothing is kept after that point. Nothing.</p>
+      <p>Your key expires the moment your spine is delivered. It cannot be reused.</p>
     </div>
     <div class="guide-section-title">With truth</div>
     <div class="guide-body">
       <p>This will only work if you are honest. Not performatively honest — not the version of honesty that sounds good. The kind that costs something to say out loud.</p>
-      <p>Scout will not judge you. It will not give you advice. It will not tell you what to do. It will listen with more precision than most humans are capable of, and it will reflect back what it hears — including the things you did not quite say.</p>
+      <p>Scout will not judge you. It will not give you advice. It will not tell you what to do. It will listen without an agenda, without distraction, and without the need to protect itself from what you say — and it will reflect back what it hears, including the things you did not quite say.</p>
       <p>The people who get the most from this are the ones who stop editing themselves. The ones who say the thing they have never said to anyone. The ones who let the silence sit rather than filling it with noise.</p>
       <p>What emerges from this session becomes the foundation of something that will serve you every day. Not a plan. Not a to-do list. A companion that knows who you actually are — and speaks to you from that knowledge, every morning, for as long as you use it. The quality of that companion depends entirely on the quality of what you give today.</p>
       <p>Scout works best when you are in a stable place. If you are currently experiencing significant mental health difficulties — or if you are in active treatment for a mental health condition — this is not the right moment for this kind of work. Not because anything is wrong with you. Because this process goes deep, and deep is not always what is needed right now. Please speak with your therapist or doctor before proceeding.</p>
       <p>If you want to explore sexual or relational complexity — Scout will acknowledge it and note it. But this is territory that deserves a human specialist. Scout will point you there.</p>
-      <p>If you are ready for that — enter your key.</p>
+      <p>When you are ready — enter your key.</p>
     </div>
   </div>
 </div>
@@ -401,6 +455,18 @@ keyInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") { e.preventDefault(); authenticate(); }
 });
 
+// Input focus fade — dim surrounding elements
+keyInput.addEventListener("focus", function() {
+  document.querySelector('.landing-statement').style.opacity = '0.2';
+  document.querySelector('.wordmark-wrap').style.opacity = '0.2';
+  document.querySelector('.guide-link').style.opacity = '0.2';
+});
+keyInput.addEventListener("blur", function() {
+  document.querySelector('.landing-statement').style.opacity = '1';
+  document.querySelector('.wordmark-wrap').style.opacity = '1';
+  document.querySelector('.guide-link').style.opacity = '1';
+});
+
 async function authenticate() {
   const key = keyInput.value.trim();
   if (!key) return;
@@ -417,8 +483,15 @@ async function authenticate() {
     const data = await resp.json();
 
     if (data.success) {
-      showState("scout-session");
-      initConversation();
+      const overlay = document.getElementById('fade-overlay');
+      overlay.classList.add('active');
+      setTimeout(() => {
+        showState('scout-session');
+        setTimeout(() => {
+          overlay.classList.remove('active');
+          initConversation();
+        }, 500);
+      }, 1500);
     } else if (data.reason === "expired") {
       keyError.textContent = "This session has already been completed.";
       keyError.classList.add("visible");
@@ -595,9 +668,43 @@ async function sendMessage(message) {
 // --- Post-session generation ---
 
 async function triggerGenerate() {
-  const statusEl = addMessage("scout");
-  statusEl.textContent = "Assembling your spine. This takes a moment.";
+  const messages = [
+    "The finest things take a little longer.",
+    "Your spine is being assembled — each section carefully, in order.",
+    "This cannot be rushed. It should not be.",
+    "What you gave this conversation deserves precision. We are giving it that.",
+    "Almost there. Patience will pay."
+  ];
+
+  // Create generating message element
+  const msgEl = addMessage("scout");
+  msgEl.innerHTML = "";
+  msgEl.style.background = "transparent";
+  msgEl.style.borderLeft = "none";
+  const genMsg = document.createElement("div");
+  genMsg.className = "generating-message";
+  genMsg.textContent = messages[0];
+  msgEl.appendChild(genMsg);
   conversation.scrollTop = conversation.scrollHeight;
+
+  // Fade in first message
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      genMsg.classList.add("visible");
+    });
+  });
+
+  // Rotate messages every 18 seconds
+  let msgIndex = 0;
+  const rotateInterval = setInterval(() => {
+    msgIndex++;
+    if (msgIndex >= messages.length) msgIndex = 0;
+    genMsg.classList.remove("visible");
+    setTimeout(() => {
+      genMsg.textContent = messages[msgIndex];
+      genMsg.classList.add("visible");
+    }, 1000);
+  }, 18000);
 
   try {
     const resp = await fetch("/generate", {
@@ -607,6 +714,8 @@ async function triggerGenerate() {
     });
     const data = await resp.json();
 
+    clearInterval(rotateInterval);
+
     // Burn the key
     await fetch("/burn", { method: "POST" });
     activateExitWarning();
@@ -615,17 +724,20 @@ async function triggerGenerate() {
     sessionStorage.setItem("portrait", data.portrait);
     sessionStorage.setItem("yaml", data.yaml);
 
-    // Replace assembling message with action buttons
-    statusEl.innerHTML = "";
-    statusEl.style.display = "flex";
-    statusEl.style.gap = "12px";
-    statusEl.style.background = "transparent";
-    statusEl.style.borderLeft = "none";
-    statusEl.style.padding = "14px 0";
+    // Fade out generating message
+    genMsg.classList.remove("visible");
+
+    await new Promise(r => setTimeout(r, 1000));
+
+    // Replace with action buttons
+    msgEl.innerHTML = "";
+    msgEl.style.display = "flex";
+    msgEl.style.gap = "12px";
+    msgEl.style.padding = "14px 0";
 
     const dlBtn = document.createElement("button");
     dlBtn.textContent = "Download Spine";
-    dlBtn.style.cssText = "background:#1a1a1a;color:#e8e8e8;border:1px solid #333;border-radius:6px;padding:10px 20px;font-family:inherit;font-size:14px;cursor:pointer;";
+    dlBtn.style.cssText = "background:#1a1a1a;color:#e8e8e8;border:1px solid #333;border-radius:6px;padding:10px 20px;font-family:inherit;font-size:14px;cursor:pointer;opacity:0;transition:opacity 1s ease-in-out;";
     dlBtn.addEventListener("click", () => {
       const blob = new Blob([data.yaml], { type: "text/yaml" });
       const a = document.createElement("a");
@@ -638,7 +750,7 @@ async function triggerGenerate() {
 
     const viewBtn = document.createElement("button");
     viewBtn.textContent = "View Portrait";
-    viewBtn.style.cssText = "background:#1a1a1a;color:#e8e8e8;border:1px solid #333;border-radius:6px;padding:10px 20px;font-family:inherit;font-size:14px;cursor:pointer;";
+    viewBtn.style.cssText = "background:#1a1a1a;color:#e8e8e8;border:1px solid #333;border-radius:6px;padding:10px 20px;font-family:inherit;font-size:14px;cursor:pointer;opacity:0;transition:opacity 1s ease-in-out;";
     viewBtn.addEventListener("click", () => {
       fetch("/portrait", {
         method: "POST",
@@ -655,11 +767,20 @@ async function triggerGenerate() {
       });
     });
 
-    statusEl.appendChild(dlBtn);
-    statusEl.appendChild(viewBtn);
+    msgEl.appendChild(dlBtn);
+    msgEl.appendChild(viewBtn);
     conversation.scrollTop = conversation.scrollHeight;
+
+    // Fade in buttons
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        dlBtn.style.opacity = "1";
+        viewBtn.style.opacity = "1";
+      });
+    });
   } catch (err) {
-    statusEl.textContent = "Generation failed. " + err.message;
+    clearInterval(rotateInterval);
+    genMsg.textContent = "Generation failed. " + err.message;
   }
 }
 
