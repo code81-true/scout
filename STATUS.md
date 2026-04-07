@@ -1,6 +1,6 @@
 # Scout — Project Status
 
-Last updated: 2026-04-06
+Last updated: 2026-04-07
 
 ---
 
@@ -14,7 +14,7 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 ### Brain
 
-- **Scout system prompt** (`scout/prompt.py`) — 1,152 lines across 7 sections: Identity & Disposition, Hard Rules (one question per response, no "why", banned phrases), How Scout Listens (5-level reading framework, priority stack, Socratic/Elicitation/Columbo techniques, smokescreen detection, emotional weight handling, cliche handling, resistance handling), Seven Layers (Roles, Work, People, Body, Beliefs, Shadows, Long Game with opening questions, evasion patterns, depth signals for each), The Closing (5 contextual final questions, closing statement guidelines), Parsing Pass (full spine.yaml schema with 13 top-level sections, 7 parsing rules including self-type marking and health data filter), Safety (8 hard constraints including crisis intervention, health data exclusion, no real names, no advice, no political positions, no manipulation, data transparency, scope limits).
+- **Scout system prompt** (`scout/prompt.py`) — 1,283 lines across 7 sections: Identity & Disposition, Hard Rules (one question per response, no "why", banned phrases), How Scout Listens (5-level reading framework, priority stack, Socratic/Elicitation/Columbo techniques, smokescreen detection, emotional weight handling, reflection discipline, layer transition rules, cliche handling, resistance handling), Seven Layers (Roles, Work, People, Body, Beliefs, Shadows, Long Game with opening questions, evasion patterns, depth signals for each), The Closing (closing acknowledgement, 5 contextual final questions, closing statement guidelines), Parsing Pass (full spine.yaml schema with 13 top-level sections including legal_note field, 7 parsing rules including self-type marking and health data filter), Safety (9 hard constraints including crisis intervention, health data exclusion, no real names, no advice, no political positions, no manipulation, data transparency, scope limits, minor detection).
 - **Chronicler prompt** (`scout/chronicler.py`) — Portrait writing prompt with two required moments: the Half-Seen Shadow (something the person tried hardest not to say) and the Unacknowledged Greatness (a quality they know they possess but never felt entitled to name). Includes explicit `[SHADOW]...[/SHADOW]` and `[SURPRISE]...[/SURPRISE]` markup instructions for passage detection. Length guidance tied to session depth (600–800, 900–1200, or 1400–1800 words). Explicit prohibition on advice, coaching, and resolution in the final third.
 - **Test prompt** (`scout/test_prompt.py`) — Minimal 3-exchange interview for logistics testing. Produces a 10% completion spine.yaml with all fields marked low confidence.
 
@@ -30,10 +30,10 @@ Scout is a single-session AI interview engine that guides one person through sev
 ### Frontend
 
 - `templates/index.html` — Three-state single page application:
-  - **State 1 (Landing)**: Dark background (#0D0B0A), two muted statement lines in Cormorant Garant 300, "Scout" wordmark with forged bronze gradient (16-stop linear-gradient at 108deg), "Before you begin" guide link, key input console with password field, "Reveal" auth button, "By invitation only" colophon. Breathing animation on guide link, key label (in phase), and reveal button (0.5s offset).
+  - **State 1 (Landing)**: Dark background (#0D0B0A), two muted statement lines in Cormorant Garant 300, "Scout" wordmark with forged bronze gradient (16-stop linear-gradient at 108deg), "Before you begin" guide link, key input console with password field, age notice ("Scout is for adults only"), "Reveal" auth button, "By invitation only" colophon. Breathing animation on guide link, key label (in phase), and reveal button (0.5s offset).
   - **State 2 (Guide)**: "Technically" and "With truth" sections explaining what Scout is and how to approach it. Includes session resumption explanation. Back link returns to landing.
   - **State 3 (Conversation)**: Streaming chat UI with client-side typewriter effect (28ms base delay, +/-8ms jitter, 600ms pause after periods, 250ms after commas, 900ms after paragraph breaks). Scout messages left-aligned, user messages right-aligned. Dark monospace aesthetic. Input locks during Scout response. Session completion detected via `session_complete` SSE flag. Post-session: "Assembling your spine" status, then Download Spine + View Portrait buttons. Exit warning activates after /burn, deactivates after download.
-- `templates/portrait.html` — Compass portrait display page. Warm ivory background (#F5F0E8), warm near-black text (#1C1917), antique gold accent (#B8965A). Compass SVG watermark (220px, opacity 0.07) with outer ring, degree ticks, 8-point rose, cardinal letters, centre dot. Bodoni Moda italic for pseudonym (58px) and drop capital (52px). Cormorant Garant 300 for body (19px, line-height 1.95). Cormorant SC for colophon (10px, letter-spacing 0.22em). Gold gradient rules. Movement breaks (two lines flanking rotated diamond). Shadow passages detected via `[SHADOW]` markers — italic, 1px gold left border. Surprise moments detected via `[SURPRISE]` markers — 400 weight, 19.5px, 2px gold left border, subtle gold tint. North needle SVG above final line. "Save Portrait" button triggers window.print(). Print styles hide button and set white background.
+- `templates/portrait.html` — Compass portrait display page. Warm ivory background (#F5F0E8), warm near-black text (#1C1917), antique gold accent (#B8965A). Compass SVG watermark (220px, opacity 0.07) with outer ring, degree ticks, 8-point rose, cardinal letters, centre dot. Bodoni Moda italic for pseudonym (58px) and drop capital (52px). Cormorant Garant 300 for body (19px, line-height 1.95). Cormorant SC for colophon (10px, letter-spacing 0.22em). Gold gradient rules. Movement breaks (two lines flanking rotated diamond). Shadow passages detected via `[SHADOW]` markers — italic, 1px gold left border. Surprise moments detected via `[SURPRISE]` markers — 400 weight, 19.5px, 2px gold left border, subtle gold tint. North needle SVG above final line. Colophon includes "For adults only" and "Not a therapeutic or medical tool" legal notices. "Save Portrait" button triggers window.print(). Print styles hide button and set white background.
 
 ### Infrastructure
 
@@ -81,6 +81,10 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 16. **Surprise passage typography: weight over style** — surprise moments use font-weight 400 (one step heavier than the 300 body text) and font-size 19.5px (barely perceptible increase). The shadow passage uses italic as its distinguishing quality. This prevents both passage types from competing visually while giving each a distinct character.
 
+17. **Adults-only constraint with clarification before rejection** — Scout does not stop immediately on minor signals (school references, parent mentions). It asks one clarifying question first because adults frequently reference school-era memories. Only a confirmed or implied under-18 status triggers session termination. This avoids false positives while maintaining the safeguard.
+
+18. **Legal notices on all outputs** — the spine.yaml schema includes a `legal_note` field in meta, and the portrait colophon includes "For adults only" and "Not a therapeutic or medical tool". These appear on every generated document regardless of content, establishing the tool's legal position at the point of output.
+
 ---
 
 ## Changes Based on Review
@@ -106,6 +110,14 @@ Scout is a single-session AI interview engine that guides one person through sev
 10. **Pattern matching → marker-based passage detection** — Pope identified that regex content matching for shadow/surprise passages in portrait.html was fragile and would break in production. Replaced with explicit `[SHADOW]` and `[SURPRISE]` markers in the Chronicler prompt, parsed structurally by the frontend.
 
 11. **Surprise passage typography** — Pope specified font-weight 400 and font-size 19.5px for surprise moments, distinguishing them from shadow passages (which use italic at 300 weight) without competing visually.
+
+12. **Constraint 9 — minor detection** — Pope added adults-only safeguard. Scout asks one clarifying question if minor signals appear. If confirmed under 18, session stops immediately with no spine or portrait generated.
+
+13. **Age notice on landing page** — Pope added italic notice between key label and input: "Scout is for adults only. If you are under 18 — this is not for you."
+
+14. **Legal footer on outputs** — Pope added "For adults only" and "Not a therapeutic or medical tool" to portrait colophon, and `legal_note` field to spine.yaml meta schema.
+
+15. **Prompt additions: layer transitions, reflection discipline, closing acknowledgement** — Pope added three new sections to the Scout prompt: rules for seamless layer transitions (no announcements), when to reflect vs ask directly (max once per five exchanges), and a closing acknowledgement passage before the final question.
 
 ---
 
