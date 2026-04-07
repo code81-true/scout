@@ -191,7 +191,7 @@ No live user testing has been conducted yet. All testing has been against the mo
 | `scout/test_prompt.py` | Test mode prompt — 3-exchange minimal interview |
 | `scout/engine.py` | Context window engine — all API call functions, YAML stitching, three model constants |
 | `scout/session.py` | In-memory transcript holder |
-| `access/keygen.py` | Key generator — production keys and TEST- prefixed test keys |
+| `keys_generate.py` | Key generator — production keys and TEST- prefixed test keys. Lives in project root so it deploys via git. |
 | `access/keys.txt` | Key store — not committed to git |
 | `templates/index.html` | Landing page + guide + conversation UI (three-state SPA) |
 | `templates/portrait.html` | Compass portrait display page with marker-based passage detection |
