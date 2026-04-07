@@ -196,3 +196,4 @@ No live user testing has been conducted yet. All testing has been against the mo
 | `templates/index.html` | Landing page + guide + conversation UI (three-state SPA) |
 | `templates/portrait.html` | Compass portrait display page with marker-based passage detection |
 | `tests/mock_transcript.json` | 8-exchange mock transcript for testing generation pipeline |
+| `deploy.sh` | VPS deployment script. Cleans session files, pulls from GitHub, installs dependencies, restarts Scout. Lives in repo root. |
