@@ -1,3 +1,11 @@
+# SECURITY RULE — access/ directory
+# access/keys.txt contains live Scout access keys.
+# It must NEVER be committed to git.
+# The access/ directory must NEVER contain anything
+# other than keys.txt and keys_generate.py (now moved).
+# If you are about to add a file to access/ — stop.
+# Keys and credentials live on VPS only.
+# Code lives in git only. Never mix them.
 .env
 __pycache__/
 *.pyc

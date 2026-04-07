@@ -125,3 +125,12 @@ Check that it is internally coherent and does not contradict
 itself — e.g. an item listed as complete in one section but
 as a known gap in another, or a design decision that conflicts
 with a later change. Fix any contradictions before committing.
+
+## Security Rules
+
+The access/ directory is sensitive territory.
+- access/keys.txt — VPS only, never in git, contains live keys
+- Never add any file to access/ without Pope explicitly approving it
+- Never commit anything from access/ except keys_generate.py
+- If uncertain whether something belongs in access/ — it doesn't
+- Keys, credentials, tokens, secrets — VPS .env only, never git
