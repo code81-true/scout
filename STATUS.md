@@ -14,7 +14,7 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 ### Brain
 
-- **Scout system prompt** (`scout/prompt.py`) — 1,283 lines across 7 sections: Identity & Disposition, Hard Rules (one question per response, no "why", banned phrases), How Scout Listens (5-level reading framework, priority stack, Socratic/Elicitation/Columbo techniques, smokescreen detection, emotional weight handling, reflection discipline, layer transition rules, cliche handling, resistance handling), Seven Layers (Roles, Work, People, Body, Beliefs, Shadows, Long Game with opening questions, evasion patterns, depth signals for each), The Closing (closing acknowledgement, 5 contextual final questions, closing statement guidelines), Parsing Pass (full spine.yaml schema with 13 top-level sections including legal_note field, 7 parsing rules including self-type marking and health data filter), Safety (9 hard constraints including crisis intervention, health data exclusion, no real names, no advice, no political positions, no manipulation, data transparency, scope limits, minor detection).
+- **Scout system prompt** (`scout/prompt.py`) — ~1,355 lines across 7 sections: Identity & Disposition, Hard Rules (one question per response, no "why", banned phrases), How Scout Listens (5-level reading framework, priority stack, Socratic/Elicitation/Columbo techniques, smokescreen detection, emotional weight handling, reflection discipline, layer transition rules, cliche handling, resistance handling), Seven Layers (Roles, Work, People, Body, Beliefs, Shadows, Long Game with opening questions, evasion patterns, depth signals for each), The Closing (closing acknowledgement, 5 contextual final questions, closing statement guidelines), Parsing Pass (full spine.yaml schema with 13 top-level sections including legal_note field, 7 parsing rules including self-type marking and health data filter), Safety (11 hard constraints including crisis intervention, health data exclusion, no real names, no advice, no political positions, no manipulation, data transparency, scope limits, minor detection, mental health boundary, sexual and relational complexity).
 - **Chronicler prompt** (`scout/chronicler.py`) — Portrait writing prompt with two required moments: the Half-Seen Shadow (something the person tried hardest not to say) and the Unacknowledged Greatness (a quality they know they possess but never felt entitled to name). Includes explicit `[SHADOW]...[/SHADOW]` and `[SURPRISE]...[/SURPRISE]` markup instructions for passage detection. Length guidance tied to session depth (600–800, 900–1200, or 1400–1800 words). Explicit prohibition on advice, coaching, and resolution in the final third.
 - **Test prompt** (`scout/test_prompt.py`) — Minimal 3-exchange interview for logistics testing. Produces a 10% completion spine.yaml with all fields marked low confidence.
 
@@ -31,7 +31,7 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 - `templates/index.html` — Three-state single page application:
   - **State 1 (Landing)**: Dark background (#0D0B0A), two muted statement lines in Cormorant Garant 300, "Scout" wordmark with forged bronze gradient (16-stop linear-gradient at 108deg), "Before you begin" guide link, key input console with password field, age notice ("Scout is for adults only"), "Reveal" auth button, "By invitation only" colophon. Breathing animation on guide link, key label (in phase), and reveal button (0.5s offset).
-  - **State 2 (Guide)**: "Technically" and "With truth" sections explaining what Scout is and how to approach it. Includes session resumption explanation. Back link returns to landing.
+  - **State 2 (Guide)**: "Technically" and "With truth" sections explaining what Scout is and how to approach it. Includes session resumption explanation, mental health stability notice, and relational complexity notice. Back link returns to landing.
   - **State 3 (Conversation)**: Streaming chat UI with client-side typewriter effect (28ms base delay, +/-8ms jitter, 600ms pause after periods, 250ms after commas, 900ms after paragraph breaks). Scout messages left-aligned, user messages right-aligned. Dark monospace aesthetic. Input locks during Scout response. Session completion detected via `session_complete` SSE flag. Post-session: "Assembling your spine" status, then Download Spine + View Portrait buttons. Exit warning activates after /burn, deactivates after download.
 - `templates/portrait.html` — Compass portrait display page. Warm ivory background (#F5F0E8), warm near-black text (#1C1917), antique gold accent (#B8965A). Compass SVG watermark (220px, opacity 0.07) with outer ring, degree ticks, 8-point rose, cardinal letters, centre dot. Bodoni Moda italic for pseudonym (58px) and drop capital (52px). Cormorant Garant 300 for body (19px, line-height 1.95). Cormorant SC for colophon (10px, letter-spacing 0.22em). Gold gradient rules. Movement breaks (two lines flanking rotated diamond). Shadow passages detected via `[SHADOW]` markers — italic, 1px gold left border. Surprise moments detected via `[SURPRISE]` markers — 400 weight, 19.5px, 2px gold left border, subtle gold tint. North needle SVG above final line. Colophon includes "For adults only" and "Not a therapeutic or medical tool" legal notices. "Save Portrait" button triggers window.print(). Print styles hide button and set white background.
 
@@ -85,6 +85,10 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 18. **Legal notices on all outputs** — the spine.yaml schema includes a `legal_note` field in meta, and the portrait colophon includes "For adults only" and "Not a therapeutic or medical tool". These appear on every generated document regardless of content, establishing the tool's legal position at the point of output.
 
+19. **Mental health pause not burn** — when a person discloses current significant mental health difficulty, Scout pauses the session and recommends they speak with their therapist or doctor. The key remains active — they can return when ready. This is a pause, not a termination. Past mental health history (therapy attended years ago, difficult periods navigated) does not trigger this constraint. The distinction between current crisis and past experience is critical to avoid over-triggering.
+
+20. **Sexual complexity acknowledged not explored** — Scout receives sexual and relational complexity without judgement and notes it in the spine, but does not explore it at depth. It redirects to a human specialist (therapist or couples counsellor) once. No moralising. No opinions on relationship structures. The spine records what is real — not what should be real. This protects both the person and the tool from territory that requires human expertise.
+
 ---
 
 ## Changes Based on Review
@@ -118,6 +122,14 @@ Scout is a single-session AI interview engine that guides one person through sev
 14. **Legal footer on outputs** — Pope added "For adults only" and "Not a therapeutic or medical tool" to portrait colophon, and `legal_note` field to spine.yaml meta schema.
 
 15. **Prompt additions: layer transitions, reflection discipline, closing acknowledgement** — Pope added three new sections to the Scout prompt: rules for seamless layer transitions (no announcements), when to reflect vs ask directly (max once per five exchanges), and a closing acknowledgement passage before the final question.
+
+16. **Constraint 10 — mental health boundary** — Pope added pause-not-burn behaviour for current mental health crisis disclosure. Key stays active. Past history does not trigger.
+
+17. **Constraint 11 — sexual and relational complexity** — Pope added acknowledge-not-explore behaviour. Scout notes it in the spine but redirects to human specialist. No moralising.
+
+18. **Guide page mental health and relational notices** — Pope added two paragraphs to the "With truth" section advising people in active mental health difficulty to consult their therapist first, and noting Scout's approach to sexual/relational complexity.
+
+19. **Guide page — time commitment, guide link text, MyTrueNorth paragraph** — Pope added "Set aside two hours" as first paragraph in Technically section. Changed guide link from "Before you begin — read this" to "What you are about to enter — read this first". Added MyTrueNorth companion paragraph to With truth section before mental health notice.
 
 ---
 

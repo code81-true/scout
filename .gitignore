@@ -7,3 +7,6 @@ venv/
 .DS_Store
 access/keys.txt
 access/
+sessions/
+sessions/flask_sessions/
+sessions/transcripts/
