@@ -197,3 +197,5 @@ No live user testing has been conducted yet. All testing has been against the mo
 | `templates/portrait.html` | Compass portrait display page with marker-based passage detection |
 | `tests/mock_transcript.json` | 8-exchange mock transcript for testing generation pipeline |
 | `deploy.sh` | VPS deployment script. Cleans session files, pulls from GitHub, installs dependencies, restarts Scout. Lives in repo root. |
+| `generate_keys.bat` | Windows batch file. SSHs into VPS, generates 10 production keys, downloads updated keys.txt to local machine. |
+| `generate_test_keys.bat` | Windows batch file. SSHs into VPS, generates 5 test keys, downloads updated keys.txt to local machine. |
