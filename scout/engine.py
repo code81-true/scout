@@ -143,8 +143,8 @@ def _stitch_yaml_sections(parts: list[str]) -> str:
     cleaned: list[str] = []
     for part in parts:
         # Strip fenced code block markers
-        text = re.sub(r"^```(?:yaml)?\s*\n?", "", part.strip())
-        text = re.sub(r"\n?```\s*$", "", text)
+        text = re.sub(r"```(?:yaml)?\s*\n?", "", part.strip())
+        text = re.sub(r"\n?```\s*", "", text)
         cleaned.append(text.strip())
 
     # Build the document: start with spine: root, then nest each section
