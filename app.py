@@ -317,6 +317,133 @@ def portrait():
     )
 
 
+@app.route("/download-portrait")
+def download_portrait():
+    """Generate PDF portrait and return as download."""
+    import re
+    from io import BytesIO
+
+    portrait_filename = flask_session.get("portrait_file")
+    if not portrait_filename:
+        return {"error": "No portrait available."}, 404
+
+    portrait_path = os.path.join(SPINE_DIR, portrait_filename)
+    if not os.path.exists(portrait_path):
+        return {"error": "Portrait file not found."}, 404
+
+    with open(portrait_path, "r", encoding="utf-8") as f:
+        raw_text = f.read()
+
+    pseudonym = flask_session.get("pseudonym", "Anonymous")
+    date_str = flask_session.get("date", "")
+
+    # Parse SHADOW/SURPRISE markers into HTML
+    portrait_html = _parse_portrait_markers(raw_text, pseudonym)
+
+    # Render the PDF template
+    html_string = render_template(
+        "portrait_pdf.html",
+        pseudonym=pseudonym,
+        date=date_str,
+        portrait_html=portrait_html,
+    )
+
+    # Generate PDF with WeasyPrint
+    from weasyprint import HTML
+    pdf_buffer = BytesIO()
+    HTML(string=html_string).write_pdf(pdf_buffer)
+    pdf_buffer.seek(0)
+
+    safe_name = re.sub(r"[^a-zA-Z0-9]", "_", pseudonym)
+    filename = f"portrait_{safe_name}_{date_str}.pdf"
+
+    return Response(
+        pdf_buffer.read(),
+        mimetype="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+def _parse_portrait_markers(raw_text: str, pseudonym: str) -> str:
+    """Parse SHADOW/SURPRISE markers and convert to HTML paragraphs."""
+    import re
+
+    # Split into typed blocks
+    blocks: list[dict] = []
+    remaining = raw_text
+
+    while remaining:
+        shadow_start = remaining.find("[SHADOW]")
+        surprise_start = remaining.find("[SURPRISE]")
+
+        nearest = -1
+        marker_type = ""
+        open_tag = ""
+        close_tag = ""
+
+        if shadow_start != -1 and (surprise_start == -1 or shadow_start < surprise_start):
+            nearest = shadow_start
+            marker_type = "shadow"
+            open_tag = "[SHADOW]"
+            close_tag = "[/SHADOW]"
+        elif surprise_start != -1:
+            nearest = surprise_start
+            marker_type = "surprise"
+            open_tag = "[SURPRISE]"
+            close_tag = "[/SURPRISE]"
+
+        if nearest == -1:
+            if remaining.strip():
+                blocks.append({"type": "normal", "text": remaining.strip()})
+            break
+
+        before = remaining[:nearest].strip()
+        if before:
+            blocks.append({"type": "normal", "text": before})
+
+        after_open = remaining[nearest + len(open_tag):]
+        close_idx = after_open.find(close_tag)
+        if close_idx == -1:
+            if after_open.strip():
+                blocks.append({"type": "normal", "text": after_open.strip()})
+            break
+
+        marked = after_open[:close_idx].strip()
+        if marked:
+            blocks.append({"type": marker_type, "text": marked})
+
+        remaining = after_open[close_idx + len(close_tag):]
+
+    # Convert blocks to HTML paragraphs
+    html_parts: list[str] = []
+    for block in blocks:
+        paragraphs = [p.strip() for p in block["text"].split("\n\n") if p.strip()]
+        for para in paragraphs:
+            # Escape HTML
+            safe = para.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            safe = safe.replace("\n", " ")
+
+            if block["type"] == "shadow":
+                html_parts.append(f'<div class="shadow-passage"><p>{safe}</p></div>')
+            elif block["type"] == "surprise":
+                html_parts.append(f'<div class="surprise-passage"><p>{safe}</p></div>')
+            else:
+                html_parts.append(f"<p>{safe}</p>")
+
+    # Highlight pseudonym in the final paragraph
+    if html_parts:
+        last = html_parts[-1]
+        if pseudonym in last:
+            last = last.replace(
+                pseudonym,
+                f'<span class="final-name">{pseudonym}</span>',
+                1,
+            )
+            html_parts[-1] = last
+
+    return "\n".join(html_parts)
+
+
 @app.route("/test-generate", methods=["POST"])
 def test_generate():
     """Dev-only route: run generation against a mock transcript."""

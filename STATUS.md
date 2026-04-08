@@ -143,6 +143,10 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 25. **WeasyPrint added** — weasyprint>=68.0 added to requirements.txt. WeasyPrint 68.1 installed on VPS. Server-side PDF generation planned for portrait output.
 
+26. **WeasyPrint PDF portrait route, chronicler final name, guide copy** — /download-portrait route generates A4 PDF via WeasyPrint with compass cover page, gold typography, shadow/surprise passage styling, pseudonym in final line. Chronicler instructed to address person by pseudonym in final sentence only. Guide page updated to mention both portrait and spine. Download screen redesigned: gold "Download Portrait" primary, understated "Download Spine" secondary.
+
+27. **sessionEnded flag** — global JS flag prevents any sendMessage() call after session_complete is detected. Fixes bug where Scout's follow-up message after YAML generation interrupted triggerGenerate() before it could fire. Mode-agnostic — works identically for TEST- and production keys.
+
 ---
 
 ## Changes Based on User Testing

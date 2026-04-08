@@ -473,7 +473,7 @@
     <div class="guide-body">
       <p>Set aside two hours. Not ninety minutes. Two hours. The people who got the most from this gave it that.</p>
       <p>Scout will sit with you in a conversation that goes somewhere you always wanted to go, but never had the company — following what you say, and sometimes what you don't.</p>
-      <p>At the end, it will produce something called a spine — a personal constitution that captures the real version of you, not the performed one. It belongs to you alone.</p>
+      <p>At the end you will receive two things — a portrait written about you, and a spine. The portrait is prose. The spine is structured. Both belong to you alone. Download both before you close the window.</p>
       <p>During your session, your conversation is held in a temporary file — like a document that saves itself while you write. If your connection drops or your browser closes, you can return with the same key and Scout picks up exactly where you left off. The moment your spine is delivered and you close this window, that file is deleted permanently. Nothing is kept after that point. Nothing.</p>
       <p>Your key expires the moment your spine is delivered. It cannot be reused.</p>
     </div>
@@ -613,6 +613,7 @@ const userInput = document.getElementById("user-input");
 const sendBtn = document.getElementById("send-btn");
 
 let locked = true;
+let sessionEnded = false;
 
 // --- Typing delay logic (client-side) ---
 
@@ -694,6 +695,7 @@ function unlock() {
 }
 
 async function sendMessage(message) {
+  if (sessionEnded) return;
   lock();
   const scoutEl = addMessage("scout");
   const tw = new TypeWriter(scoutEl);
@@ -715,6 +717,7 @@ async function sendMessage(message) {
     }
 
     if (sessionComplete) {
+      sessionEnded = true;
       userInput.placeholder = "Session complete.";
       triggerGenerate();
     } else {
@@ -816,16 +819,29 @@ async function triggerGenerate() {
 
     await new Promise(r => setTimeout(r, 1000));
 
-    // Replace with action buttons
+    // Replace with download area
     msgEl.innerHTML = "";
     msgEl.style.display = "flex";
-    msgEl.style.gap = "12px";
-    msgEl.style.padding = "14px 0";
+    msgEl.style.flexDirection = "column";
+    msgEl.style.alignItems = "center";
+    msgEl.style.gap = "16px";
+    msgEl.style.padding = "24px 0";
+    msgEl.style.background = "transparent";
+    msgEl.style.borderLeft = "none";
 
-    const dlBtn = document.createElement("button");
-    dlBtn.textContent = "Download Spine";
-    dlBtn.style.cssText = "background:#1a1a1a;color:#e8e8e8;border:1px solid #333;border-radius:6px;padding:10px 20px;font-family:inherit;font-size:14px;cursor:pointer;opacity:0;transition:opacity 1s ease-in-out;";
-    dlBtn.addEventListener("click", () => {
+    const notice = document.createElement("p");
+    notice.textContent = "Download both before you close this window.";
+    notice.style.cssText = "font-family:'Cormorant Garant',serif;font-style:italic;font-size:15px;color:#6A6560;margin:0;opacity:0;transition:opacity 1s ease-in-out;";
+
+    const portraitBtn = document.createElement("a");
+    portraitBtn.textContent = "Download Portrait";
+    portraitBtn.href = "/download-portrait";
+    portraitBtn.style.cssText = "display:block;width:100%;max-width:320px;text-align:center;background:transparent;color:#B8965A;border:1px solid #B8965A;border-radius:6px;padding:14px 20px;font-family:'Cormorant SC',serif;font-size:13px;letter-spacing:0.15em;cursor:pointer;text-decoration:none;opacity:0;transition:opacity 1s ease-in-out;";
+
+    const spineBtn = document.createElement("button");
+    spineBtn.textContent = "Download Spine";
+    spineBtn.style.cssText = "background:transparent;color:#6A6560;border:1px solid #333;border-radius:6px;padding:10px 20px;font-family:inherit;font-size:13px;cursor:pointer;opacity:0;transition:opacity 1s ease-in-out;";
+    spineBtn.addEventListener("click", () => {
       const blob = new Blob([data.yaml], { type: "text/yaml" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
@@ -835,22 +851,17 @@ async function triggerGenerate() {
       deactivateExitWarning();
     });
 
-    const viewBtn = document.createElement("button");
-    viewBtn.textContent = "View Portrait";
-    viewBtn.style.cssText = "background:#1a1a1a;color:#e8e8e8;border:1px solid #333;border-radius:6px;padding:10px 20px;font-family:inherit;font-size:14px;cursor:pointer;opacity:0;transition:opacity 1s ease-in-out;";
-    viewBtn.addEventListener("click", () => {
-      window.location.href = "/portrait";
-    });
-
-    msgEl.appendChild(dlBtn);
-    msgEl.appendChild(viewBtn);
+    msgEl.appendChild(notice);
+    msgEl.appendChild(portraitBtn);
+    msgEl.appendChild(spineBtn);
     conversation.scrollTop = conversation.scrollHeight;
 
-    // Fade in buttons
+    // Fade in
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        dlBtn.style.opacity = "1";
-        viewBtn.style.opacity = "1";
+        notice.style.opacity = "1";
+        portraitBtn.style.opacity = "1";
+        spineBtn.style.opacity = "1";
       });
     });
   } catch (err) {

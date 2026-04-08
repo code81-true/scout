@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,500;1,400;1,500&family=Cormorant+Garant:ital,wght@0,300;0,400;1,300;1,400&family=Cormorant+SC:wght@300;400&display=swap');
+
+  @page {
+    size: A4;
+    margin: 20mm 18mm 20mm 18mm;
+
+    @top-center {
+      content: none;
+    }
+    @bottom-left {
+      font-family: "Cormorant SC", serif;
+      font-size: 8pt;
+      color: #B8965A;
+      opacity: 0.7;
+      content: "{{ pseudonym }}";
+    }
+    @bottom-right {
+      font-family: "Cormorant Garant", serif;
+      font-weight: 300;
+      font-size: 8pt;
+      color: #B8965A;
+      content: counter(page);
+    }
+  }
+
+  @page :first {
+    @top-center { content: none; }
+    @bottom-left { content: none; }
+    @bottom-right { content: none; }
+  }
+
+  @page last-page {
+    @bottom-left { content: none; }
+    @bottom-right { content: none; }
+  }
+
+  body {
+    background: #FDFAF5;
+    color: #2A1F14;
+    font-family: "Cormorant Garant", Georgia, serif;
+    font-weight: 300;
+    font-size: 11pt;
+    line-height: 1.85;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* --- Cover page --- */
+
+  .cover {
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    position: relative;
+  }
+
+  .cover-compass {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120mm;
+    height: 120mm;
+    opacity: 0.18;
+  }
+
+  .cover-pseudonym {
+    position: relative;
+    z-index: 1;
+    font-family: "Bodoni Moda", serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 28pt;
+    color: #B8965A;
+    text-align: center;
+    margin-bottom: 12pt;
+  }
+
+  .cover-rule {
+    width: 30mm;
+    height: 0.5pt;
+    background: #B8965A;
+    border: none;
+    margin-bottom: 12pt;
+  }
+
+  .cover-date {
+    font-family: "Cormorant Garant", serif;
+    font-weight: 300;
+    font-size: 9pt;
+    color: #B8965A;
+    letter-spacing: 0.18em;
+    text-align: center;
+  }
+
+  /* --- Body pages --- */
+
+  .body-content {
+    border-top: 0.5pt solid #B8965A;
+    padding-top: 6mm;
+  }
+
+  .body-content p {
+    margin: 0 0 8pt 0;
+    page-break-inside: avoid;
+  }
+
+  /* Shadow passage */
+  .shadow-passage {
+    border-left: 1pt solid #B8965A;
+    padding-left: 8mm;
+    font-style: italic;
+    color: #3A2810;
+    page-break-inside: avoid;
+    margin: 0 0 8pt 0;
+  }
+
+  /* Surprise passage */
+  .surprise-passage {
+    border-left: 1pt solid #B8965A;
+    padding-left: 8mm;
+    font-style: italic;
+    color: #3A2810;
+    page-break-inside: avoid;
+    margin: 0 0 8pt 0;
+  }
+
+  /* Final line — pseudonym rendered in gold */
+  .final-name {
+    font-family: "Bodoni Moda", serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 13pt;
+    color: #B8965A;
+  }
+
+  /* --- Last page colophon --- */
+
+  .colophon-section {
+    page: last-page;
+    margin-top: 24pt;
+    text-align: center;
+  }
+
+  .colophon-rule {
+    width: 20mm;
+    height: 0.5pt;
+    background: #B8965A;
+    border: none;
+    margin: 0 auto 16pt auto;
+  }
+
+  .colophon-text {
+    font-family: "Cormorant SC", serif;
+    font-weight: 300;
+    font-size: 8pt;
+    color: #8A7A6A;
+    line-height: 1.9;
+  }
+</style>
+</head>
+<body>
+
+<!-- Cover page -->
+<div class="cover">
+  <svg class="cover-compass" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="110" cy="110" r="105" fill="none" stroke="#B8965A" stroke-width="1"/>
+    <circle cx="110" cy="110" r="98" fill="none" stroke="#B8965A" stroke-width="0.4"/>
+    <g stroke="#B8965A" stroke-width="0.4">
+      <line x1="110" y1="8" x2="110" y2="18" transform="rotate(0 110 110)"/>
+      <line x1="110" y1="8" x2="110" y2="18" transform="rotate(30 110 110)"/>
+      <line x1="110" y1="8" x2="110" y2="18" transform="rotate(60 110 110)"/>
+      <line x1="110" y1="8" x2="110" y2="18" transform="rotate(90 110 110)"/>
+      <line x1="110" y1="8" x2="110" y2="18" transform="rotate(120 110 110)"/>
+      <line x1="110" y1="8" x2="110" y2="18" transform="rotate(150 110 110)"/>
+      <line x1="110" y1="8" x2="110" y2="18" transform="rotate(180 110 110)"/>
+      <line x1="110" y1="8" x2="110" y2="18" transform="rotate(210 110 110)"/>
+      <line x1="110" y1="8" x2="110" y2="18" transform="rotate(240 110 110)"/>
+      <line x1="110" y1="8" x2="110" y2="18" transform="rotate(270 110 110)"/>
+      <line x1="110" y1="8" x2="110" y2="18" transform="rotate(300 110 110)"/>
+      <line x1="110" y1="8" x2="110" y2="18" transform="rotate(330 110 110)"/>
+    </g>
+    <g fill="#B8965A" opacity="0.5">
+      <polygon points="110,30 104,110 116,110"/>
+      <polygon points="110,190 104,110 116,110"/>
+      <polygon points="190,110 110,104 110,116"/>
+      <polygon points="30,110 110,104 110,116"/>
+    </g>
+    <g fill="#B8965A" opacity="0.25">
+      <polygon points="166,44 108,106 114,112"/>
+      <polygon points="166,176 108,114 114,108"/>
+      <polygon points="54,176 106,114 112,108"/>
+      <polygon points="54,44 106,108 112,114"/>
+    </g>
+    <g font-family="Cormorant SC, serif" font-size="11" fill="#B8965A" text-anchor="middle" opacity="0.6">
+      <text x="110" y="28">N</text>
+      <text x="110" y="202">S</text>
+      <text x="198" y="114">E</text>
+      <text x="22" y="114">W</text>
+    </g>
+    <circle cx="110" cy="110" r="3" fill="#B8965A" opacity="0.4"/>
+  </svg>
+  <div class="cover-pseudonym">{{ pseudonym }}</div>
+  <hr class="cover-rule">
+  <div class="cover-date">{{ date }}</div>
+</div>
+
+<!-- Body pages -->
+<div class="body-content">
+  {{ portrait_html|safe }}
+</div>
+
+<!-- Colophon -->
+<div class="colophon-section">
+  <hr class="colophon-rule">
+  <div class="colophon-text">
+    This portrait was written for you alone.<br>
+    No copy exists anywhere else.<br>
+    Scout &middot; {{ date }}
+  </div>
+</div>
+
+</body>
+</html>

@@ -403,4 +403,27 @@ underneath all of it. That it is still open.
 
 The fact that it is still open is the most
 important thing in the document.
+
+---
+
+## The final name
+
+The final sentence of the portrait must address
+the person directly by their pseudonym.
+
+The pseudonym appears nowhere else in the prose
+body — this is the only moment it is used.
+
+The sentence must feel earned, not decorative.
+It arrives because everything before it has built
+toward this single direct address.
+
+Example structure:
+"You already know the answer, [pseudonym]."
+
+But written freshly for each person, never
+templated. The pseudonym is the last word
+the portrait speaks — or close to it.
+It lands because it has been withheld
+until the moment it matters most.
 """
