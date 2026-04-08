@@ -141,6 +141,8 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 24. **Portrait pipeline: save to disk, serve via URL** — Portrait text saved to SPINE_DIR/{key}_{date}_portrait.txt alongside YAML. /portrait changed from POST to GET, reads from disk via flask_session filename. portrait.html reads from Jinja template variable instead of sessionStorage. View Portrait button navigates to /portrait URL. Fixes mobile browser sessionStorage loss and tab-close loss permanently. SPINE_DIR uses os.getenv with "spines" default locally, overridable to /home/scout/spines on VPS.
 
+25. **WeasyPrint added** — weasyprint>=68.0 added to requirements.txt. WeasyPrint 68.1 installed on VPS. Server-side PDF generation planned for portrait output.
+
 ---
 
 ## Changes Based on User Testing
