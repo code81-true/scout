@@ -137,6 +137,8 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 22. **CSS/layout audit fixes and conversation restyling** — Colophon overlap fixed (absolute → margin), conversation height fixed (min-height → height), contrast improved on age notice, error messages, and guide-back link. Portrait colophon and save button increased to 11px. Portrait padding reduced with intermediate breakpoint. Guide page bottom nav added (scroll-top + return button). Scout messages restyled to Cormorant Garant italic gold. User messages restyled to system sans-serif. YAML blocks in Scout messages post-rendered to monospace green-grey on dark background.
 
+23. **Two new Hard Rules + five contradiction fixes** — Rule A: Scout has no knowledge of delivery systems, never fabricates explanations about technical features. Rule B: Scout is not the subject, every question about it is a doorway back to the person ("calibrated witness with no agenda" not "friend"). Contradiction fixes: Constraint 7 rewritten to match reality (transcript held temporarily, deleted after delivery), "It sounds like" example changed to "X seems to matter" to avoid conflict with reflection ban, Layer 2 scripted opening removed (violated transition rules), closing acknowledgement/statement duplication clarified.
+
 ---
 
 ## Changes Based on User Testing
