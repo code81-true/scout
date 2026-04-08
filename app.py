@@ -26,8 +26,10 @@ app.secret_key = "scout-session-key"
 
 TRANSCRIPT_DIR = os.getenv("TRANSCRIPT_DIR", "sessions/transcripts")
 FLASK_SESSION_DIR = os.getenv("FLASK_SESSION_DIR", "sessions/flask_sessions")
+SPINE_DIR = os.getenv("SPINE_DIR", "spines")
 os.makedirs(TRANSCRIPT_DIR, exist_ok=True)
 os.makedirs(FLASK_SESSION_DIR, exist_ok=True)
+os.makedirs(SPINE_DIR, exist_ok=True)
 
 app.config["SESSION_TYPE"] = "filesystem"
 app.config["SESSION_FILE_DIR"] = FLASK_SESSION_DIR
@@ -257,36 +259,61 @@ def generate_spine():
     gen_model = TEST_MODEL if _is_test_key(gen_key) else None
     sess = get_session(gen_key)
     yaml_doc = generate_yaml_sections(client, sess.transcript, model=gen_model)
-    portrait = generate_portrait(client, sess.transcript, model=gen_model)
+    portrait_text = generate_portrait(client, sess.transcript, model=gen_model)
 
     # Save YAML to filesystem
-    user_id = flask_session.get("user_id") or datetime.now().strftime("%Y%m%d_%H%M%S")
     date_str = datetime.now().strftime("%Y-%m-%d")
-    spine_dir = "/home/scout/spines"
-    os.makedirs(spine_dir, exist_ok=True)
-    filepath = os.path.join(spine_dir, f"{user_id}_{date_str}.yaml")
-    with open(filepath, "w", encoding="utf-8") as f:
+    yaml_path = os.path.join(SPINE_DIR, f"{gen_key}_{date_str}.yaml")
+    with open(yaml_path, "w", encoding="utf-8") as f:
         f.write(yaml_doc)
 
-    return {"yaml": yaml_doc, "portrait": portrait}
+    # Save portrait to filesystem
+    portrait_filename = f"{gen_key}_{date_str}_portrait.txt"
+    portrait_path = os.path.join(SPINE_DIR, portrait_filename)
+    with open(portrait_path, "w", encoding="utf-8") as f:
+        f.write(portrait_text)
+
+    # Store in session for /portrait route
+    flask_session["portrait_file"] = portrait_filename
+    flask_session["pseudonym"] = flask_session.get("pseudonym", "Anonymous")
+    flask_session["date"] = date_str
+    flask_session["user_id"] = gen_key
+
+    return {"yaml": yaml_doc, "portrait_url": "/portrait"}
 
 
-@app.route("/portrait", methods=["POST"])
+@app.route("/portrait")
 def portrait():
-    """Serve the portrait display page."""
-    auth_err = _require_auth()
-    if auth_err:
-        return auth_err
+    """Serve the portrait display page with text from disk."""
+    portrait_filename = flask_session.get("portrait_file")
+    if not portrait_filename:
+        return render_template(
+            "portrait.html",
+            pseudonym="Anonymous",
+            date="",
+            user_id="",
+            portrait_text="",
+        )
 
-    data = request.get_json()
-    flask_session["pseudonym"] = data.get("pseudonym", "Anonymous")
-    flask_session["date"] = data.get("date", "")
-    flask_session["user_id"] = data.get("user_id", "")
+    portrait_path = os.path.join(SPINE_DIR, portrait_filename)
+    if not os.path.exists(portrait_path):
+        return render_template(
+            "portrait.html",
+            pseudonym=flask_session.get("pseudonym", "Anonymous"),
+            date=flask_session.get("date", ""),
+            user_id=flask_session.get("user_id", ""),
+            portrait_text="",
+        )
+
+    with open(portrait_path, "r", encoding="utf-8") as f:
+        portrait_text = f.read()
+
     return render_template(
         "portrait.html",
-        pseudonym=flask_session["pseudonym"],
-        date=flask_session["date"],
-        user_id=flask_session["user_id"],
+        pseudonym=flask_session.get("pseudonym", "Anonymous"),
+        date=flask_session.get("date", ""),
+        user_id=flask_session.get("user_id", ""),
+        portrait_text=portrait_text,
     )
 
 

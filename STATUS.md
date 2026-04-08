@@ -139,6 +139,8 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 23. **Two new Hard Rules + five contradiction fixes** — Rule A: Scout has no knowledge of delivery systems, never fabricates explanations about technical features. Rule B: Scout is not the subject, every question about it is a doorway back to the person ("calibrated witness with no agenda" not "friend"). Contradiction fixes: Constraint 7 rewritten to match reality (transcript held temporarily, deleted after delivery), "It sounds like" example changed to "X seems to matter" to avoid conflict with reflection ban, Layer 2 scripted opening removed (violated transition rules), closing acknowledgement/statement duplication clarified.
 
+24. **Portrait pipeline: save to disk, serve via URL** — Portrait text saved to SPINE_DIR/{key}_{date}_portrait.txt alongside YAML. /portrait changed from POST to GET, reads from disk via flask_session filename. portrait.html reads from Jinja template variable instead of sessionStorage. View Portrait button navigates to /portrait URL. Fixes mobile browser sessionStorage loss and tab-close loss permanently. SPINE_DIR uses os.getenv with "spines" default locally, overridable to /home/scout/spines on VPS.
+
 ---
 
 ## Changes Based on User Testing
@@ -156,7 +158,7 @@ No live user testing has been conducted yet. All testing has been against the mo
 - **FUTURE** — No rate limiting on /auth. Brute force key guessing is theoretically possible (though 30^10 keyspace makes it impractical).
 - **FUTURE** — No logging or monitoring beyond Flask debug output.
 - **FUTURE** — No admin interface for key management. Keys managed via CLI keygen.py only.
-- **FUTURE** — Portrait page loads portrait text from sessionStorage. If user navigates directly to /portrait, no portrait is displayed.
+- **FUTURE** — Portrait page requires active flask session. If session expires, /portrait returns empty state.
 - **FUTURE** — The `send_message()` sync function is unused by the web app (only used by `run_session.py`). Could be removed or kept for terminal mode.
 
 ---

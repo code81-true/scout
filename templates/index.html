@@ -808,8 +808,7 @@ async function triggerGenerate() {
     await fetch("/burn", { method: "POST" });
     activateExitWarning();
 
-    // Store portrait for the portrait page
-    sessionStorage.setItem("portrait", data.portrait);
+    // Store YAML for download button
     sessionStorage.setItem("yaml", data.yaml);
 
     // Fade out generating message
@@ -840,19 +839,7 @@ async function triggerGenerate() {
     viewBtn.textContent = "View Portrait";
     viewBtn.style.cssText = "background:#1a1a1a;color:#e8e8e8;border:1px solid #333;border-radius:6px;padding:10px 20px;font-family:inherit;font-size:14px;cursor:pointer;opacity:0;transition:opacity 1s ease-in-out;";
     viewBtn.addEventListener("click", () => {
-      fetch("/portrait", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          pseudonym: "Anonymous",
-          date: new Date().toISOString().slice(0, 10),
-          user_id: "",
-        }),
-      }).then(resp => resp.text()).then(html => {
-        document.open();
-        document.write(html);
-        document.close();
-      });
+      window.location.href = "/portrait";
     });
 
     msgEl.appendChild(dlBtn);

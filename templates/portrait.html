@@ -323,12 +323,12 @@
 </div>
 
 <script>
-const raw = sessionStorage.getItem("portrait");
+const raw = {{ portrait_text|tojson }};
 const textEl = document.getElementById("portrait-text");
 const closingEl = document.getElementById("closing-section");
 const finalLineEl = document.getElementById("final-line");
 
-if (!raw) {
+if (!raw || raw === "") {
   textEl.innerHTML = '<p class="empty-state">Portrait not available. Please return to your session.</p>';
 } else {
   // Parse markers: [SHADOW]...[/SHADOW] and [SURPRISE]...[/SURPRISE]
