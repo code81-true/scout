@@ -167,6 +167,10 @@ No live user testing has been conducted yet. All testing has been against the mo
 
 3. **Chronicler output review after first real session** — Evaluate portrait quality, marker placement, length, and whether the final third stays within bounds. Adjust Chronicler prompt if needed based on real output.
 
+4. **Stripe donation page** — Separate discoverable URL, not on the portrait page. Placed 24–48hrs after session or on a page the person can find themselves. Never immediately after portrait delivery.
+
+5. **Scout → MTN handshake button design** — First-class feature on the post-session screen. Clear, elegant path from Scout to MyTrueNorth. Not upselling — the natural next step.
+
 ---
 
 ## Model Allocation

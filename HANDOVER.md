@@ -49,6 +49,26 @@ Scout's voice: calm, direct, slightly formal. Warm in the way that genuine atten
 
 ---
 
+## 2a. Product Vision
+
+There are days — sometimes weeks — when we cannot connect with ourselves. Not because anything is wrong with us, but because the noise is too loud. Circumstance, exhaustion, the accumulated weight of everything that needs doing. In those moments we cannot know what to do or what is right.
+
+MyTrueNorth does not suffer from that problem. It has the spine. It knows who you are at your core — your values, your roles, your shadows, your long game — and it never forgets. On the days you cannot hear yourself, North is the compass that still points true.
+
+This is not motivation. It is not a productivity system. It is a trusted companion that knows you better than you know yourself on your worst days — and speaks to you from that knowledge, without agenda, without the noise.
+
+---
+
+## 2b. Commercial Model
+
+- **Scout is free indefinitely** for early users. No paywall. No trial period. The tool earns trust before it earns revenue.
+- **MyTrueNorth subscription** is the primary revenue model. Scout builds the spine; MTN is the daily companion that reads it. The subscription value is in the ongoing relationship, not the one-time interview.
+- **Optional post-session donation via Stripe** — placed 24–48 hours after the session or on a separate discoverable page. Never immediately after the portrait. The person should sit with what they received before being asked for anything. The emotional weight of the session must not be leveraged for conversion.
+- **Scout → MTN handshake button** is a first-class feature to be designed. After the spine is delivered, there should be a clear, elegant path from Scout to MyTrueNorth. This is not upselling — it is the natural next step in the product journey.
+- **Private cost threshold** — Pope will set a threshold when Scout API costs exceed sustainable levels. Until then, Scout remains free. This decision is Pope's alone and is not automated.
+
+---
+
 ## 3. Technical Architecture
 
 **Stack:**
