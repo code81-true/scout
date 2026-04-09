@@ -119,6 +119,7 @@ Scout is a single-session AI interview engine that guides one person through sev
 - **First real user session (Boss, K7M3WNPX4R)** — portrait generated but not delivered in-session. Manual recovery required. Scout fabricated explanation about portrait status. Led to Rule A (no fabrication), portrait pipeline fix, and settling conversation. [2026-04-08]
 - **Second test session on VPS** — YAML appeared on screen, settling conversation did not fire in test mode, compass not visible, Download Portrait button missing. Led to fenced-block filter, test prompt settling instruction, compass alignment fix, button type change. [2026-04-09]
 - **PDF test** — white border visible, cover not centred, paragraphs breaking across pages, colophon at top of page. Led to zero-margin page with content padding, 267mm flex containers, para-wrap divs, expanded SVG viewBox. [2026-04-09]
+- **Arrival pre-layer** — untested in test mode by design. test_prompt.py runs independent minimal structure. Arrival section verified in prompt.py only. Production session required for arrival verification. Technical exception accepted — tested in production with real key, session stopped midway. [2026-04-09]
 
 ---
 
