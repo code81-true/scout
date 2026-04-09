@@ -147,6 +147,8 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 27. **sessionEnded flag** — global JS flag prevents any sendMessage() call after session_complete is detected. Fixes bug where Scout's follow-up message after YAML generation interrupted triggerGenerate() before it could fire. Mode-agnostic — works identically for TEST- and production keys.
 
+28. **PDF ivory redesign, View Portrait restored, compass animation** — portrait_pdf.html redesigned: ivory #FDFAF5 background, 15mm margins, cover centred, compass opacity 0.10, Cormorant Garant 11.5pt, footer with pseudonym/rule/page number, no footer on cover or colophon. View Portrait button restored as secondary between Download Portrait and Download Spine. Animated compass SVG during generation wait: searching phase (erratic needle, loops), settling phase (damped oscillation to north, 3s), settled phase (true north, N marker gold pulse, 2s), then compass fades out as download buttons fade in.
+
 ---
 
 ## Changes Based on User Testing

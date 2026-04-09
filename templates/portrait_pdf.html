@@ -7,7 +7,7 @@
 
   @page {
     size: A4;
-    margin: 20mm 18mm 20mm 18mm;
+    margin: 15mm;
 
     @top-center {
       content: none;
@@ -18,6 +18,12 @@
       color: #B8965A;
       opacity: 0.7;
       content: "{{ pseudonym }}";
+    }
+    @bottom-center {
+      content: "";
+      border-top: 0.25pt solid #B8965A;
+      width: 30mm;
+      opacity: 0.4;
     }
     @bottom-right {
       font-family: "Cormorant Garant", serif;
@@ -31,11 +37,13 @@
   @page :first {
     @top-center { content: none; }
     @bottom-left { content: none; }
+    @bottom-center { content: none; }
     @bottom-right { content: none; }
   }
 
-  @page last-page {
+  @page colophon-page {
     @bottom-left { content: none; }
+    @bottom-center { content: none; }
     @bottom-right { content: none; }
   }
 
@@ -44,8 +52,8 @@
     color: #2A1F14;
     font-family: "Cormorant Garant", Georgia, serif;
     font-weight: 300;
-    font-size: 11pt;
-    line-height: 1.85;
+    font-size: 11.5pt;
+    line-height: 1.9;
     margin: 0;
     padding: 0;
   }
@@ -54,22 +62,26 @@
 
   .cover {
     page-break-after: always;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
     position: relative;
+    height: 100%;
   }
 
-  .cover-compass {
+  .cover-center {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    text-align: center;
+  }
+
+  .cover-compass {
     width: 120mm;
     height: 120mm;
-    opacity: 0.18;
+    opacity: 0.10;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
 
   .cover-pseudonym {
@@ -80,16 +92,15 @@
     font-weight: 400;
     font-size: 28pt;
     color: #B8965A;
-    text-align: center;
-    margin-bottom: 12pt;
+    margin-bottom: 14pt;
   }
 
   .cover-rule {
     width: 30mm;
-    height: 0.5pt;
-    background: #B8965A;
+    height: 0;
     border: none;
-    margin-bottom: 12pt;
+    border-top: 0.5pt solid #B8965A;
+    margin: 0 auto 14pt auto;
   }
 
   .cover-date {
@@ -98,14 +109,13 @@
     font-size: 9pt;
     color: #B8965A;
     letter-spacing: 0.18em;
-    text-align: center;
   }
 
   /* --- Body pages --- */
 
   .body-content {
     border-top: 0.5pt solid #B8965A;
-    padding-top: 6mm;
+    padding-top: 5mm;
   }
 
   .body-content p {
@@ -123,6 +133,10 @@
     margin: 0 0 8pt 0;
   }
 
+  .shadow-passage p {
+    margin: 0;
+  }
+
   /* Surprise passage */
   .surprise-passage {
     border-left: 1pt solid #B8965A;
@@ -131,6 +145,10 @@
     color: #3A2810;
     page-break-inside: avoid;
     margin: 0 0 8pt 0;
+  }
+
+  .surprise-passage p {
+    margin: 0;
   }
 
   /* Final line — pseudonym rendered in gold */
@@ -142,20 +160,21 @@
     color: #B8965A;
   }
 
-  /* --- Last page colophon --- */
+  /* --- Colophon --- */
 
   .colophon-section {
-    page: last-page;
-    margin-top: 24pt;
+    page: colophon-page;
+    margin-top: 32pt;
     text-align: center;
   }
 
   .colophon-rule {
     width: 20mm;
-    height: 0.5pt;
-    background: #B8965A;
+    height: 0;
     border: none;
+    border-top: 0.5pt solid #B8965A;
     margin: 0 auto 16pt auto;
+    opacity: 0.5;
   }
 
   .colophon-text {
@@ -188,6 +207,20 @@
       <line x1="110" y1="8" x2="110" y2="18" transform="rotate(300 110 110)"/>
       <line x1="110" y1="8" x2="110" y2="18" transform="rotate(330 110 110)"/>
     </g>
+    <g stroke="#B8965A" stroke-width="0.3">
+      <line x1="110" y1="10" x2="110" y2="16" transform="rotate(15 110 110)"/>
+      <line x1="110" y1="10" x2="110" y2="16" transform="rotate(45 110 110)"/>
+      <line x1="110" y1="10" x2="110" y2="16" transform="rotate(75 110 110)"/>
+      <line x1="110" y1="10" x2="110" y2="16" transform="rotate(105 110 110)"/>
+      <line x1="110" y1="10" x2="110" y2="16" transform="rotate(135 110 110)"/>
+      <line x1="110" y1="10" x2="110" y2="16" transform="rotate(165 110 110)"/>
+      <line x1="110" y1="10" x2="110" y2="16" transform="rotate(195 110 110)"/>
+      <line x1="110" y1="10" x2="110" y2="16" transform="rotate(225 110 110)"/>
+      <line x1="110" y1="10" x2="110" y2="16" transform="rotate(255 110 110)"/>
+      <line x1="110" y1="10" x2="110" y2="16" transform="rotate(285 110 110)"/>
+      <line x1="110" y1="10" x2="110" y2="16" transform="rotate(315 110 110)"/>
+      <line x1="110" y1="10" x2="110" y2="16" transform="rotate(345 110 110)"/>
+    </g>
     <g fill="#B8965A" opacity="0.5">
       <polygon points="110,30 104,110 116,110"/>
       <polygon points="110,190 104,110 116,110"/>
@@ -208,9 +241,11 @@
     </g>
     <circle cx="110" cy="110" r="3" fill="#B8965A" opacity="0.4"/>
   </svg>
-  <div class="cover-pseudonym">{{ pseudonym }}</div>
-  <hr class="cover-rule">
-  <div class="cover-date">{{ date }}</div>
+  <div class="cover-center">
+    <div class="cover-pseudonym">{{ pseudonym }}</div>
+    <hr class="cover-rule">
+    <div class="cover-date">{{ date }}</div>
+  </div>
 </div>
 
 <!-- Body pages -->
