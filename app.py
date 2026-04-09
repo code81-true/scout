@@ -274,7 +274,12 @@ def generate_spine():
     portrait_filename = f"{gen_key}_{date_str}_portrait.txt"
     portrait_path = os.path.join(SPINE_DIR, portrait_filename)
     with open(portrait_path, "w", encoding="utf-8") as f:
-        f.write(portrait_text)
+        # Strip markdown headers — portrait is continuous prose
+        clean_portrait = "\n".join(
+            line for line in portrait_text.splitlines()
+            if not line.startswith("#")
+        ).strip()
+        f.write(clean_portrait)
 
     # Store in session for /portrait route
     flask_session["portrait_file"] = portrait_filename
