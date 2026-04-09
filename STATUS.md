@@ -45,6 +45,7 @@ Scout is a single-session AI interview engine that guides one person through sev
 - Server-side filesystem sessions via flask-session.
 - Transcript persistence to sessions/transcripts/.
 - Per-key session isolation — multiple concurrent users supported.
+- /health endpoint for uptime monitoring — returns {"status": "ok"}. [2026-04-09]
 
 ---
 

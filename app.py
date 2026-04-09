@@ -124,6 +124,11 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/health", methods=["GET"])
+def health():
+    return {"status": "ok", "service": "scout"}, 200
+
+
 @app.route("/auth", methods=["POST"])
 @limiter.limit("5 per minute")
 def auth():
