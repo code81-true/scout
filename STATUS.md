@@ -112,6 +112,7 @@ Scout is a single-session AI interview engine that guides one person through sev
 30. **PDF layout fixes** — cover centred, ivory edge-to-edge, paragraph breaks, colophon centred. [2026-04-09]
 31. **Strip portrait markdown headers** — server-side stripping of # lines at save point. [2026-04-09]
 32. **WeasyPrint paragraph break fix** — break-inside: avoid + page-break-inside: avoid on div wrappers. [2026-04-09]
+33. **SSE generator flask_session write removed** — flask_session["session_depth"] = depth was inside streaming generator, caused RuntimeError under Gunicorn. Removed — depth already sent via SSE payload and computed independently by /generate route. [2026-04-09]
 
 ---
 

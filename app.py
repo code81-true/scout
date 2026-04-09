@@ -295,7 +295,6 @@ def chat():
         settling = "I'll start now \u2014 give me a few minutes" in full_reply
         # Depth check
         depth = _has_depth(sess.transcript)
-        flask_session["session_depth"] = depth
         yield f"data: {json.dumps({'done': True, 'session_complete': complete, 'settling_complete': settling, 'session_depth': depth})}\n\n"
 
     return Response(generate(), mimetype="text/event-stream")
