@@ -7,23 +7,17 @@
 
   @page {
     size: A4;
-    margin: 15mm;
+    margin: 0;
+    background: #FDFAF5;
 
-    @top-center {
-      content: none;
-    }
     @bottom-left {
       font-family: "Cormorant SC", serif;
       font-size: 8pt;
       color: #B8965A;
       opacity: 0.7;
       content: "{{ pseudonym }}";
-    }
-    @bottom-center {
-      content: "";
-      border-top: 0.25pt solid #B8965A;
-      width: 30mm;
-      opacity: 0.4;
+      margin-left: 18mm;
+      margin-bottom: 12mm;
     }
     @bottom-right {
       font-family: "Cormorant Garant", serif;
@@ -31,19 +25,18 @@
       font-size: 8pt;
       color: #B8965A;
       content: counter(page);
+      margin-right: 18mm;
+      margin-bottom: 12mm;
     }
   }
 
   @page :first {
-    @top-center { content: none; }
     @bottom-left { content: none; }
-    @bottom-center { content: none; }
     @bottom-right { content: none; }
   }
 
   @page colophon-page {
     @bottom-left { content: none; }
-    @bottom-center { content: none; }
     @bottom-right { content: none; }
   }
 
@@ -56,27 +49,25 @@
     line-height: 1.9;
     margin: 0;
     padding: 0;
+    orphans: 3;
+    widows: 3;
   }
 
   /* --- Cover page --- */
 
   .cover {
     page-break-after: always;
+    height: 267mm;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     position: relative;
-    height: 100%;
-  }
-
-  .cover-center {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
   }
 
   .cover-compass {
-    width: 120mm;
-    height: 120mm;
+    width: 100mm;
+    height: 100mm;
     opacity: 0.10;
     position: absolute;
     top: 50%;
@@ -84,9 +75,13 @@
     transform: translate(-50%, -50%);
   }
 
-  .cover-pseudonym {
+  .cover-text {
     position: relative;
     z-index: 1;
+    text-align: center;
+  }
+
+  .cover-pseudonym {
     font-family: "Bodoni Moda", serif;
     font-style: italic;
     font-weight: 400;
@@ -114,15 +109,18 @@
   /* --- Body pages --- */
 
   .body-content {
+    padding: 20mm 18mm;
     border-top: 0.5pt solid #B8965A;
-    padding-top: 5mm;
   }
 
-  .body-content p {
-    margin: 0 0 8pt 0;
+  .body-content .para-wrap {
     break-inside: avoid;
-    orphans: 3;
-    widows: 3;
+    page-break-inside: avoid;
+    margin: 0 0 8pt 0;
+  }
+
+  .body-content .para-wrap p {
+    margin: 0;
   }
 
   /* Shadow passage */
@@ -132,6 +130,7 @@
     font-style: italic;
     color: #3A2810;
     break-inside: avoid;
+    page-break-inside: avoid;
     margin: 0 0 8pt 0;
   }
 
@@ -146,6 +145,7 @@
     font-style: italic;
     color: #3A2810;
     break-inside: avoid;
+    page-break-inside: avoid;
     margin: 0 0 8pt 0;
   }
 
@@ -166,7 +166,12 @@
 
   .colophon-section {
     page: colophon-page;
-    margin-top: 32pt;
+    page-break-before: always;
+    height: 267mm;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     text-align: center;
   }
 
@@ -192,58 +197,58 @@
 
 <!-- Cover page -->
 <div class="cover">
-  <svg class="cover-compass" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="110" cy="110" r="105" fill="none" stroke="#B8965A" stroke-width="1"/>
-    <circle cx="110" cy="110" r="98" fill="none" stroke="#B8965A" stroke-width="0.4"/>
+  <svg class="cover-compass" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="120" cy="120" r="110" fill="none" stroke="#B8965A" stroke-width="1"/>
+    <circle cx="120" cy="120" r="103" fill="none" stroke="#B8965A" stroke-width="0.4"/>
     <g stroke="#B8965A" stroke-width="0.4">
-      <line x1="110" y1="8" x2="110" y2="18" transform="rotate(0 110 110)"/>
-      <line x1="110" y1="8" x2="110" y2="18" transform="rotate(30 110 110)"/>
-      <line x1="110" y1="8" x2="110" y2="18" transform="rotate(60 110 110)"/>
-      <line x1="110" y1="8" x2="110" y2="18" transform="rotate(90 110 110)"/>
-      <line x1="110" y1="8" x2="110" y2="18" transform="rotate(120 110 110)"/>
-      <line x1="110" y1="8" x2="110" y2="18" transform="rotate(150 110 110)"/>
-      <line x1="110" y1="8" x2="110" y2="18" transform="rotate(180 110 110)"/>
-      <line x1="110" y1="8" x2="110" y2="18" transform="rotate(210 110 110)"/>
-      <line x1="110" y1="8" x2="110" y2="18" transform="rotate(240 110 110)"/>
-      <line x1="110" y1="8" x2="110" y2="18" transform="rotate(270 110 110)"/>
-      <line x1="110" y1="8" x2="110" y2="18" transform="rotate(300 110 110)"/>
-      <line x1="110" y1="8" x2="110" y2="18" transform="rotate(330 110 110)"/>
+      <line x1="120" y1="13" x2="120" y2="23" transform="rotate(0 120 120)"/>
+      <line x1="120" y1="13" x2="120" y2="23" transform="rotate(30 120 120)"/>
+      <line x1="120" y1="13" x2="120" y2="23" transform="rotate(60 120 120)"/>
+      <line x1="120" y1="13" x2="120" y2="23" transform="rotate(90 120 120)"/>
+      <line x1="120" y1="13" x2="120" y2="23" transform="rotate(120 120 120)"/>
+      <line x1="120" y1="13" x2="120" y2="23" transform="rotate(150 120 120)"/>
+      <line x1="120" y1="13" x2="120" y2="23" transform="rotate(180 120 120)"/>
+      <line x1="120" y1="13" x2="120" y2="23" transform="rotate(210 120 120)"/>
+      <line x1="120" y1="13" x2="120" y2="23" transform="rotate(240 120 120)"/>
+      <line x1="120" y1="13" x2="120" y2="23" transform="rotate(270 120 120)"/>
+      <line x1="120" y1="13" x2="120" y2="23" transform="rotate(300 120 120)"/>
+      <line x1="120" y1="13" x2="120" y2="23" transform="rotate(330 120 120)"/>
     </g>
     <g stroke="#B8965A" stroke-width="0.3">
-      <line x1="110" y1="10" x2="110" y2="16" transform="rotate(15 110 110)"/>
-      <line x1="110" y1="10" x2="110" y2="16" transform="rotate(45 110 110)"/>
-      <line x1="110" y1="10" x2="110" y2="16" transform="rotate(75 110 110)"/>
-      <line x1="110" y1="10" x2="110" y2="16" transform="rotate(105 110 110)"/>
-      <line x1="110" y1="10" x2="110" y2="16" transform="rotate(135 110 110)"/>
-      <line x1="110" y1="10" x2="110" y2="16" transform="rotate(165 110 110)"/>
-      <line x1="110" y1="10" x2="110" y2="16" transform="rotate(195 110 110)"/>
-      <line x1="110" y1="10" x2="110" y2="16" transform="rotate(225 110 110)"/>
-      <line x1="110" y1="10" x2="110" y2="16" transform="rotate(255 110 110)"/>
-      <line x1="110" y1="10" x2="110" y2="16" transform="rotate(285 110 110)"/>
-      <line x1="110" y1="10" x2="110" y2="16" transform="rotate(315 110 110)"/>
-      <line x1="110" y1="10" x2="110" y2="16" transform="rotate(345 110 110)"/>
+      <line x1="120" y1="15" x2="120" y2="21" transform="rotate(15 120 120)"/>
+      <line x1="120" y1="15" x2="120" y2="21" transform="rotate(45 120 120)"/>
+      <line x1="120" y1="15" x2="120" y2="21" transform="rotate(75 120 120)"/>
+      <line x1="120" y1="15" x2="120" y2="21" transform="rotate(105 120 120)"/>
+      <line x1="120" y1="15" x2="120" y2="21" transform="rotate(135 120 120)"/>
+      <line x1="120" y1="15" x2="120" y2="21" transform="rotate(165 120 120)"/>
+      <line x1="120" y1="15" x2="120" y2="21" transform="rotate(195 120 120)"/>
+      <line x1="120" y1="15" x2="120" y2="21" transform="rotate(225 120 120)"/>
+      <line x1="120" y1="15" x2="120" y2="21" transform="rotate(255 120 120)"/>
+      <line x1="120" y1="15" x2="120" y2="21" transform="rotate(285 120 120)"/>
+      <line x1="120" y1="15" x2="120" y2="21" transform="rotate(315 120 120)"/>
+      <line x1="120" y1="15" x2="120" y2="21" transform="rotate(345 120 120)"/>
     </g>
     <g fill="#B8965A" opacity="0.5">
-      <polygon points="110,30 104,110 116,110"/>
-      <polygon points="110,190 104,110 116,110"/>
-      <polygon points="190,110 110,104 110,116"/>
-      <polygon points="30,110 110,104 110,116"/>
+      <polygon points="120,35 114,120 126,120"/>
+      <polygon points="120,205 114,120 126,120"/>
+      <polygon points="205,120 120,114 120,126"/>
+      <polygon points="35,120 120,114 120,126"/>
     </g>
     <g fill="#B8965A" opacity="0.25">
-      <polygon points="166,44 108,106 114,112"/>
-      <polygon points="166,176 108,114 114,108"/>
-      <polygon points="54,176 106,114 112,108"/>
-      <polygon points="54,44 106,108 112,114"/>
+      <polygon points="180,50 118,116 124,122"/>
+      <polygon points="180,190 118,124 124,118"/>
+      <polygon points="60,190 116,124 122,118"/>
+      <polygon points="60,50 116,118 122,124"/>
     </g>
-    <g font-family="Cormorant SC, serif" font-size="11" fill="#B8965A" text-anchor="middle" opacity="0.6">
-      <text x="110" y="28">N</text>
-      <text x="110" y="202">S</text>
-      <text x="198" y="114">E</text>
-      <text x="22" y="114">W</text>
+    <g font-family="Cormorant SC, serif" font-size="12" fill="#B8965A" text-anchor="middle" opacity="0.6">
+      <text x="120" y="10">N</text>
+      <text x="120" y="237">S</text>
+      <text x="234" y="124">E</text>
+      <text x="6" y="124">W</text>
     </g>
-    <circle cx="110" cy="110" r="3" fill="#B8965A" opacity="0.4"/>
+    <circle cx="120" cy="120" r="3" fill="#B8965A" opacity="0.4"/>
   </svg>
-  <div class="cover-center">
+  <div class="cover-text">
     <div class="cover-pseudonym">{{ pseudonym }}</div>
     <hr class="cover-rule">
     <div class="cover-date">{{ date }}</div>

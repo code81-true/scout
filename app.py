@@ -436,7 +436,7 @@ def _parse_portrait_markers(raw_text: str, pseudonym: str) -> str:
             elif block["type"] == "surprise":
                 html_parts.append(f'<div class="surprise-passage"><p>{safe}</p></div>')
             else:
-                html_parts.append(f"<p>{safe}</p>")
+                html_parts.append(f'<div class="para-wrap"><p>{safe}</p></div>')
 
     # Highlight pseudonym in the final paragraph
     if html_parts:
