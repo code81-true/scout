@@ -69,6 +69,40 @@ def _is_test_key(key: str) -> bool:
     return str(key).upper().startswith("TEST")
 
 
+def _has_depth(transcript: list[dict]) -> bool:
+    """Check if session has sufficient depth for generation.
+
+    Requires 8+ exchanges after arrival AND at least one layer signal.
+    Arrival exchanges are the first 6 messages (3 exchanges: opening,
+    arrival question+answer, settling question+answer, Ready+reply).
+    """
+    # Count post-arrival exchanges (each exchange = 2 messages)
+    post_arrival = max(0, len(transcript) - 6)
+    exchanges = post_arrival // 2
+
+    if exchanges < 8:
+        return False
+
+    # Check for at least one layer signal in assistant messages
+    layer_keywords = [
+        "roles", "role you play", "hats you wear",
+        "work", "what do you do", "wish you were doing",
+        "important people", "relationships", "who matters",
+        "taking care of yourself", "your body", "your health",
+        "stand for", "compromise on", "values",
+        "gap between who you are", "shadow",
+        "success look like", "long game", "afraid of",
+    ]
+    for msg in transcript:
+        if msg["role"] == "assistant":
+            content_lower = msg["content"].lower()
+            for kw in layer_keywords:
+                if kw in content_lower:
+                    return True
+
+    return False
+
+
 def _require_auth():
     """Return error response if session is not authenticated, else None."""
     if not flask_session.get("scout_key"):
@@ -244,7 +278,10 @@ def chat():
             )
         # Settling complete — triggers generation
         settling = "I'll start now \u2014 give me a few minutes" in full_reply
-        yield f"data: {json.dumps({'done': True, 'session_complete': complete, 'settling_complete': settling})}\n\n"
+        # Depth check
+        depth = _has_depth(sess.transcript)
+        flask_session["session_depth"] = depth
+        yield f"data: {json.dumps({'done': True, 'session_complete': complete, 'settling_complete': settling, 'session_depth': depth})}\n\n"
 
     return Response(generate(), mimetype="text/event-stream")
 
@@ -259,8 +296,13 @@ def generate_spine():
     from datetime import datetime
 
     gen_key = flask_session.get("scout_key", "")
-    gen_model = TEST_MODEL if _is_test_key(gen_key) else None
     sess = get_session(gen_key)
+
+    # Depth check — skip for test keys
+    if not _is_test_key(gen_key) and not _has_depth(sess.transcript):
+        return {"error": "insufficient_depth"}, 422
+
+    gen_model = TEST_MODEL if _is_test_key(gen_key) else None
     yaml_doc = generate_yaml_sections(client, sess.transcript, model=gen_model)
     portrait_text = generate_portrait(client, sess.transcript, model=gen_model)
 

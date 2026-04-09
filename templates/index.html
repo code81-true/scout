@@ -690,6 +690,8 @@ const sendBtn = document.getElementById("send-btn");
 
 let locked = true;
 let sessionEnded = false;
+let lastSessionDepth = false;
+let fallbackTimer = null;
 
 // --- Typing delay logic (client-side) ---
 
@@ -836,17 +838,30 @@ async function sendMessage(message) {
 
   let sessionComplete = false;
   let settlingComplete = false;
+  let sessionDepth = false;
 
   tw.onFinish = async () => {
     if (settlingComplete) {
-      // Settling conversation is over — lock permanently, generate
+      // Closing conversation is over — lock permanently, generate
+      if (fallbackTimer) { clearTimeout(fallbackTimer); fallbackTimer = null; }
       sessionEnded = true;
       userInput.placeholder = "Session complete.";
-      triggerGenerate();
+      triggerGenerate(sessionDepth);
     } else if (sessionComplete) {
-      // Interview is over — unlock for settling conversation
+      // Interview is over — unlock for closing conversation
       userInput.placeholder = "The session is over. Say what you'd like.";
+      lastSessionDepth = sessionDepth;
       unlock();
+      // Fallback: if settling_complete doesn't fire within 10 minutes
+      if (!fallbackTimer) {
+        fallbackTimer = setTimeout(() => {
+          if (!sessionEnded) {
+            sessionEnded = true;
+            userInput.placeholder = "Session complete.";
+            triggerGenerate(lastSessionDepth);
+          }
+        }, 600000);
+      }
     } else {
       unlock();
     }
@@ -875,6 +890,7 @@ async function sendMessage(message) {
         if (payload.text) tw.append(payload.text);
         if (payload.session_complete) sessionComplete = true;
         if (payload.settling_complete) settlingComplete = true;
+        if (payload.session_depth !== undefined) sessionDepth = payload.session_depth;
         if (payload.done) tw.finish();
       }
     }
@@ -886,7 +902,39 @@ async function sendMessage(message) {
 
 // --- Post-session generation ---
 
-async function triggerGenerate() {
+async function triggerGenerate(hasDepth) {
+  // If no depth — show too-early message instead of generating
+  if (hasDepth === false) {
+    const earlyEl = addMessage("scout");
+    earlyEl.innerHTML = "";
+    earlyEl.style.background = "transparent";
+    earlyEl.style.borderLeft = "none";
+    earlyEl.style.textAlign = "center";
+    earlyEl.style.padding = "40px 20px";
+
+    const earlyMsg = document.createElement("p");
+    earlyMsg.textContent = "We did not get far enough this time \u2014 and that is fine. Not every day is the right day for this. If you want to try again, reach out to the person who gave you your key.";
+    earlyMsg.style.cssText = "font-family:'Cormorant Garant',serif;font-style:italic;font-size:18px;color:#B8965A;line-height:1.8;max-width:480px;margin:0 auto 24px;opacity:0;transition:opacity 1s ease-in-out;";
+
+    const closeLink = document.createElement("a");
+    closeLink.textContent = "close this window";
+    closeLink.href = "#";
+    closeLink.style.cssText = "font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.15em;color:#6A6560;text-decoration:none;opacity:0;transition:opacity 1s ease-in-out;";
+    closeLink.addEventListener("click", (e) => { e.preventDefault(); window.close(); });
+
+    earlyEl.appendChild(earlyMsg);
+    earlyEl.appendChild(closeLink);
+    conversation.scrollTop = conversation.scrollHeight;
+
+    setTimeout(() => {
+      earlyMsg.style.opacity = "1";
+      closeLink.style.opacity = "1";
+    }, 50);
+
+    // Burn the key
+    await fetch("/burn", { method: "POST" });
+    return;
+  }
   const messages = [
     "The finest things take a little longer.",
     "Your spine is being assembled — each section carefully, in order.",
@@ -989,6 +1037,14 @@ async function triggerGenerate() {
     const data = await resp.json();
 
     clearInterval(rotateInterval);
+
+    // Handle insufficient depth from server
+    if (data.error === "insufficient_depth") {
+      compassDiv.classList.remove("visible");
+      await new Promise(r => setTimeout(r, 1000));
+      triggerGenerate(false);
+      return;
+    }
 
     // Burn the key
     await fetch("/burn", { method: "POST" });
