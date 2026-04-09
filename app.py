@@ -231,6 +231,7 @@ def chat():
         transcript_path = os.path.join(TRANSCRIPT_DIR, f"{active_key}_transcript.json")
         with open(transcript_path, "w", encoding="utf-8") as f:
             json.dump(sess.transcript, f, ensure_ascii=False, indent=2)
+        # Interview complete — triggers settling conversation
         complete = (
             "Give me a moment" in full_reply
             and len(sess.transcript) >= 40
@@ -241,7 +242,9 @@ def chat():
                 "```yaml" in full_reply
                 and "spine:" in full_reply
             )
-        yield f"data: {json.dumps({'done': True, 'session_complete': complete})}\n\n"
+        # Settling complete — triggers generation
+        settling = "I'll start now \u2014 give me a few minutes" in full_reply
+        yield f"data: {json.dumps({'done': True, 'session_complete': complete, 'settling_complete': settling})}\n\n"
 
     return Response(generate(), mimetype="text/event-stream")
 

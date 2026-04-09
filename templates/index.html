@@ -718,11 +718,23 @@ class TypeWriter {
     this.pos = 0;
     this.done = false;
     this.draining = false;
+    this.yamlDropped = false;
     this.onFinish = null;
   }
 
   append(text) {
-    this.buffer += text;
+    // Silent drop: if YAML marker detected, stop accepting text
+    if (this.yamlDropped) return;
+    // Check if this chunk or accumulated buffer contains YAML start
+    const combined = this.buffer + text;
+    const yamlIdx = combined.indexOf("```yaml");
+    if (yamlIdx !== -1) {
+      // Only keep text up to the marker
+      this.buffer = combined.substring(0, yamlIdx);
+      this.yamlDropped = true;
+    } else {
+      this.buffer += text;
+    }
     if (!this.draining) this._drain();
   }
 
@@ -777,25 +789,18 @@ async function sendMessage(message) {
   const tw = new TypeWriter(scoutEl);
 
   let sessionComplete = false;
+  let settlingComplete = false;
 
   tw.onFinish = async () => {
-    // Post-render: style YAML blocks in monospace
-    const rawText = scoutEl.textContent;
-    if (rawText.includes('```yaml')) {
-      const parts = rawText.split(/(```yaml[\s\S]*?```)/);
-      scoutEl.innerHTML = parts.map(part => {
-        if (part.startsWith('```yaml')) {
-          const code = part.replace(/^```yaml\s*/, '').replace(/\s*```$/, '');
-          return '<span class="yaml-block">' + code.replace(/</g, '&lt;') + '</span>';
-        }
-        return part.replace(/</g, '&lt;').replace(/\n/g, '<br>');
-      }).join('');
-    }
-
-    if (sessionComplete) {
+    if (settlingComplete) {
+      // Settling conversation is over — lock permanently, generate
       sessionEnded = true;
       userInput.placeholder = "Session complete.";
       triggerGenerate();
+    } else if (sessionComplete) {
+      // Interview is over — unlock for settling conversation
+      userInput.placeholder = "The session is over. Say what you'd like.";
+      unlock();
     } else {
       unlock();
     }
@@ -823,6 +828,7 @@ async function sendMessage(message) {
         const payload = JSON.parse(line.slice(6));
         if (payload.text) tw.append(payload.text);
         if (payload.session_complete) sessionComplete = true;
+        if (payload.settling_complete) settlingComplete = true;
         if (payload.done) tw.finish();
       }
     }
