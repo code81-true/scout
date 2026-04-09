@@ -39,7 +39,7 @@ Scout is a single-session AI interview engine that guides one person through sev
 ### Infrastructure
 
 - **Deployed** to VPS at scout.regtool.org (178.104.57.52, Hetzner Ubuntu 24.04). [MODIFIED 2026-04-09: updated from "not yet deployed"]
-- Flask with debug=False. Gunicorn replacement pending.
+- Gunicorn 25.3.0 installed, 3 workers, replacing Flask dev server. [2026-04-09]
 - nginx reverse proxy with SSL via Let's Encrypt (expires 2026-07-05).
 - systemd service at /etc/systemd/system/scout.service.
 - Server-side filesystem sessions via flask-session.
@@ -127,8 +127,9 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 - **IMPORTANT** — No pseudonym collection. Portrait page defaults to "Anonymous". Need to ask user for pseudonym during or after interview. [2026-04-06]
 - **IMPORTANT** — YAML stitching sometimes double-indents already-indented content. [2026-04-06]
-- **IMPORTANT** — Gunicorn needed to replace Flask dev server. [2026-04-07]
-- **FUTURE** — No rate limiting on /auth. [2026-04-06]
+- [SUPERSEDED 2026-04-09: "Gunicorn needed" — Gunicorn 25.3.0 installed with 3 workers]
+- [SUPERSEDED 2026-04-09: "No rate limiting on /auth" — Flask-Limiter added, 5/min/IP on /auth]
+- **SECURITY BACKLOG v1.2** — Gunicorn running as root user — acceptable for beta, must create dedicated scout system user and run Gunicorn under that account before commercial launch. [2026-04-09]
 - **FUTURE** — No logging or monitoring beyond Flask debug output. [2026-04-06]
 - **FUTURE** — No admin interface for key management. [2026-04-06]
 - **FUTURE** — Portrait page requires active flask session. If session expires, /portrait returns empty state. [2026-04-09]

@@ -10,6 +10,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from flask import Flask, render_template, request, Response, session as flask_session
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_session import Session as FlaskSessionExt
 
 from scout.engine import (
@@ -35,6 +37,13 @@ app.config["SESSION_TYPE"] = "filesystem"
 app.config["SESSION_FILE_DIR"] = FLASK_SESSION_DIR
 app.config["SESSION_PERMANENT"] = False
 FlaskSessionExt(app)
+limiter = Limiter(get_remote_address, app=app, default_limits=[])
+
+
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    return {"error": "too many attempts, please wait"}, 429
+
 
 # Per-key session isolation
 client = create_client()
@@ -116,6 +125,7 @@ def index():
 
 
 @app.route("/auth", methods=["POST"])
+@limiter.limit("5 per minute")
 def auth():
     """Authenticate a single-use key."""
     data = request.get_json()
