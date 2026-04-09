@@ -718,23 +718,69 @@ class TypeWriter {
     this.pos = 0;
     this.done = false;
     this.draining = false;
-    this.yamlDropped = false;
+    this.inYamlBlock = false;
     this.onFinish = null;
   }
 
   append(text) {
-    // Silent drop: if YAML marker detected, stop accepting text
-    if (this.yamlDropped) return;
-    // Check if this chunk or accumulated buffer contains YAML start
-    const combined = this.buffer + text;
-    const yamlIdx = combined.indexOf("```yaml");
-    if (yamlIdx !== -1) {
-      // Only keep text up to the marker
-      this.buffer = combined.substring(0, yamlIdx);
-      this.yamlDropped = true;
-    } else {
-      this.buffer += text;
+    let combined = this.buffer.substring(this.pos) + text;
+    let cleaned = "";
+    let i = 0;
+
+    while (i < combined.length) {
+      if (this.inYamlBlock) {
+        // Look for closing fence
+        const closeIdx = combined.indexOf("```", i);
+        if (closeIdx !== -1) {
+          // Skip everything up to and including closing fence
+          i = closeIdx + 3;
+          // Skip trailing newline after fence
+          if (i < combined.length && combined[i] === "\n") i++;
+          this.inYamlBlock = false;
+        } else {
+          // Still inside block, drop rest
+          break;
+        }
+      } else {
+        // Look for ```yaml opening fence
+        const openIdx = combined.indexOf("```yaml", i);
+        // Look for standalone --- YAML separator (newline before and after)
+        const sepIdx = combined.indexOf("\n---\n", i);
+
+        let nextDrop = -1;
+        let dropLen = 0;
+        let enterBlock = false;
+
+        if (openIdx !== -1 && (sepIdx === -1 || openIdx < sepIdx)) {
+          nextDrop = openIdx;
+          dropLen = 7; // length of "```yaml"
+          enterBlock = true;
+        } else if (sepIdx !== -1) {
+          nextDrop = sepIdx;
+          dropLen = 5; // length of "\n---\n"
+          enterBlock = false;
+        }
+
+        if (nextDrop === -1) {
+          // No markers — keep rest
+          cleaned += combined.substring(i);
+          break;
+        }
+
+        // Keep text before the marker
+        cleaned += combined.substring(i, nextDrop);
+        i = nextDrop + dropLen;
+
+        if (enterBlock) {
+          this.inYamlBlock = true;
+          // Skip newline after opening fence
+          if (i < combined.length && combined[i] === "\n") i++;
+        }
+      }
     }
+
+    // Replace buffer from current pos onwards with cleaned text
+    this.buffer = this.buffer.substring(0, this.pos) + cleaned;
     if (!this.draining) this._drain();
   }
 
@@ -854,6 +900,7 @@ async function triggerGenerate() {
   msgEl.innerHTML = "";
   msgEl.style.background = "transparent";
   msgEl.style.borderLeft = "none";
+  msgEl.style.textAlign = "center";
 
   // Animated compass
   const compassDiv = document.createElement("div");
@@ -915,13 +962,11 @@ async function triggerGenerate() {
   msgEl.appendChild(genMsg);
   conversation.scrollTop = conversation.scrollHeight;
 
-  // Fade in compass and first message
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      compassDiv.classList.add("visible");
-      genMsg.classList.add("visible");
-    });
-  });
+  // Fade in compass and first message (50ms delay for DOM paint)
+  setTimeout(() => {
+    compassDiv.classList.add("visible");
+    genMsg.classList.add("visible");
+  }, 50);
 
   // Rotate messages every 18 seconds
   let msgIndex = 0;
@@ -990,10 +1035,12 @@ async function triggerGenerate() {
     notice.textContent = "Download both before you close this window.";
     notice.style.cssText = "font-family:'Cormorant Garant',serif;font-style:italic;font-size:15px;color:#6A6560;margin:0;opacity:0;transition:opacity 1s ease-in-out;";
 
-    const portraitBtn = document.createElement("a");
+    const portraitBtn = document.createElement("button");
     portraitBtn.textContent = "Download Portrait";
-    portraitBtn.href = "/download-portrait";
-    portraitBtn.style.cssText = "display:block;width:100%;max-width:320px;text-align:center;background:transparent;color:#B8965A;border:1px solid #B8965A;border-radius:6px;padding:14px 20px;font-family:'Cormorant SC',serif;font-size:13px;letter-spacing:0.15em;cursor:pointer;text-decoration:none;opacity:0;transition:opacity 1s ease-in-out;";
+    portraitBtn.style.cssText = "display:block;width:100%;max-width:320px;text-align:center;background:transparent;color:#B8965A;border:1px solid #B8965A;border-radius:6px;padding:14px 20px;font-family:'Cormorant SC',serif;font-size:13px;letter-spacing:0.15em;cursor:pointer;opacity:0;transition:opacity 1s ease-in-out;";
+    portraitBtn.addEventListener("click", () => {
+      window.location.href = "/download-portrait";
+    });
 
     const viewBtn = document.createElement("a");
     viewBtn.textContent = "View Portrait";
