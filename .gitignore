@@ -17,3 +17,4 @@ access/keys.txt
 sessions/
 sessions/flask_sessions/
 sessions/transcripts/
+run_local.bat
