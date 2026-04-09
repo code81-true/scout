@@ -126,6 +126,22 @@ itself — e.g. an item listed as complete in one section but
 as a known gap in another, or a design decision that conflicts
 with a later change. Fix any contradictions before committing.
 
+## STATUS.md Rules
+
+Rule 1 — Date stamps:
+Every update to STATUS.md must include a date stamp in the
+format [YYYY-MM-DD] on the same line as the update. No entry
+ever appears without a date. Example:
+- Portrait pipeline fixed — serves from disk not sessionStorage [2026-04-09]
+
+Rule 2 — Full read before update:
+Before updating STATUS.md, read the entire file. Any existing
+entry that is no longer accurate must be marked
+[SUPERSEDED YYYY-MM-DD: reason] — never silently deleted or
+overwritten. Any entry that has been partially modified must
+be marked [MODIFIED YYYY-MM-DD: what changed]. New entries go
+at the top of the relevant section with a date stamp.
+
 ## Security Rules
 
 The access/ directory is sensitive territory.

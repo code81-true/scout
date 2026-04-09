@@ -1,12 +1,12 @@
 # Scout — Project Status
 
-Last updated: 2026-04-07
+Last updated: 2026-04-09
 
 ---
 
 ## Current State
 
-Scout is a single-session AI interview engine that guides one person through seven layers of self-examination and produces two outputs: a structured spine.yaml (personal constitution for the MyTrueNorth system) and a prose portrait written by the Chronicler. The system runs as a Flask web application on localhost with a landing page, single-use key authentication, streaming conversation UI, and a compass-themed portrait display page. It has not yet been deployed to VPS. The backend supports per-key session isolation, session resumption after disconnection, test mode with Haiku for logistics testing, and transcript persistence to disk during active sessions.
+Scout is a single-session AI interview engine that guides one person through seven layers of self-examination and produces two outputs: a structured spine.yaml (personal constitution for the MyTrueNorth system) and a prose portrait written by the Chronicler. The system runs as a Flask web application with a landing page, single-use key authentication, streaming conversation UI, compass-themed portrait display page, and WeasyPrint PDF portrait generation. Deployed to VPS at scout.regtool.org. The backend supports per-key session isolation, session resumption after disconnection, test mode with Haiku for logistics testing, transcript persistence to disk, and a settling conversation before generation begins. [MODIFIED 2026-04-09: updated to reflect VPS deployment, settling conversation, and PDF generation]
 
 ---
 
@@ -14,180 +14,137 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 ### Brain
 
-- **Scout system prompt** (`scout/prompt.py`) — ~1,355 lines across 7 sections: Identity & Disposition, Hard Rules (one question per response, no "why", banned phrases), How Scout Listens (5-level reading framework, priority stack, Socratic/Elicitation/Columbo techniques, smokescreen detection, emotional weight handling, reflection discipline, layer transition rules, cliche handling, resistance handling), Seven Layers (Roles, Work, People, Body, Beliefs, Shadows, Long Game with opening questions, evasion patterns, depth signals for each), The Closing (closing acknowledgement, 5 contextual final questions, closing statement guidelines), Parsing Pass (full spine.yaml schema with 13 top-level sections including legal_note field, 7 parsing rules including self-type marking and health data filter), Safety (11 hard constraints including crisis intervention, health data exclusion, no real names, no advice, no political positions, no manipulation, data transparency, scope limits, minor detection, mental health boundary, sexual and relational complexity).
-- **Chronicler prompt** (`scout/chronicler.py`) — Portrait writing prompt with two required moments: the Half-Seen Shadow (something the person tried hardest not to say) and the Unacknowledged Greatness (a quality they know they possess but never felt entitled to name). Includes explicit `[SHADOW]...[/SHADOW]` and `[SURPRISE]...[/SURPRISE]` markup instructions for passage detection. Length guidance tied to session depth (600–800, 900–1200, or 1400–1800 words). Explicit prohibition on advice, coaching, and resolution in the final third.
-- **Test prompt** (`scout/test_prompt.py`) — Minimal 3-exchange interview for logistics testing. Produces a 10% completion spine.yaml with all fields marked low confidence.
+- **Scout system prompt** (`scout/prompt.py`) — ~1,370 lines across 7 sections: Identity & Disposition, Hard Rules (10 rules including no fabrication and not-the-subject), How Scout Listens (5-level reading framework, priority stack, Socratic/Elicitation/Columbo techniques, smokescreen detection, emotional weight handling, reflection discipline, layer transition rules, cliche handling, resistance handling), Seven Layers (Roles, Work, People, Body, Beliefs, Shadows, Long Game), The Closing (closing acknowledgement, 5 contextual final questions, closing statement, settling conversation with fixed closing line), Parsing Pass (full spine.yaml schema with 13 top-level sections including legal_note field, 7 parsing rules), Safety (11 hard constraints). [MODIFIED 2026-04-09: updated line count, added settling conversation, 10 hard rules]
+- **Chronicler prompt** (`scout/chronicler.py`) — Portrait writing prompt with two required moments: Half-Seen Shadow and Unacknowledged Greatness. Includes [SHADOW]/[SURPRISE] markup instructions, length guidance (600–1800 words), advice prohibition in final third, and final-name instruction (pseudonym in last sentence only). [MODIFIED 2026-04-09: added final-name instruction]
+- **Test prompt** (`scout/test_prompt.py`) — Minimal 3-exchange interview for logistics testing. Includes settling conversation with fixed closing line for pipeline testing. [MODIFIED 2026-04-09: added settling instruction]
 
 ### Backend
 
-- `scout/engine.py` — Context window engine. Full transcript sent on every API call. Functions: `create_client()`, `send_message()` (sync), `send_message_stream()` (streaming with optional system_prompt/model override), `generate_portrait()` (Chronicler call, Opus model, 10k tokens), `generate_yaml_sections()` (4 sequential section calls + YAML stitching + PyYAML validation), `_stitch_yaml_sections()` (strips fencing, deduplicates spine: root, indents root-level keys). Three model constants: `MODEL` (Sonnet), `OPUS_MODEL` (Opus), `TEST_MODEL` (Haiku).
-- `scout/session.py` — In-memory transcript holder with `add_user()` and `add_assistant()`.
-- `app.py` — Flask application with per-key session isolation (`_sessions` dict + `_started_keys` set + `get_session()` helper). Routes: `GET /` (landing page), `POST /auth` (single-use key authentication with resume detection and hijack prevention), `POST /burn` (key expiry + transcript deletion + session cleanup), `POST /chat` (streaming SSE with dual completion detection — "Give me a moment" + 40 messages for production, YAML detection for test keys — transcript persistence, resume acknowledgement injection, test mode routing), `POST /generate` (YAML + portrait generation, filesystem save), `POST /portrait` (portrait display page), `POST /test-generate` (dev route using mock transcript). Test mode detection via `_is_test_key()` routes TEST- keys to Haiku model with test prompt.
-- `access/keygen.py` — Key generator. 10-char uppercase alphanumeric (excluding 0/O/I/1). `--test` flag generates TEST-XXXXXX format keys. Appends to keys.txt.
-- `access/keys.txt` — Key store. 22 production keys + 3 test keys. Format: `KEY:status` where status is `unused`, `active`, or `used`.
-- `run_session.py` — Terminal entry point for the original PR 1 brain-only mode.
+- `scout/engine.py` — Context window engine. Full transcript on every API call. Three model constants: MODEL (Sonnet), OPUS_MODEL (Opus), TEST_MODEL (Haiku). Functions: create_client(), send_message(), send_message_stream() (with optional prompt/model override), generate_portrait() (Opus, 10k tokens), generate_yaml_sections() (4 sequential calls + YAML stitching + PyYAML validation). [2026-04-06]
+- `scout/session.py` — In-memory transcript holder. [2026-04-06]
+- `app.py` — Flask application with per-key session isolation. Routes: GET / (landing), POST /auth (key auth with resume detection), POST /burn (key expiry + transcript deletion + session cleanup), POST /chat (streaming SSE with dual completion: session_complete + settling_complete), POST /generate (YAML + portrait saved to SPINE_DIR), GET /portrait (serves from disk), GET /download-portrait (WeasyPrint PDF generation), POST /test-generate (dev route). [MODIFIED 2026-04-09: added settling_complete, download-portrait, portrait from disk]
+- `keys_generate.py` — Key generator in project root. Production keys (10-char) and TEST- keys (6-char). [2026-04-07]
+- `access/keys.txt` — Key store. VPS only, never in git. [2026-04-06]
+- `run_session.py` — Terminal entry point for brain-only mode (PR 1). [2026-04-06]
 
 ### Frontend
 
-- `templates/index.html` — Three-state single page application:
-  - **State 1 (Landing)**: Dark background (#0D0B0A), two muted statement lines in Cormorant Garant 300, "Scout" wordmark with forged bronze gradient (16-stop linear-gradient at 108deg), "What you are about to enter" guide link, key input console with password field, age notice ("Scout is for adults only"), "Reveal" auth button, "By invitation only" colophon. Breathing animation on guide link, key label (in phase), and reveal button (0.5s offset). Five UI animations: vignette pulse (12s cycle), wordmark letter-spacing on hover with crosshair cursor, input focus fade (statement and wordmark to 0.2 opacity), black fade transition on auth success (1.5s fade to black, 0.5s hold, 1s fade in), generating message rotation (5 messages, 18s intervals, gold Cormorant Garant italic).
-  - **State 2 (Guide)**: "Technically" and "With truth" sections explaining what Scout is and how to approach it. Includes session resumption explanation, mental health stability notice, and relational complexity notice. Back link returns to landing.
-  - **State 3 (Conversation)**: Streaming chat UI with client-side typewriter effect (28ms base delay, +/-8ms jitter, 600ms pause after periods, 250ms after commas, 900ms after paragraph breaks). Scout messages left-aligned, user messages right-aligned. Dark monospace aesthetic. Input locks during Scout response. Session completion detected via `session_complete` SSE flag. Post-session: rotating generating messages (5 messages, 18s crossfade, gold italic), then Download Spine + View Portrait buttons fade in. Exit warning activates after /burn, deactivates after download.
-- `templates/portrait.html` — Compass portrait display page. Warm ivory background (#F5F0E8), warm near-black text (#1C1917), antique gold accent (#B8965A). Compass SVG watermark (220px, opacity 0.07) with outer ring, degree ticks, 8-point rose, cardinal letters, centre dot. Bodoni Moda italic for pseudonym (58px) and drop capital (52px). Cormorant Garant 300 for body (19px, line-height 1.95). Cormorant SC for colophon (10px, letter-spacing 0.22em). Gold gradient rules. Movement breaks (two lines flanking rotated diamond). Shadow passages detected via `[SHADOW]` markers — italic, 1px gold left border. Surprise moments detected via `[SURPRISE]` markers — 400 weight, 19.5px, 2px gold left border, subtle gold tint. North needle SVG above final line. Colophon includes "For adults only" and "Not a therapeutic or medical tool" legal notices. "Save Portrait" button triggers window.print(). Print styles hide button and set white background.
+- `templates/index.html` — Three-state SPA: [MODIFIED 2026-04-09: added settling state, fenced YAML filter, compass animation, three download buttons]
+  - **State 1 (Landing)**: Dark background, Scout wordmark with forged bronze gradient, guide link, key console with age notice, breathing animations, vignette pulse, input focus fade, black fade transition on auth.
+  - **State 2 (Guide)**: "Technically" and "With truth" sections. Session resumption, mental health, relational complexity notices. Bottom nav with scroll-top and return buttons.
+  - **State 3 (Conversation)**: Streaming typewriter UI (28ms base, punctuation pauses). Scout messages in Cormorant Garant italic gold, user messages in system sans-serif. Fenced-block YAML filter strips ```yaml...``` blocks and --- separators silently. session_complete unlocks for settling conversation. settling_complete locks permanently and triggers generation. Compass animation during generation (searching → settling → settled phases). Three download buttons: Download Portrait (gold, PDF), View Portrait (secondary), Download Spine (understated, YAML blob).
+- `templates/portrait.html` — Compass portrait display page served from disk. Marker-based [SHADOW]/[SURPRISE] passage detection. [2026-04-07]
+- `templates/portrait_pdf.html` — WeasyPrint A4 PDF template. Ivory #FDFAF5 edge-to-edge, cover page with centred compass + pseudonym, body with gold hairline rules and paragraph break protection, colophon centred on final page. [MODIFIED 2026-04-09: fixed cover centering, edge-to-edge background, paragraph breaks, colophon centering]
 
 ### Infrastructure
 
-- **Not yet deployed.** All development and testing is on localhost:5000.
-- Flask dev server with debug mode.
+- **Deployed** to VPS at scout.regtool.org (178.104.57.52, Hetzner Ubuntu 24.04). [MODIFIED 2026-04-09: updated from "not yet deployed"]
+- Flask with debug=False. Gunicorn replacement pending.
+- nginx reverse proxy with SSL via Let's Encrypt (expires 2026-07-05).
+- systemd service at /etc/systemd/system/scout.service.
 - Server-side filesystem sessions via flask-session.
-- Transcript persistence to `sessions/transcripts/`.
-- Flask session files in `sessions/flask_sessions/`.
-- Per-key session isolation — multiple concurrent users supported in-memory.
-- No VPS, no nginx, no SSL, no systemd service yet.
+- Transcript persistence to sessions/transcripts/.
+- Per-key session isolation — multiple concurrent users supported.
 
 ---
 
 ## Design Decisions
 
-1. **Full transcript on every API call** — no summarisation, no truncation. The entire conversation history is sent fresh with the system prompt on every call. This ensures Scout has perfect recall and can reference early statements when detecting contradictions. Cost is higher token usage but fidelity is non-negotiable for this use case.
-
-2. **Single context window architecture** — no RAG, no vector store, no memory system. Scout operates entirely within one conversation context. This was chosen because the interview is a single session and the full transcript must be available for the parsing pass.
-
-3. **Client-side typewriter effect, not server-side delays** — streaming tokens arrive as fast as the API sends them and are buffered client-side, then drained character-by-character with human-like timing. This means the full response is received quickly (no timeout risk) while the display feels natural.
-
-4. **Four sequential YAML generation calls instead of one** — the spine.yaml schema is too large for a single generation call to populate reliably. Splitting into 4 section-focused calls (meta/purpose/hats, values/hard_limits, shadows/long_game/relationships, north_instructions/intellectual_diet/unresolved) produces more complete output. Trade-off: 4x API calls, ~60s total generation time.
-
-5. **Portrait written by Opus, interview conducted by Sonnet** — the Chronicler portrait requires literary quality and emotional precision that benefits from the most capable model. The interview itself runs on Sonnet for cost efficiency and speed given the many round-trips.
-
-6. **Single-use key system instead of accounts** — Scout is a one-session tool. No accounts, no passwords, no email. A key is issued by invitation, used once, burned on completion. This matches the product philosophy: one person, one session, one spine.
-
-7. **Key lifecycle: unused → active → used** — three states prevent replay attacks. Active keys with no transcript file are rejected (prevents session hijacking). Used keys are permanently expired.
-
-8. **Transcript saved to disk after every exchange** — enables session resumption after browser crash or network drop. Transcript file is deleted when the key is burned. No transcript data persists after spine delivery.
-
-9. **Session completion detected server-side, not client-side** — the server checks for "Give me a moment" in Scout's response AND >=40 messages (20 exchanges) for production sessions. Test sessions use YAML detection instead (```yaml + spine: in response). This prevents premature completion detection from partial phrase matches during early exchanges while allowing test mode to complete in 3 exchanges.
-
-10. **Test mode via key prefix** — TEST- prefixed keys route to Haiku model with a minimal 3-exchange prompt. No code branching needed beyond key detection. Same pipeline, different model and prompt.
-
-11. **YAML stitching with validation** — raw section responses are stripped of code fencing, duplicate `spine:` root keys are removed, root-level keys are indented under `spine:`, and the result is validated with PyYAML. If validation fails, the raw string is returned rather than crashing.
-
-12. **Exit warning after burn, not before** — the beforeunload listener activates only after the key is burned (spine delivered). This prevents the user from closing the window and losing their spine without downloading it. Deactivates after download.
-
-13. **Resume acknowledgement injected as system note** — when a session resumes, a system message is injected into the transcript instructing Scout to acknowledge the return warmly and reference where the conversation left off. This feels natural rather than mechanical.
-
-14. **Per-key session isolation** — each authenticated key gets its own Session instance stored in `_sessions` dict, with a separate `_started_keys` set tracking which keys have received their opening. Prevents transcript collision between concurrent users. Sessions and started flags are cleaned up on burn.
-
-15. **Marker-based passage detection, not content pattern matching** — the Chronicler wraps shadow passages in `[SHADOW]...[/SHADOW]` and surprise moments in `[SURPRISE]...[/SURPRISE]`. The portrait page parses these markers and applies CSS classes accordingly. Markers are stripped from displayed text. This replaces fragile regex pattern matching that would break when the Chronicler varied its language.
-
-16. **Surprise passage typography: weight over style** — surprise moments use font-weight 400 (one step heavier than the 300 body text) and font-size 19.5px (barely perceptible increase). The shadow passage uses italic as its distinguishing quality. This prevents both passage types from competing visually while giving each a distinct character.
-
-17. **Adults-only constraint with clarification before rejection** — Scout does not stop immediately on minor signals (school references, parent mentions). It asks one clarifying question first because adults frequently reference school-era memories. Only a confirmed or implied under-18 status triggers session termination. This avoids false positives while maintaining the safeguard.
-
-18. **Legal notices on all outputs** — the spine.yaml schema includes a `legal_note` field in meta, and the portrait colophon includes "For adults only" and "Not a therapeutic or medical tool". These appear on every generated document regardless of content, establishing the tool's legal position at the point of output.
-
-19. **Mental health pause not burn** — when a person discloses current significant mental health difficulty, Scout pauses the session and recommends they speak with their therapist or doctor. The key remains active — they can return when ready. This is a pause, not a termination. Past mental health history (therapy attended years ago, difficult periods navigated) does not trigger this constraint. The distinction between current crisis and past experience is critical to avoid over-triggering.
-
-20. **Sexual complexity acknowledged not explored** — Scout receives sexual and relational complexity without judgement and notes it in the spine, but does not explore it at depth. It redirects to a human specialist (therapist or couples counsellor) once. No moralising. No opinions on relationship structures. The spine records what is real — not what should be real. This protects both the person and the tool from territory that requires human expertise.
+1. **Full transcript on every API call** — no summarisation, non-negotiable for quality. [2026-04-06]
+2. **Single context window architecture** — no RAG, no vector store. [2026-04-06]
+3. **Client-side typewriter effect** — tokens buffered client-side, drained with human-like timing. [2026-04-06]
+4. **Four sequential YAML generation calls** — schema too large for single call. [2026-04-06]
+5. **Portrait by Opus, interview by Sonnet** — literary quality vs cost efficiency. [2026-04-06]
+6. **Single-use key system** — no accounts, one session, burned on completion. [2026-04-06]
+7. **Key lifecycle: unused → active → used** — active + no transcript = rejected. [2026-04-06]
+8. **Transcript saved to disk after every exchange** — enables resume after disconnect. [2026-04-07]
+9. **Session completion detected server-side** — "Give me a moment" + 40 messages (production), YAML detection (test). [MODIFIED 2026-04-09: added settling_complete as second trigger]
+10. **Test mode via key prefix** — TEST- keys route to Haiku with minimal prompt. [2026-04-07]
+11. **YAML stitching with validation** — strips fencing, deduplicates root keys, validates with PyYAML. [2026-04-06]
+12. **Exit warning after burn** — beforeunload activates after key burned, deactivates after download. [2026-04-07]
+13. **Resume acknowledgement injected as system note** — warm return message referencing last topic. [2026-04-07]
+14. **Per-key session isolation** — _sessions dict + _started_keys set, cleaned up on burn. [2026-04-07]
+15. **Marker-based passage detection** — [SHADOW]/[SURPRISE] markers parsed structurally, not by regex. [2026-04-07]
+16. **Surprise typography: weight over style** — 400 weight + 19.5px, shadow uses italic. [2026-04-07]
+17. **Adults-only with clarification before rejection** — one clarifying question before stopping. [2026-04-07]
+18. **Legal notices on all outputs** — legal_note in spine.yaml meta, "For adults only" on portrait colophon. [2026-04-07]
+19. **Mental health pause not burn** — key stays active, person can return. Past history does not trigger. [2026-04-07]
+20. **Sexual complexity acknowledged not explored** — redirect to human specialist, no moralising. [2026-04-07]
+21. **Settling conversation before generation** — warmer tone, three themes, max 4 exchanges, fixed closing line triggers generation. [2026-04-09]
+22. **Fenced-block YAML filter** — strips only ```yaml...``` blocks and standalone --- separators, resumes rendering after. [2026-04-09]
+23. **Portrait served from disk not sessionStorage** — survives tab close and mobile browser. [2026-04-09]
+24. **PDF generation via WeasyPrint** — A4, ivory background, compass cover, paragraph break protection. [2026-04-09]
 
 ---
 
 ## Changes Based on Review
 
-1. **max_tokens 300 → 1500 → 5000** — Pope increased token limit twice. Original 300 was too restrictive for Scout's responses, especially in later layers and the closing.
-
-2. **Prompt rewrite** — Pope replaced the initial 93-line prompt with a 1,152-line comprehensive prompt covering all seven layers, listening framework, evasion handling, closing ceremony, parsing pass schema, and safety constraints.
-
-3. **Removed /reset route** — Pope requested removal. Single-session tool should not have a reset mechanism.
-
-4. **"Cormorant Garamond" → "Cormorant Garant"** — Typeface name correction across Google Fonts URL and CSS declarations in portrait.html.
-
-5. **generate_portrait() max_tokens 8000 → 10000** — Increased to give the Chronicler more room for the portrait prose.
-
-6. **generate_yaml_sections() max_tokens MAX_TOKENS → 4000** — Each section call gets its own 4000 token budget rather than sharing the global MAX_TOKENS.
-
-7. **GET /portrait → POST /portrait** — Changed from query parameters to JSON request body with Flask session storage. Prevents sensitive data in URL.
-
-8. **Active key resume security tightening** — Initially active keys allowed re-auth without verification. Pope identified the hijack risk: active key + no transcript = reject. Only active key + existing transcript = allow resume.
-
-9. **Landing page visual adjustments** — Guide link, key label, reveal button: increased font sizes, lighter colours, breathing animation. Key input: subtle background, gold focus border. Guide section titles: gold colour, wider letter-spacing.
-
-10. **Pattern matching → marker-based passage detection** — Pope identified that regex content matching for shadow/surprise passages in portrait.html was fragile and would break in production. Replaced with explicit `[SHADOW]` and `[SURPRISE]` markers in the Chronicler prompt, parsed structurally by the frontend.
-
-11. **Surprise passage typography** — Pope specified font-weight 400 and font-size 19.5px for surprise moments, distinguishing them from shadow passages (which use italic at 300 weight) without competing visually.
-
-12. **Constraint 9 — minor detection** — Pope added adults-only safeguard. Scout asks one clarifying question if minor signals appear. If confirmed under 18, session stops immediately with no spine or portrait generated.
-
-13. **Age notice on landing page** — Pope added italic notice between key label and input: "Scout is for adults only. If you are under 18 — this is not for you."
-
-14. **Legal footer on outputs** — Pope added "For adults only" and "Not a therapeutic or medical tool" to portrait colophon, and `legal_note` field to spine.yaml meta schema.
-
-15. **Prompt additions: layer transitions, reflection discipline, closing acknowledgement** — Pope added three new sections to the Scout prompt: rules for seamless layer transitions (no announcements), when to reflect vs ask directly (max once per five exchanges), and a closing acknowledgement passage before the final question.
-
-16. **Constraint 10 — mental health boundary** — Pope added pause-not-burn behaviour for current mental health crisis disclosure. Key stays active. Past history does not trigger.
-
-17. **Constraint 11 — sexual and relational complexity** — Pope added acknowledge-not-explore behaviour. Scout notes it in the spine but redirects to human specialist. No moralising.
-
-18. **Guide page mental health and relational notices** — Pope added two paragraphs to the "With truth" section advising people in active mental health difficulty to consult their therapist first, and noting Scout's approach to sexual/relational complexity.
-
-19. **Guide page — time commitment, guide link text, MyTrueNorth paragraph** — Pope added "Set aside two hours" as first paragraph in Technically section. Changed guide link from "Before you begin — read this" to "What you are about to enter — read this first". Added MyTrueNorth companion paragraph to With truth section before mental health notice.
-
-20. **Five UI animations** — Pope specified vignette pulse, wordmark hover with crosshair cursor, input focus fade, black fade transition on auth success, and generating message rotation with five gold italic messages at 18s intervals.
-
-21. **Guide page rewrite** — Pope replaced all guide page copy with pristine version. Removed "AI interviewer" framing, replaced with conversation framing. Contradictions removed. Closing line changed to "When you are ready — enter your key."
-
-22. **CSS/layout audit fixes and conversation restyling** — Colophon overlap fixed (absolute → margin), conversation height fixed (min-height → height), contrast improved on age notice, error messages, and guide-back link. Portrait colophon and save button increased to 11px. Portrait padding reduced with intermediate breakpoint. Guide page bottom nav added (scroll-top + return button). Scout messages restyled to Cormorant Garant italic gold. User messages restyled to system sans-serif. YAML blocks in Scout messages post-rendered to monospace green-grey on dark background.
-
-23. **Two new Hard Rules + five contradiction fixes** — Rule A: Scout has no knowledge of delivery systems, never fabricates explanations about technical features. Rule B: Scout is not the subject, every question about it is a doorway back to the person ("calibrated witness with no agenda" not "friend"). Contradiction fixes: Constraint 7 rewritten to match reality (transcript held temporarily, deleted after delivery), "It sounds like" example changed to "X seems to matter" to avoid conflict with reflection ban, Layer 2 scripted opening removed (violated transition rules), closing acknowledgement/statement duplication clarified.
-
-24. **Portrait pipeline: save to disk, serve via URL** — Portrait text saved to SPINE_DIR/{key}_{date}_portrait.txt alongside YAML. /portrait changed from POST to GET, reads from disk via flask_session filename. portrait.html reads from Jinja template variable instead of sessionStorage. View Portrait button navigates to /portrait URL. Fixes mobile browser sessionStorage loss and tab-close loss permanently. SPINE_DIR uses os.getenv with "spines" default locally, overridable to /home/scout/spines on VPS.
-
-25. **WeasyPrint added** — weasyprint>=68.0 added to requirements.txt. WeasyPrint 68.1 installed on VPS. Server-side PDF generation planned for portrait output.
-
-26. **WeasyPrint PDF portrait route, chronicler final name, guide copy** — /download-portrait route generates A4 PDF via WeasyPrint with compass cover page, gold typography, shadow/surprise passage styling, pseudonym in final line. Chronicler instructed to address person by pseudonym in final sentence only. Guide page updated to mention both portrait and spine. Download screen redesigned: gold "Download Portrait" primary, understated "Download Spine" secondary.
-
-27. **sessionEnded flag** — global JS flag prevents any sendMessage() call after session_complete is detected. Fixes bug where Scout's follow-up message after YAML generation interrupted triggerGenerate() before it could fire. Mode-agnostic — works identically for TEST- and production keys.
-
-28. **Settling conversation, YAML removed from screen, settling_complete trigger** — New settling conversation section in prompt.py: three beats, three themes, max 4 exchanges, fixed closing line triggers generation. settling_complete detection in app.py uses full line match. TypeWriter YAML filter silently drops content after ```yaml marker. session_complete unlocks for settling, settling_complete locks and triggers generation. Test prompt updated with minimal settling instruction.
-
-29. **Four production bug fixes** — Fenced-block YAML filter replaces all-or-nothing yamlDropped: strips only ```yaml...``` blocks and standalone --- separators, resumes rendering after closing fence so settling transition line survives. Compass container gets textAlign center + 50ms setTimeout for DOM paint before opacity transition. Download Portrait changed from &lt;a&gt; to &lt;button&gt; with onclick handler matching other buttons.
-
-30. **PDF layout fixes** — Page margin set to 0 with background #FDFAF5 edge-to-edge, internal spacing via content padding. Cover page: height 267mm flex-centred, compass SVG reduced to 100mm with expanded viewBox containing all labels, pseudonym/rule/date centred over compass. Paragraph breaks: normal paragraphs wrapped in div.para-wrap with both break-inside and page-break-inside avoid, orphans/widows 3. Colophon: page-break-before always, 267mm flex-centred.
-
-31. **PDF ivory redesign, View Portrait restored, compass animation** — portrait_pdf.html redesigned: ivory #FDFAF5 background, 15mm margins, cover centred, compass opacity 0.10, Cormorant Garant 11.5pt, footer with pseudonym/rule/page number, no footer on cover or colophon. View Portrait button restored as secondary between Download Portrait and Download Spine. Animated compass SVG during generation wait: searching phase (erratic needle, loops), settling phase (damped oscillation to north, 3s), settled phase (true north, N marker gold pulse, 2s), then compass fades out as download buttons fade in.
+1. **max_tokens 300 → 1500 → 5000** — Pope increased token limit twice. [2026-04-06]
+2. **Prompt rewrite** — Pope replaced initial 93-line prompt with 1,152-line comprehensive prompt. [2026-04-06]
+3. **Removed /reset route** — single-session tool should not have reset. [2026-04-06]
+4. **"Cormorant Garamond" → "Cormorant Garant"** — typeface name correction. [2026-04-06]
+5. **generate_portrait() max_tokens 8000 → 10000** [2026-04-06]
+6. **generate_yaml_sections() max_tokens MAX_TOKENS → 4000** [2026-04-06]
+7. **GET /portrait → POST /portrait** — prevents sensitive data in URL. [SUPERSEDED 2026-04-09: /portrait changed back to GET, serves from disk]
+8. **Active key resume security tightening** — active + no transcript = reject. [2026-04-07]
+9. **Landing page visual adjustments** — breathing animations, gold focus border. [2026-04-07]
+10. **Pattern matching → marker-based passage detection** [2026-04-07]
+11. **Surprise passage typography** — 400 weight, 19.5px. [2026-04-07]
+12. **Constraint 9 — minor detection** [2026-04-07]
+13. **Age notice on landing page** [2026-04-07]
+14. **Legal footer on outputs** [2026-04-07]
+15. **Prompt additions: layer transitions, reflection discipline, closing acknowledgement** [2026-04-07]
+16. **Constraint 10 — mental health boundary** [2026-04-07]
+17. **Constraint 11 — sexual and relational complexity** [2026-04-07]
+18. **Guide page mental health and relational notices** [2026-04-07]
+19. **Guide page — time commitment, guide link text, MyTrueNorth paragraph** [2026-04-07]
+20. **Five UI animations** — vignette pulse, wordmark hover, focus fade, black transition, generating messages. [2026-04-07]
+21. **Guide page rewrite** — pristine copy, conversation framing, "When you are ready — enter your key." [2026-04-07]
+22. **CSS/layout audit fixes and conversation restyling** — colophon overlap, contrast fixes, guide nav, Scout/user message restyling, YAML block rendering. [2026-04-08]
+23. **Two new Hard Rules + five contradiction fixes** — Rule A (no fabrication), Rule B (not the subject), Constraint 7 rewritten, reflection example fixed, Layer 2 opening removed, closing duplication clarified. [2026-04-08]
+24. **Portrait pipeline: save to disk, serve via URL** — fixes mobile and tab-close loss. [2026-04-09]
+25. **WeasyPrint added** — weasyprint>=68.0 in requirements.txt. [2026-04-09]
+26. **WeasyPrint PDF portrait route, chronicler final name, guide copy** — /download-portrait route, pseudonym in final sentence, guide mentions portrait + spine. [2026-04-09]
+27. **sessionEnded flag** — prevents triggerGenerate interruption. [2026-04-09]
+28. **Settling conversation, YAML removed from screen, settling_complete trigger** [2026-04-09]
+29. **Four production bug fixes** — fenced YAML filter, compass alignment, portrait button fix. [2026-04-09]
+30. **PDF layout fixes** — cover centred, ivory edge-to-edge, paragraph breaks, colophon centred. [2026-04-09]
+31. **Strip portrait markdown headers** — server-side stripping of # lines at save point. [2026-04-09]
+32. **WeasyPrint paragraph break fix** — break-inside: avoid + page-break-inside: avoid on div wrappers. [2026-04-09]
 
 ---
 
 ## Changes Based on User Testing
 
-No live user testing has been conducted yet. All testing has been against the mock transcript (`tests/mock_transcript.json`) and local browser testing of the landing page and auth flow.
+- **First real user session (Boss, K7M3WNPX4R)** — portrait generated but not delivered in-session. Manual recovery required. Scout fabricated explanation about portrait status. Led to Rule A (no fabrication), portrait pipeline fix, and settling conversation. [2026-04-08]
+- **Second test session on VPS** — YAML appeared on screen, settling conversation did not fire in test mode, compass not visible, Download Portrait button missing. Led to fenced-block filter, test prompt settling instruction, compass alignment fix, button type change. [2026-04-09]
+- **PDF test** — white border visible, cover not centred, paragraphs breaking across pages, colophon at top of page. Led to zero-margin page with content padding, 267mm flex containers, para-wrap divs, expanded SVG viewBox. [2026-04-09]
 
 ---
 
 ## Known Gaps
 
-- **IMPORTANT** — No VPS deployment yet. nginx, SSL, systemd service, Gunicorn all needed.
-- **IMPORTANT** — Spine save path is hardcoded to `/home/scout/spines` which doesn't exist on Windows localhost. Will fail silently on /generate.
-- **IMPORTANT** — No pseudonym collection. Portrait page defaults to "Anonymous". Need to ask user for pseudonym during or after interview.
-- **IMPORTANT** — YAML stitching produces valid structure but section responses sometimes include content already indented, leading to double-indentation. Needs more robust whitespace handling.
-- **FUTURE** — No rate limiting on /auth. Brute force key guessing is theoretically possible (though 30^10 keyspace makes it impractical).
-- **FUTURE** — No logging or monitoring beyond Flask debug output.
-- **FUTURE** — No admin interface for key management. Keys managed via CLI keygen.py only.
-- **FUTURE** — Portrait page requires active flask session. If session expires, /portrait returns empty state.
-- **FUTURE** — The `send_message()` sync function is unused by the web app (only used by `run_session.py`). Could be removed or kept for terminal mode.
+- **IMPORTANT** — No pseudonym collection. Portrait page defaults to "Anonymous". Need to ask user for pseudonym during or after interview. [2026-04-06]
+- **IMPORTANT** — YAML stitching sometimes double-indents already-indented content. [2026-04-06]
+- **IMPORTANT** — Gunicorn needed to replace Flask dev server. [2026-04-07]
+- **FUTURE** — No rate limiting on /auth. [2026-04-06]
+- **FUTURE** — No logging or monitoring beyond Flask debug output. [2026-04-06]
+- **FUTURE** — No admin interface for key management. [2026-04-06]
+- **FUTURE** — Portrait page requires active flask session. If session expires, /portrait returns empty state. [2026-04-09]
+- **FUTURE** — send_message() sync function unused by web app (only run_session.py). [2026-04-06]
+- [SUPERSEDED 2026-04-09: "No VPS deployment" — VPS is now live at scout.regtool.org]
+- [SUPERSEDED 2026-04-09: "Spine save path hardcoded to /home/scout/spines" — now uses SPINE_DIR env var]
+- [SUPERSEDED 2026-04-09: "Portrait loads from sessionStorage" — now served from disk]
 
 ---
 
 ## Next Session Priorities
 
-1. **VPS deployment** — Set up nginx reverse proxy, SSL via Let's Encrypt, Gunicorn WSGI server, systemd service. Update spine save path to VPS filesystem. Full production setup.
-
-2. **First real user session on production** — End-to-end test with a real person on the live VPS. Validate all seven layers, closing, YAML generation, portrait delivery, key burn, and exit warning.
-
-3. **Chronicler output review after first real session** — Evaluate portrait quality, marker placement, length, and whether the final third stays within bounds. Adjust Chronicler prompt if needed based on real output.
-
-4. **Stripe donation page** — Separate discoverable URL, not on the portrait page. Placed 24–48hrs after session or on a page the person can find themselves. Never immediately after portrait delivery.
-
-5. **Scout → MTN handshake button design** — First-class feature on the post-session screen. Clear, elegant path from Scout to MyTrueNorth. Not upselling — the natural next step.
+1. **Pseudonym collection** — ask user for pseudonym before or after interview. [2026-04-09]
+2. **Gunicorn WSGI server** — replace Flask dev server. [2026-04-07]
+3. **Chronicler output review** — evaluate portrait quality after real sessions. [2026-04-07]
+4. **Stripe donation page** — separate discoverable URL, 24–48hrs post session. [2026-04-07]
+5. **Scout → MTN handshake button design** [2026-04-07]
 
 ---
 
@@ -195,10 +152,10 @@ No live user testing has been conducted yet. All testing has been against the mo
 
 | Function | Model | Why |
 |---|---|---|
-| Interview (send_message_stream) | claude-sonnet-4-5 | Cost-efficient for many round-trips. Sonnet handles the interview framework well. |
-| YAML generation (generate_yaml_sections) | claude-sonnet-4-5 | Structured output generation. Sonnet follows schema instructions reliably. |
-| Portrait (generate_portrait) | claude-opus-4-6 | Literary quality. The portrait requires emotional precision and prose craft that benefits from the most capable model. |
-| Test mode (all functions) | claude-haiku-4-5-20251001 | Fast and cheap for logistics testing. No need for quality in test sessions. |
+| Interview (send_message_stream) | claude-sonnet-4-5 | Cost-efficient for many round-trips. [2026-04-06] |
+| YAML generation (generate_yaml_sections) | claude-sonnet-4-5 | Structured output, follows schema reliably. [2026-04-06] |
+| Portrait (generate_portrait) | claude-opus-4-6 | Literary quality, emotional precision. [2026-04-07] |
+| Test mode (all functions) | claude-haiku-4-5-20251001 | Fast and cheap for logistics testing. [2026-04-07] |
 
 ---
 
@@ -206,24 +163,27 @@ No live user testing has been conducted yet. All testing has been against the mo
 
 | File | Description |
 |---|---|
-| `CLAUDE.md` | Project instructions, constraints, human review gates, and STATUS.md update rules for CC |
-| `STATUS.md` | This file — single source of truth for project status |
-| `.gitignore` | Excludes .env, venv, __pycache__, access/ directory |
-| `.env` | ANTHROPIC_API_KEY only |
-| `requirements.txt` | Python dependencies: anthropic, flask, python-dotenv, pyyaml, flask-session |
-| `app.py` | Flask application — all routes, auth, per-key session management, test mode detection |
-| `run_session.py` | Terminal entry point for brain-only mode (PR 1) |
-| `scout/__init__.py` | Package marker |
-| `scout/prompt.py` | Scout system prompt — 1,152 lines, the complete interviewer brain |
-| `scout/chronicler.py` | Chronicler system prompt — portrait writing with SHADOW/SURPRISE markers |
-| `scout/test_prompt.py` | Test mode prompt — 3-exchange minimal interview |
-| `scout/engine.py` | Context window engine — all API call functions, YAML stitching, three model constants |
-| `scout/session.py` | In-memory transcript holder |
-| `keys_generate.py` | Key generator — production keys and TEST- prefixed test keys. Lives in project root so it deploys via git. |
-| `access/keys.txt` | Key store — not committed to git |
-| `templates/index.html` | Landing page + guide + conversation UI (three-state SPA) |
-| `templates/portrait.html` | Compass portrait display page with marker-based passage detection |
-| `tests/mock_transcript.json` | 8-exchange mock transcript for testing generation pipeline |
-| `deploy.sh` | VPS deployment script. Cleans session files, pulls from GitHub, installs dependencies, restarts Scout. Lives in repo root. |
-| `generate_keys.bat` | Windows batch file. SSHs into VPS, generates 10 production keys, downloads updated keys.txt to local machine. |
-| `generate_test_keys.bat` | Windows batch file. SSHs into VPS, generates 5 test keys, downloads updated keys.txt to local machine. |
+| `CLAUDE.md` | Project instructions, constraints, review gates, STATUS.md rules for CC [2026-04-06] |
+| `STATUS.md` | Single source of truth for project status [2026-04-06] |
+| `.gitignore` | Excludes .env, venv, __pycache__, access/keys.txt, sessions/, run_local.bat [2026-04-06] |
+| `.env` | ANTHROPIC_API_KEY only [2026-04-06] |
+| `requirements.txt` | anthropic, flask, python-dotenv, pyyaml, flask-session, weasyprint [MODIFIED 2026-04-09: added weasyprint] |
+| `app.py` | Flask app — all routes, auth, per-key sessions, test mode, PDF generation [MODIFIED 2026-04-09] |
+| `run_session.py` | Terminal entry point for brain-only mode [2026-04-06] |
+| `scout/__init__.py` | Package marker [2026-04-06] |
+| `scout/prompt.py` | Scout system prompt — ~1,370 lines, the complete interviewer brain [MODIFIED 2026-04-09] |
+| `scout/chronicler.py` | Chronicler prompt — portrait writing with SHADOW/SURPRISE markers, final name [MODIFIED 2026-04-09] |
+| `scout/test_prompt.py` | Test mode prompt — 3-exchange with settling instruction [MODIFIED 2026-04-09] |
+| `scout/engine.py` | Context window engine — API calls, YAML stitching, three model constants [2026-04-06] |
+| `scout/session.py` | In-memory transcript holder [2026-04-06] |
+| `keys_generate.py` | Key generator — production and TEST- keys [2026-04-07] |
+| `access/keys.txt` | Key store — VPS only, never in git [2026-04-06] |
+| `templates/index.html` | Landing + guide + conversation UI (three-state SPA) [MODIFIED 2026-04-09] |
+| `templates/portrait.html` | Compass portrait display page [2026-04-07] |
+| `templates/portrait_pdf.html` | WeasyPrint A4 PDF template [MODIFIED 2026-04-09] |
+| `tests/mock_transcript.json` | 8-exchange mock transcript for testing [2026-04-06] |
+| `deploy.sh` | VPS deployment script [2026-04-07] |
+| `generate_keys.bat` | Windows batch — generates 10 production keys on VPS [2026-04-07] |
+| `generate_test_keys.bat` | Windows batch — generates 5 test keys on VPS [2026-04-07] |
+| `boss_portrait.html` | Static rendered portrait for Boss (first real user) [2026-04-08] |
+| `SCOUT_MASTER_HANDOVER.md` | Master handover document for new Claude sessions [2026-04-08] |
