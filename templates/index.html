@@ -745,8 +745,8 @@ class TypeWriter {
           break;
         }
       } else {
-        // Look for ```yaml opening fence
-        const openIdx = combined.indexOf("```yaml", i);
+        // Look for any ``` opening fence (with or without language tag)
+        const openIdx = combined.indexOf("```", i);
         // Look for standalone --- YAML separator (newline before and after)
         const sepIdx = combined.indexOf("\n---\n", i);
 
@@ -756,7 +756,10 @@ class TypeWriter {
 
         if (openIdx !== -1 && (sepIdx === -1 || openIdx < sepIdx)) {
           nextDrop = openIdx;
-          dropLen = 7; // length of "```yaml"
+          // Skip ``` plus any language tag up to newline
+          let fenceEnd = openIdx + 3;
+          while (fenceEnd < combined.length && combined[fenceEnd] !== "\n") fenceEnd++;
+          dropLen = fenceEnd - openIdx;
           enterBlock = true;
         } else if (sepIdx !== -1) {
           nextDrop = sepIdx;
