@@ -426,4 +426,12 @@ templated. The pseudonym is the last word
 the portrait speaks — or close to it.
 It lands because it has been withheld
 until the moment it matters most.
+
+The pseudonym used in the final sentence must be
+exactly the pseudonym provided in the session
+metadata. Never invent, guess, or substitute a
+different name. If the pseudonym is "Anonymous" —
+use "Anonymous". Do not replace it with a name
+that feels more personal or poetic. The pseudonym
+belongs to the person, not to you.
 """

@@ -117,6 +117,7 @@ Scout is a single-session AI interview engine that guides one person through sev
 35. **Three surgical fixes** — Flask secret key from FLASK_SECRET_KEY env var with dev fallback. Case D closing line: removed "Of course." (banned phrase). Chronicler "Fix 3" label renamed to "The final exchange". [2026-04-10]
 36. **No markdown in conversation + extended fence filter** — New Hard Rule: Scout must never use backtick fences, pipes, tables, bullets, or headers in conversational responses. TypeWriter filter extended to catch all ``` openings (not just ```yaml), skips language tag, strips entire block. Fixes visible backtick and pipe rendering in production. [2026-04-10]
 37. **Closing line completeness + parsing pass YAML-only** — Closing line must be delivered as complete two-sentence sequence in single response, never split or modified — system trigger, any variation breaks delivery. Parsing pass produces structured YAML only — no prose, no explanations, no meta-commentary once parsing begins. [2026-04-10]
+38. **Pseudonym collection + Chronicler pseudonym fix** — Scout asks for pseudonym in Arrival section before Layer 1. Server-side detection in /chat (exchanges 2–7, under 30 chars, strips common prefixes, checks decline signals). Chronicler receives pseudonym explicitly in user message — never invents or substitutes. chronicler.py rule added: use exact pseudonym, "Anonymous" means "Anonymous". portrait.html Save Portrait button changed to Download Portrait linking to /download-portrait. generate_portrait() accepts pseudonym parameter. [SUPERSEDED 2026-04-10: "No pseudonym collection" known gap resolved] [2026-04-10]
 
 ---
 
@@ -131,7 +132,7 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 ## Known Gaps
 
-- **IMPORTANT** — No pseudonym collection. Portrait page defaults to "Anonymous". Need to ask user for pseudonym during or after interview. [2026-04-06]
+- [SUPERSEDED 2026-04-10: "No pseudonym collection" — Scout now asks for pseudonym in Arrival, detected server-side, passed explicitly to Chronicler]
 - **IMPORTANT** — YAML stitching sometimes double-indents already-indented content. [2026-04-06]
 - [SUPERSEDED 2026-04-09: "Gunicorn needed" — Gunicorn 25.3.0 installed with 3 workers]
 - [SUPERSEDED 2026-04-09: "No rate limiting on /auth" — Flask-Limiter added, 5/min/IP on /auth]

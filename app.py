@@ -273,6 +273,24 @@ def chat():
 
     # Normal turn
     sess.add_user(message)
+
+    # Pseudonym detection — during arrival phase (exchanges 2-4)
+    exchange_count = len(sess.transcript) // 2
+    if (flask_session.get("pseudonym", "Anonymous") == "Anonymous"
+            and 2 <= exchange_count <= 7
+            and len(message) < 30):
+        candidate = message.strip()
+        # Strip common phrasing
+        for prefix in ["call me ", "my name is ", "use ", "i'll be ", "i am ", "im ", "i'm "]:
+            if candidate.lower().startswith(prefix):
+                candidate = candidate[len(prefix):].strip()
+                break
+        # Check for decline signals
+        decline_signals = ["anonymous", "i don't mind", "doesn't matter",
+                          "no preference", "don't care", "anything", "whatever"]
+        if not any(s in candidate.lower() for s in decline_signals) and candidate:
+            flask_session["pseudonym"] = candidate.strip(' "\'.,')
+
     collected: list[str] = []
 
     def generate():
@@ -323,7 +341,8 @@ def generate_spine():
 
     gen_model = TEST_MODEL if _is_test_key(gen_key) else None
     yaml_doc = generate_yaml_sections(client, sess.transcript, model=gen_model)
-    portrait_text = generate_portrait(client, sess.transcript, model=gen_model)
+    pseudonym = flask_session.get("pseudonym", "Anonymous")
+    portrait_text = generate_portrait(client, sess.transcript, model=gen_model, pseudonym=pseudonym)
 
     # Save YAML to filesystem
     date_str = datetime.now().strftime("%Y-%m-%d")

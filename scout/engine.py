@@ -43,11 +43,12 @@ def generate_portrait(
     client: anthropic.Anthropic,
     transcript: list[dict[str, str]],
     model: str | None = None,
+    pseudonym: str = "Anonymous",
 ) -> str:
     """Make a separate API call using the Chronicler prompt to write the portrait.
 
-    Sends the full transcript as a single user message. Returns the
-    complete portrait prose.
+    Sends the full transcript as a single user message with the
+    pseudonym explicitly stated. Returns the complete portrait prose.
     """
     from scout.chronicler import CHRONICLER_PROMPT
 
@@ -67,8 +68,11 @@ def generate_portrait(
             {
                 "role": "user",
                 "content": (
-                    "Here is the complete Scout session transcript. "
-                    "Write the portrait.\n\n" + transcript_text
+                    f"The person's pseudonym for this session is: {pseudonym}. "
+                    f"This is the exact name to use in the final sentence — "
+                    f"do not invent or substitute any other name.\n\n"
+                    f"Here is the complete Scout session transcript. "
+                    f"Write the portrait.\n\n{transcript_text}"
                 ),
             }
         ],
