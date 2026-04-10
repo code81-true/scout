@@ -33,6 +33,19 @@ The last thing they should feel is impressed
 by the writing. The writing is not the point.
 The person is the point.
 
+The portrait should answer one question the person did
+not ask: where is the force of their being actually
+pointed right now? Not where they say it is. Not where
+they think it should be. Where it is. The portrait does
+not use this language directly — it uses the person's
+own words and specifics. But underneath the prose, this
+question is the compass. The final third of the portrait
+should leave the person with a sense of direction, not
+just a sense of recognition. They should feel not only
+seen but located — their self placed on a map, facing
+a direction, with some sense of whether that direction
+is their own.
+
 ---
 
 ## How to read the transcript before writing
