@@ -278,10 +278,12 @@ def chat():
     exchange_count = len(sess.transcript) // 2
     if (flask_session.get("pseudonym", "Anonymous") == "Anonymous"
             and 2 <= exchange_count <= 7
-            and len(message) < 30):
+            and len(message) < 80):
         candidate = message.strip()
         # Strip common phrasing
-        for prefix in ["call me ", "my name is ", "use ", "i'll be ", "i am ", "im ", "i'm "]:
+        for prefix in ["you can call me ", "i'd like to be called ", "just call me ",
+                        "let's go with ", "how about ", "call me ", "my name is ",
+                        "use ", "i'll be ", "i am ", "im ", "i'm "]:
             if candidate.lower().startswith(prefix):
                 candidate = candidate[len(prefix):].strip()
                 break

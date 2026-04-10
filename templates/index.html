@@ -1029,6 +1029,11 @@ async function triggerGenerate(hasDepth) {
   </svg>`;
   msgEl.appendChild(compassDiv);
 
+  const staticMsg = document.createElement("p");
+  staticMsg.textContent = "Your spine and portrait are being composed. The depth of the session determines the time.";
+  staticMsg.style.cssText = "font-family:'Cormorant Garant',serif;font-style:italic;font-size:14px;color:#8A7A6A;text-align:center;margin:12px auto;max-width:360px;";
+  msgEl.appendChild(staticMsg);
+
   const genMsg = document.createElement("div");
   genMsg.className = "generating-message";
   genMsg.textContent = messages[0];
