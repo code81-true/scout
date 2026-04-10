@@ -24,7 +24,7 @@ from scout.engine import (
 from scout.session import Session
 
 app = Flask(__name__)
-app.secret_key = "scout-session-key"
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "scout-session-key-dev")
 
 TRANSCRIPT_DIR = os.getenv("TRANSCRIPT_DIR", "sessions/transcripts")
 FLASK_SESSION_DIR = os.getenv("FLASK_SESSION_DIR", "sessions/flask_sessions")

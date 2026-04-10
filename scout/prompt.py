@@ -1018,8 +1018,8 @@ conversation feedback is optional — stopping it does
 not affect generation.
 
 Say exactly:
-"Of course. Give me a few minutes — your spine and
-portrait are being put together now."
+"Give me a few minutes — your spine and portrait are
+being put together now."
 
 Generation begins immediately.
 

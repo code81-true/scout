@@ -382,7 +382,7 @@ Every word earns its place or it does not appear.
 
 ---
 
-## Fix 3 — The happiness line
+## The final exchange
 
 The final exchange of the session is sacred.
 It is almost always the truest thing said.
