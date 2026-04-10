@@ -722,6 +722,7 @@ class TypeWriter {
     this.done = false;
     this.draining = false;
     this.inYamlBlock = false;
+    this.inPlainFence = false;
     this.onFinish = null;
   }
 
@@ -732,55 +733,75 @@ class TypeWriter {
 
     while (i < combined.length) {
       if (this.inYamlBlock) {
-        // Look for closing fence
+        // Path A — inside ```yaml block: drop all content
         const closeIdx = combined.indexOf("```", i);
         if (closeIdx !== -1) {
-          // Skip everything up to and including closing fence
           i = closeIdx + 3;
-          // Skip trailing newline after fence
           if (i < combined.length && combined[i] === "\n") i++;
           this.inYamlBlock = false;
         } else {
-          // Still inside block, drop rest
+          break;
+        }
+      } else if (this.inPlainFence) {
+        // Path B — inside plain ``` block: keep content, strip closing fence
+        const closeIdx = combined.indexOf("```", i);
+        if (closeIdx !== -1) {
+          // Keep everything between fences
+          cleaned += combined.substring(i, closeIdx);
+          i = closeIdx + 3;
+          if (i < combined.length && combined[i] === "\n") i++;
+          this.inPlainFence = false;
+        } else {
+          // Fence not closed yet — keep content so far
+          cleaned += combined.substring(i);
           break;
         }
       } else {
-        // Look for any ``` opening fence (with or without language tag)
-        const openIdx = combined.indexOf("```", i);
-        // Look for standalone --- YAML separator (newline before and after)
+        // Look for ```yaml opening fence (Path A trigger)
+        const yamlIdx = combined.indexOf("```yaml", i);
+        // Look for any ``` opening fence (Path B trigger)
+        const plainIdx = combined.indexOf("```", i);
+        // Look for standalone --- YAML separator
         const sepIdx = combined.indexOf("\n---\n", i);
 
-        let nextDrop = -1;
-        let dropLen = 0;
-        let enterBlock = false;
+        // Determine which marker comes first
+        let nextAction = null;
+        let nextPos = combined.length;
 
-        if (openIdx !== -1 && (sepIdx === -1 || openIdx < sepIdx)) {
-          nextDrop = openIdx;
-          // Skip ``` plus any language tag up to newline
-          let fenceEnd = openIdx + 3;
-          while (fenceEnd < combined.length && combined[fenceEnd] !== "\n") fenceEnd++;
-          dropLen = fenceEnd - openIdx;
-          enterBlock = true;
-        } else if (sepIdx !== -1) {
-          nextDrop = sepIdx;
-          dropLen = 5; // length of "\n---\n"
-          enterBlock = false;
+        if (yamlIdx !== -1 && yamlIdx < nextPos) {
+          nextAction = "yaml";
+          nextPos = yamlIdx;
+        }
+        // Plain fence only if it's not the yaml fence
+        if (plainIdx !== -1 && plainIdx < nextPos && plainIdx !== yamlIdx) {
+          nextAction = "plain";
+          nextPos = plainIdx;
+        }
+        if (sepIdx !== -1 && sepIdx < nextPos) {
+          nextAction = "sep";
+          nextPos = sepIdx;
         }
 
-        if (nextDrop === -1) {
-          // No markers — keep rest
+        if (!nextAction) {
           cleaned += combined.substring(i);
           break;
         }
 
         // Keep text before the marker
-        cleaned += combined.substring(i, nextDrop);
-        i = nextDrop + dropLen;
+        cleaned += combined.substring(i, nextPos);
 
-        if (enterBlock) {
-          this.inYamlBlock = true;
-          // Skip newline after opening fence
+        if (nextAction === "yaml") {
+          i = nextPos + 7; // skip "```yaml"
           if (i < combined.length && combined[i] === "\n") i++;
+          this.inYamlBlock = true;
+        } else if (nextAction === "plain") {
+          // Skip opening ``` line (``` plus anything to newline)
+          i = nextPos + 3;
+          while (i < combined.length && combined[i] !== "\n") i++;
+          if (i < combined.length && combined[i] === "\n") i++;
+          this.inPlainFence = true;
+        } else if (nextAction === "sep") {
+          i = nextPos + 5; // skip "\n---\n"
         }
       }
     }
