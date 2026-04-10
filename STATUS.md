@@ -113,6 +113,7 @@ Scout is a single-session AI interview engine that guides one person through sev
 31. **Strip portrait markdown headers** — server-side stripping of # lines at save point. [2026-04-09]
 32. **WeasyPrint paragraph break fix** — break-inside: avoid + page-break-inside: avoid on div wrappers. [2026-04-09]
 33. **SSE generator flask_session write removed** — flask_session["session_depth"] = depth was inside streaming generator, caused RuntimeError under Gunicorn. Removed — depth already sent via SSE payload and computed independently by /generate route. [2026-04-09]
+34. **robots.txt + noindex meta** — static/robots.txt blocks all crawlers, /robots.txt route serves it, noindex nofollow meta tag on index.html. Scout is invitation-only — no search engine indexing. [2026-04-10]
 
 ---
 

@@ -129,6 +129,11 @@ def health():
     return {"status": "ok", "service": "scout"}, 200
 
 
+@app.route("/robots.txt")
+def robots():
+    return app.send_static_file("robots.txt")
+
+
 @app.route("/auth", methods=["POST"])
 @limiter.limit("5 per minute")
 def auth():
