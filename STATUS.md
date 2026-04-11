@@ -123,7 +123,9 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 40. **Pseudonym detection fix + compass waiting message** — Pseudonym detection window widened from len < 30 to len < 80. Added prefix patterns: "you can call me", "i'd like to be called", "just call me", "let's go with", "how about". Longer prefixes listed first for correct matching. Static context message added below compass during generation: "Your spine and portrait are being composed." in muted gold italic. [MODIFIED 2026-04-10: fixes pseudonym not capturing in production]
 
-41. **Pseudonym collection + Chronicler pseudonym fix** — Scout asks for pseudonym in Arrival section before Layer 1. Server-side detection in /chat (exchanges 2–7, under 30 chars, strips common prefixes, checks decline signals). Chronicler receives pseudonym explicitly in user message — never invents or substitutes. chronicler.py rule added: use exact pseudonym, "Anonymous" means "Anonymous". portrait.html Save Portrait button changed to Download Portrait linking to /download-portrait. generate_portrait() accepts pseudonym parameter. [SUPERSEDED 2026-04-10: "No pseudonym collection" known gap resolved] [2026-04-10]
+41. **Prompt caching on Scout system prompt** — cache_control ephemeral applied to three API call sites: send_message(), generate_yaml_sections() (4 calls in loop), send_message_stream(). Chronicler generate_portrait() excluded — different prompt per session. Reduces input token costs on repeated calls within same session. [2026-04-11]
+
+42. **Pseudonym collection + Chronicler pseudonym fix** — Scout asks for pseudonym in Arrival section before Layer 1. Server-side detection in /chat (exchanges 2–7, under 30 chars, strips common prefixes, checks decline signals). Chronicler receives pseudonym explicitly in user message — never invents or substitutes. chronicler.py rule added: use exact pseudonym, "Anonymous" means "Anonymous". portrait.html Save Portrait button changed to Download Portrait linking to /download-portrait. generate_portrait() accepts pseudonym parameter. [SUPERSEDED 2026-04-10: "No pseudonym collection" known gap resolved] [2026-04-10]
 
 ---
 

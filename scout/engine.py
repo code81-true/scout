@@ -32,7 +32,7 @@ def send_message(
         model=MODEL,
         max_tokens=MAX_TOKENS,
         temperature=TEMPERATURE,
-        system=SYSTEM_PROMPT,
+        system=[{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
         messages=transcript,
     )
     # Extract text from the first content block
@@ -121,7 +121,7 @@ def generate_yaml_sections(
             model=model or MODEL,
             max_tokens=4000,
             temperature=TEMPERATURE,
-            system=SYSTEM_PROMPT,
+            system=[{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
             messages=messages,
         )
         yaml_parts.append(response.content[0].text)
@@ -185,7 +185,7 @@ def send_message_stream(
         model=model or MODEL,
         max_tokens=MAX_TOKENS,
         temperature=TEMPERATURE,
-        system=system_prompt or SYSTEM_PROMPT,
+        system=[{"type": "text", "text": system_prompt or SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
         messages=transcript,
     ) as stream:
         for text in stream.text_stream:
