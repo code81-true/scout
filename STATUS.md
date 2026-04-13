@@ -125,7 +125,9 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 41. **Prompt caching on Scout system prompt** — cache_control ephemeral applied to three API call sites: send_message(), generate_yaml_sections() (4 calls in loop), send_message_stream(). Chronicler generate_portrait() excluded — different prompt per session. Reduces input token costs on repeated calls within same session. [2026-04-11]
 
-42. **Pseudonym collection + Chronicler pseudonym fix** — Scout asks for pseudonym in Arrival section before Layer 1. Server-side detection in /chat (exchanges 2–7, under 30 chars, strips common prefixes, checks decline signals). Chronicler receives pseudonym explicitly in user message — never invents or substitutes. chronicler.py rule added: use exact pseudonym, "Anonymous" means "Anonymous". portrait.html Save Portrait button changed to Download Portrait linking to /download-portrait. generate_portrait() accepts pseudonym parameter. [SUPERSEDED 2026-04-10: "No pseudonym collection" known gap resolved] [2026-04-10]
+42. **No-portrait-in-stream + early-stop handling** — Two new Hard Rules: Scout must never generate portrait content, Chronicler-style prose, or anything resembling a portrait in the chat stream. If person asks to stop or requests portrait, deliver settling transition line immediately — no argument, no summary, no inline generation. Root cause: Scout was generating portrait prose in chat when user requested early stop. Fix is prompt-only, no code changes. [2026-04-13]
+
+43. **Pseudonym collection + Chronicler pseudonym fix** — Scout asks for pseudonym in Arrival section before Layer 1. Server-side detection in /chat (exchanges 2–7, under 30 chars, strips common prefixes, checks decline signals). Chronicler receives pseudonym explicitly in user message — never invents or substitutes. chronicler.py rule added: use exact pseudonym, "Anonymous" means "Anonymous". portrait.html Save Portrait button changed to Download Portrait linking to /download-portrait. generate_portrait() accepts pseudonym parameter. [SUPERSEDED 2026-04-10: "No pseudonym collection" known gap resolved] [2026-04-10]
 
 ---
 
