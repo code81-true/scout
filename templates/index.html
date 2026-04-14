@@ -542,6 +542,13 @@
   <div class="colophon-landing">By invitation only</div>
 </div>
 
+<!-- ====== STATE — Maintenance ====== -->
+<div id="maintenance" class="state page-landing">
+  <div class="wordmark-wrap"><div class="wordmark">Scout</div></div>
+  <p id="maintenance-msg" style="font-family:'Cormorant Garant',serif;font-style:italic;font-size:17px;color:#B8965A;text-align:center;max-width:420px;line-height:1.8;margin-top:32px;opacity:0.7;"></p>
+  <p id="maintenance-return" style="font-family:'Cormorant Garant',serif;font-style:italic;font-size:15px;color:#B8965A;text-align:center;max-width:420px;line-height:1.8;margin-top:8px;opacity:0.5;"></p>
+</div>
+
 <!-- ====== STATE 2 — Guide ====== -->
 <div id="guide" class="state">
   <a class="guide-back" id="guide-back">&larr; Back</a>
@@ -593,6 +600,21 @@ function showState(id) {
 // Guide link
 document.getElementById("guide-link").addEventListener("click", () => showState("guide"));
 document.getElementById("guide-back").addEventListener("click", () => showState("landing"));
+
+// Maintenance check on page load
+(async () => {
+  try {
+    const resp = await fetch("/status");
+    const data = await resp.json();
+    if (data.maintenance) {
+      document.getElementById("maintenance-msg").textContent = data.message || "Scout is briefly offline. Back shortly.";
+      if (data.return_minutes && data.return_minutes > 0) {
+        document.getElementById("maintenance-return").textContent = "We will be back in less than " + data.return_minutes + " minutes.";
+      }
+      showState("maintenance");
+    }
+  } catch (e) {}
+})();
 
 // ========================================
 // Auth
@@ -693,6 +715,7 @@ let locked = true;
 let sessionEnded = false;
 let lastSessionDepth = false;
 let fallbackTimer = null;
+let generateCalled = false;
 
 // --- Typing delay logic (client-side) ---
 
@@ -928,6 +951,9 @@ async function sendMessage(message) {
 // --- Post-session generation ---
 
 async function triggerGenerate(hasDepth) {
+  if (generateCalled) return;
+  generateCalled = true;
+
   // If no depth — show too-early message instead of generating
   if (hasDepth === false) {
     const earlyEl = addMessage("scout");
@@ -1044,6 +1070,7 @@ async function triggerGenerate(hasDepth) {
   setTimeout(() => {
     compassDiv.classList.add("visible");
     genMsg.classList.add("visible");
+    compassDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, 50);
 
   // Rotate messages every 18 seconds

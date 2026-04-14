@@ -134,10 +134,28 @@ def robots():
     return app.send_static_file("robots.txt")
 
 
+@app.route("/status", methods=["GET"])
+def status():
+    maintenance = os.getenv("MAINTENANCE_MODE", "false").lower() == "true"
+    result = {"maintenance": maintenance}
+    if maintenance:
+        result["message"] = os.getenv("MAINTENANCE_MESSAGE", "Scout is briefly offline. Back shortly.")
+        try:
+            mins = int(os.getenv("MAINTENANCE_RETURN_MINUTES", "0"))
+        except ValueError:
+            mins = 0
+        if mins > 0:
+            result["return_minutes"] = mins
+    return result, 200
+
+
 @app.route("/auth", methods=["POST"])
 @limiter.limit("5 per minute")
 def auth():
     """Authenticate a single-use key."""
+    if os.getenv("MAINTENANCE_MODE", "false").lower() == "true":
+        return {"error": "maintenance", "message": "Scout is briefly offline. Back shortly."}, 503
+
     data = request.get_json()
     key = data.get("key", "").strip().upper()
 

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import datetime
+
 import anthropic
 
 from scout.prompt import SYSTEM_PROMPT
@@ -93,9 +95,11 @@ def generate_yaml_sections(
     """
     section_directives = [
         (
-            "Generate only the meta, purpose, and hats sections of the "
-            "spine.yaml from this transcript. Use the exact schema "
-            "defined in your instructions."
+            f"Generate only the meta, purpose, and hats sections of the "
+            f"spine.yaml from this transcript. Use the exact schema "
+            f"defined in your instructions. "
+            f"Today's date is {datetime.date.today().isoformat()} — "
+            f"use this as the session_date."
         ),
         (
             "Generate only the values and hard_limits sections of the "

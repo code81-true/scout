@@ -20,7 +20,9 @@ No frontend. No database. No auth. Just Scout interviewing.
 scout/
 ├── CLAUDE.md
 ├── README.md
-├── .env                  # ANTHROPIC_API_KEY only
+├── .env                  # ANTHROPIC_API_KEY, FLASK_SECRET_KEY,
+│                         # MAINTENANCE_MODE, MAINTENANCE_MESSAGE,
+│                         # MAINTENANCE_RETURN_MINUTES
 ├── requirements.txt
 ├── scout/
 │   ├── __init__.py
