@@ -125,7 +125,9 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 41. **Prompt caching on Scout system prompt** — cache_control ephemeral applied to three API call sites: send_message(), generate_yaml_sections() (4 calls in loop), send_message_stream(). Chronicler generate_portrait() excluded — different prompt per session. Reduces input token costs on repeated calls within same session. [2026-04-11]
 
-42. **Maintenance mode** — /status route returns maintenance state + message + return_minutes from env vars. /auth returns 503 during maintenance. Landing page checks /status on load, switches to maintenance state with custom message and return time. Env vars: MAINTENANCE_MODE, MAINTENANCE_MESSAGE, MAINTENANCE_RETURN_MINUTES. Activated via sed on VPS .env + systemctl restart. [2026-04-14]
+42. **Pre-deploy checklist** — Mandatory 8-step checklist added to CLAUDE.md. Covers: active session check, health check, maintenance activation, deploy, env var addition, smoke test, maintenance deactivation. Includes one-block copy-paste version for Steps 3–8. Rollback instructions included. [2026-04-14]
+
+43. **Maintenance mode** — /status route returns maintenance state + message + return_minutes from env vars. /auth returns 503 during maintenance. Landing page checks /status on load, switches to maintenance state with custom message and return time. Env vars: MAINTENANCE_MODE, MAINTENANCE_MESSAGE, MAINTENANCE_RETURN_MINUTES. Activated via sed on VPS .env + systemctl restart. [2026-04-14]
 
 43. **Three production bug fixes** — Bug 1: Chronicler pseudonym hard constraint at top of prompt — use exactly as given, never substitute. Bug 2: session_date injected via datetime.date.today().isoformat() in first YAML directive — model no longer guesses date. Bug 3: generateCalled guard prevents double triggerGenerate() calls, scrollIntoView ensures compass visibility. [2026-04-14]
 
