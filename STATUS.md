@@ -125,7 +125,9 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 41. **Prompt caching on Scout system prompt** — cache_control ephemeral applied to three API call sites: send_message(), generate_yaml_sections() (4 calls in loop), send_message_stream(). Chronicler generate_portrait() excluded — different prompt per session. Reduces input token costs on repeated calls within same session. [2026-04-11]
 
-42. **Session dismissal fix** — Case C rewritten: natural close under 5 exchanges asks "would you like to go further or shall I put together what we have" instead of dismissing. Case F rewritten: explicit request at any depth always generates, no exceptions. _has_depth() replaced with _can_generate() — simple 10-message threshold, no keyword scanning. Hard Rule updated: Scout never decides a session is too short, never dismisses, never says "we did not get far enough." Chronicler works with whatever material exists. [2026-04-14]
+42. **Maintenance page layout fix** — Maintenance state div: added flex-direction column, align-items/justify-content center, padding. Message: 18px Cormorant Garant 300 italic gold, no opacity override. Return time: 14px muted #6A6560. Generous spacing, max-width 480px. Matches landing page register. [2026-04-14]
+
+43. **Session dismissal fix** — Case C rewritten: natural close under 5 exchanges asks "would you like to go further or shall I put together what we have" instead of dismissing. Case F rewritten: explicit request at any depth always generates, no exceptions. _has_depth() replaced with _can_generate() — simple 10-message threshold, no keyword scanning. Hard Rule updated: Scout never decides a session is too short, never dismisses, never says "we did not get far enough." Chronicler works with whatever material exists. [2026-04-14]
 
 43. **Pre-deploy checklist** — Mandatory 8-step checklist added to CLAUDE.md. Covers: active session check, health check, maintenance activation, deploy, env var addition, smoke test, maintenance deactivation. Includes one-block copy-paste version for Steps 3–8. Rollback instructions included. [2026-04-14]
 
