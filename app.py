@@ -3,17 +3,35 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
+from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, render_template, request, Response, session as flask_session
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_session import Session as FlaskSessionExt
 
+from scout.database import (
+    cleanup_session,
+    create_session,
+    delete_transcript,
+    get_closing_duration,
+    get_pseudonym,
+    get_session_state,
+    get_stale_closing_sessions,
+    init_db,
+    is_started,
+    load_transcript,
+    mark_started,
+    save_transcript,
+    set_pseudonym,
+    transition_state,
+)
 from scout.engine import (
     TEST_MODEL,
     create_client,
@@ -23,6 +41,8 @@ from scout.engine import (
     send_message_stream,
 )
 from scout.session import Session
+
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "scout-session-key-dev")
@@ -40,61 +60,63 @@ app.config["SESSION_PERMANENT"] = False
 FlaskSessionExt(app)
 limiter = Limiter(get_remote_address, app=app, default_limits=[])
 
+# Initialise database
+init_db()
+
+# Anthropic client
+client = create_client()
+
+KEYS_PATH = os.path.join(os.path.dirname(__file__), "access", "keys.txt")
+
 
 @app.errorhandler(429)
 def ratelimit_handler(e):
     return {"error": "too many attempts, please wait"}, 429
 
 
-# Per-key session isolation
-client = create_client()
-_sessions: dict[str, Session] = {}
-_started_keys: set[str] = set()
+# --- Background scheduler: closing timeout ---
+
+def _check_closing_timeouts():
+    """Transition stale closing sessions to generating."""
+    stale = get_stale_closing_sessions(timeout_seconds=90.0)
+    for key in stale:
+        logger.info("Closing timeout: %s has been closing for >90s, transitioning to generating", key)
+        transition_state(key, "generating")
 
 
-def get_session(key: str) -> Session:
-    """Get or create a Session for the given key."""
-    if key not in _sessions:
-        _sessions[key] = Session()
-    return _sessions[key]
+scheduler = BackgroundScheduler(daemon=True)
+scheduler.add_job(_check_closing_timeouts, "interval", seconds=30)
+try:
+    if not scheduler.running:
+        scheduler.start()
+except Exception:
+    pass
 
-KEYS_PATH = os.path.join(os.path.dirname(__file__), "access", "keys.txt")
 
+# --- Key file helpers ---
 
 def _read_keys() -> list[str]:
-    """Read keys.txt lines."""
     with open(KEYS_PATH, encoding="utf-8") as f:
         return [line.strip() for line in f if line.strip()]
 
 
 def _write_keys(lines: list[str]) -> None:
-    """Write keys.txt lines."""
     with open(KEYS_PATH, "w", encoding="utf-8") as f:
         for line in lines:
             f.write(line + "\n")
 
 
 def _is_test_key(key: str) -> bool:
-    """Check if a key is a test key."""
     return str(key).upper().startswith("TEST")
 
 
-def _can_generate(transcript: list[dict]) -> bool:
-    """Check if session has minimum exchanges for generation.
-
-    Requires 5+ total exchanges (10+ messages) OR fewer if
-    the user explicitly requested to stop (handled by the
-    settling_complete trigger which bypasses this check).
-    """
-    return len(transcript) >= 10
-
-
 def _require_auth():
-    """Return error response if session is not authenticated, else None."""
     if not flask_session.get("scout_key"):
         return {"error": "unauthorised"}, 401
     return None
 
+
+# --- Routes ---
 
 @app.route("/")
 def index():
@@ -144,64 +166,70 @@ def auth():
         parts = line.split(":")
         if len(parts) != 2:
             continue
-        k, status = parts[0], parts[1]
+        k, key_status = parts[0], parts[1]
         if k == key:
-            if status == "used":
+            if key_status == "used":
                 return {"success": False, "reason": "expired"}
-            transcript_path = os.path.join(TRANSCRIPT_DIR, f"{key}_transcript.json")
-            if status == "active":
-                # Active key — only allow resume if transcript exists
-                if not os.path.exists(transcript_path):
+
+            if key_status == "active":
+                # Active key — check for existing session in DB
+                db_session = get_session_state(key)
+                if db_session is None:
                     return {"success": False, "reason": "invalid"}
-                # Resume: load transcript into per-key session
+
+                # Resume: load transcript from DB
                 flask_session["scout_key"] = key
-                restored = Session()
-                with open(transcript_path, "r", encoding="utf-8") as f:
-                    restored.transcript = json.load(f)
-                _sessions[key] = restored
-                _started_keys.add(key)
-                flask_session["resumed"] = True
-                last_assistant = next(
-                    (m["content"] for m in reversed(restored.transcript)
-                     if m["role"] == "assistant"), ""
-                )
-                flask_session["last_topic"] = last_assistant[:120]
-                # Restore portrait file if it exists on disk
+                flask_session["pseudonym"] = get_pseudonym(key)
+
+                transcript = load_transcript(key)
+                if transcript:
+                    flask_session["resumed"] = True
+                    last_assistant = next(
+                        (m["content"] for m in reversed(transcript)
+                         if m["role"] == "assistant"), ""
+                    )
+                    flask_session["last_topic"] = last_assistant[:120]
+                else:
+                    flask_session["resumed"] = False
+                    flask_session["last_topic"] = ""
+
+                # Restore portrait/constitution files if they exist on disk
                 import glob
                 portrait_matches = sorted(
                     glob.glob(os.path.join(SPINE_DIR, f"{key}_*_portrait.txt"))
                 )
                 if portrait_matches:
-                    portrait_path = portrait_matches[-1]
-                    portrait_filename = os.path.basename(portrait_path)
+                    portrait_filename = os.path.basename(portrait_matches[-1])
                     flask_session["portrait_file"] = portrait_filename
-                    # Parse date from filename: KEY_YYYY-MM-DD_portrait.txt
-                    parts = portrait_filename.replace("_portrait.txt", "").split("_", 1)
-                    if len(parts) == 2:
-                        flask_session["date"] = parts[1]
+                    fname_parts = portrait_filename.replace("_portrait.txt", "").split("_", 1)
+                    if len(fname_parts) == 2:
+                        flask_session["date"] = fname_parts[1]
                     flask_session["user_id"] = key
-                # Restore constitution file if it exists on disk
+
                 constitution_matches = sorted(
                     glob.glob(os.path.join(SPINE_DIR, f"{key}_*_constitution.txt"))
                 )
                 if constitution_matches:
                     flask_session["constitution_file"] = os.path.basename(constitution_matches[-1])
-                return {"success": True}
+
+                return {"success": True, "session_state": db_session["state"]}
+
             # Unused key — fresh session
             lines[i] = f"{k}:active"
             _write_keys(lines)
             flask_session["scout_key"] = key
-            _sessions[key] = Session()
+            flask_session["pseudonym"] = "Anonymous"
             flask_session["resumed"] = False
             flask_session["last_topic"] = ""
-            return {"success": True}
+            create_session(key)
+            return {"success": True, "session_state": "interviewing"}
 
     return {"success": False, "reason": "invalid"}
 
 
 @app.route("/burn", methods=["POST"])
 def burn():
-    """Burn the active key after YAML delivery."""
+    """Burn the active key after delivery."""
     key = flask_session.get("scout_key")
     if not key:
         return {"error": "no active key"}, 400
@@ -214,16 +242,17 @@ def burn():
             _write_keys(lines)
             break
 
-    # Delete transcript file after burn
+    # Transition to delivered and clean up
+    transition_state(key, "delivered")
+    delete_transcript(key)
+    cleanup_session(key)
+
+    # Delete flat-file transcript backup
     transcript_path = os.path.join(TRANSCRIPT_DIR, f"{key}_transcript.json")
     try:
         os.remove(transcript_path)
     except FileNotFoundError:
         pass
-
-    # Clean up per-key session state
-    _sessions.pop(key, None)
-    _started_keys.discard(key)
 
     return {"success": True}
 
@@ -235,9 +264,18 @@ def chat():
         return auth_err
 
     active_key = flask_session.get("scout_key", "")
-    sess = get_session(active_key)
 
-    # Resume acknowledgement — inject system note into transcript
+    # Check session state — refuse if generating or delivered
+    db_state = get_session_state(active_key)
+    if db_state and db_state["state"] in ("generating", "delivered"):
+        return {"error": "session ended"}, 403
+
+    # Load transcript from database
+    transcript_data = load_transcript(active_key)
+    sess = Session()
+    sess.transcript = transcript_data
+
+    # Resume acknowledgement
     if flask_session.get("resumed"):
         last_topic = flask_session.get("last_topic", "where we left off")
         resume_note = (
@@ -251,10 +289,7 @@ def chat():
             f"is kept. We were talking about: {last_topic}. "
             f"Shall we continue?' Then continue the interview normally.]"
         )
-        sess.transcript.append({
-            "role": "user",
-            "content": resume_note
-        })
+        sess.transcript.append({"role": "user", "content": resume_note})
         flask_session["resumed"] = False
 
     data = request.get_json()
@@ -263,16 +298,16 @@ def chat():
     if not message:
         return {"error": "empty message"}, 400
 
-    # Resolve prompt and model based on key type
+    # Resolve prompt and model
     if _is_test_key(active_key):
         from scout.test_prompt import TEST_PROMPT
         stream_kwargs = {"system_prompt": TEST_PROMPT, "model": TEST_MODEL}
     else:
         stream_kwargs = {}
 
-    # First call: inject the synthetic "Begin." to get Scout's opening
-    if active_key not in _started_keys:
-        _started_keys.add(active_key)
+    # First call: inject synthetic "Begin."
+    if not is_started(active_key):
+        mark_started(active_key)
         sess.add_user("Begin.")
         opening_chunks: list[str] = []
 
@@ -282,31 +317,34 @@ def chat():
                 yield f"data: {json.dumps({'text': chunk})}\n\n"
             full_opening = "".join(opening_chunks)
             sess.add_assistant(full_opening)
-            yield f"data: {json.dumps({'done': True})}\n\n"
+            save_transcript(active_key, sess.transcript)
+            # Also save flat-file backup
+            _save_transcript_backup(active_key, sess.transcript)
+            yield f"data: {json.dumps({'done': True, 'session_state': 'interviewing'})}\n\n"
 
         return Response(generate_opening(), mimetype="text/event-stream")
 
     # Normal turn
     sess.add_user(message)
 
-    # Pseudonym detection — during arrival phase (exchanges 2-4)
+    # Pseudonym detection — during arrival phase
     exchange_count = len(sess.transcript) // 2
     if (flask_session.get("pseudonym", "Anonymous") == "Anonymous"
             and 2 <= exchange_count <= 7
             and len(message) < 80):
         candidate = message.strip()
-        # Strip common phrasing
         for prefix in ["you can call me ", "i'd like to be called ", "just call me ",
                         "let's go with ", "how about ", "call me ", "my name is ",
                         "use ", "i'll be ", "i am ", "im ", "i'm "]:
             if candidate.lower().startswith(prefix):
                 candidate = candidate[len(prefix):].strip()
                 break
-        # Check for decline signals
         decline_signals = ["anonymous", "i don't mind", "doesn't matter",
                           "no preference", "don't care", "anything", "whatever"]
         if not any(s in candidate.lower() for s in decline_signals) and candidate:
-            flask_session["pseudonym"] = candidate.strip(' "\'.,')
+            detected_pseudonym = candidate.strip(' "\'.,')
+            flask_session["pseudonym"] = detected_pseudonym
+            set_pseudonym(active_key, detected_pseudonym)
 
     collected: list[str] = []
 
@@ -316,33 +354,56 @@ def chat():
             yield f"data: {json.dumps({'text': chunk})}\n\n"
         full_reply = "".join(collected)
         sess.add_assistant(full_reply)
-        # Save transcript to disk after every exchange
-        transcript_path = os.path.join(TRANSCRIPT_DIR, f"{active_key}_transcript.json")
-        with open(transcript_path, "w", encoding="utf-8") as f:
-            json.dump(sess.transcript, f, ensure_ascii=False, indent=2)
-        # Interview complete — triggers settling conversation
-        complete = (
-            "Give me a moment" in full_reply
-            and len(sess.transcript) >= 40
-        )
-        # Test mode: YAML in response IS the completion signal
-        if _is_test_key(active_key) and not complete:
+
+        # Save transcript to database and flat-file backup
+        save_transcript(active_key, sess.transcript)
+        _save_transcript_backup(active_key, sess.transcript)
+
+        # State transition detection
+        current = get_session_state(active_key)
+        current_state = current["state"] if current else "interviewing"
+
+        if current_state == "interviewing":
+            # Check for interview completion
             complete = (
-                "```yaml" in full_reply
-                and "spine:" in full_reply
+                "Give me a moment" in full_reply
+                and len(sess.transcript) >= 40
             )
-        # Settling complete — triggers generation
-        settling = "I'll start now" in full_reply and "give me a few minutes" in full_reply
-        # Depth check
-        depth = _can_generate(sess.transcript)
-        yield f"data: {json.dumps({'done': True, 'session_complete': complete, 'settling_complete': settling, 'session_depth': depth})}\n\n"
+            if _is_test_key(active_key) and not complete:
+                complete = (
+                    "```yaml" in full_reply
+                    and "spine:" in full_reply
+                )
+            if complete:
+                transition_state(active_key, "closing")
+                current_state = "closing"
+
+        if current_state == "closing":
+            # Check for settling completion
+            settling = "I'll start now" in full_reply and "give me a few minutes" in full_reply
+            if settling:
+                transition_state(active_key, "generating")
+                current_state = "generating"
+            # 90-second timeout handled by background scheduler
+
+        yield f"data: {json.dumps({'done': True, 'session_state': current_state})}\n\n"
 
     return Response(generate(), mimetype="text/event-stream")
 
 
+def _save_transcript_backup(key: str, transcript: list[dict]) -> None:
+    """Save flat-file transcript backup alongside SQLite."""
+    try:
+        path = os.path.join(TRANSCRIPT_DIR, f"{key}_transcript.json")
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(transcript, f, ensure_ascii=False, indent=2)
+    except Exception as exc:
+        logger.error("Failed to save transcript backup for %s: %s", key, exc)
+
+
 @app.route("/generate", methods=["POST"])
 def generate_spine():
-    """Generate the spine.yaml and portrait after the interview ends."""
+    """Generate the spine.yaml, portrait, and constitution."""
     auth_err = _require_auth()
     if auth_err:
         return auth_err
@@ -350,37 +411,41 @@ def generate_spine():
     from datetime import datetime
 
     gen_key = flask_session.get("scout_key", "")
-    sess = get_session(gen_key)
 
-    # Depth check — skip for test keys
-    if not _is_test_key(gen_key) and not _can_generate(sess.transcript):
-        return {"error": "insufficient_depth"}, 422
+    # Check state — must be generating
+    db_state = get_session_state(gen_key)
+    if not db_state or db_state["state"] != "generating":
+        return {"error": "not ready for generation"}, 403
+
+    # Load transcript from database
+    transcript = load_transcript(gen_key)
+    if not transcript:
+        return {"error": "no transcript found"}, 404
 
     gen_model = TEST_MODEL if _is_test_key(gen_key) else None
-    yaml_doc = generate_yaml_sections(client, sess.transcript, model=gen_model)
-    pseudonym = flask_session.get("pseudonym", "Anonymous")
-    portrait_text = generate_portrait(client, sess.transcript, model=gen_model, pseudonym=pseudonym)
+    yaml_doc = generate_yaml_sections(client, transcript, model=gen_model)
+    pseudonym = flask_session.get("pseudonym", get_pseudonym(gen_key))
+    portrait_text = generate_portrait(client, transcript, model=gen_model, pseudonym=pseudonym)
 
-    # Save YAML to filesystem
+    # Save YAML
     date_str = datetime.now().strftime("%Y-%m-%d")
     yaml_path = os.path.join(SPINE_DIR, f"{gen_key}_{date_str}.yaml")
     with open(yaml_path, "w", encoding="utf-8") as f:
         f.write(yaml_doc)
 
-    # Save portrait to filesystem
+    # Save portrait
     portrait_filename = f"{gen_key}_{date_str}_portrait.txt"
     portrait_path = os.path.join(SPINE_DIR, portrait_filename)
     with open(portrait_path, "w", encoding="utf-8") as f:
-        # Strip markdown headers — portrait is continuous prose
         clean_portrait = "\n".join(
             line for line in portrait_text.splitlines()
             if not line.startswith("#")
         ).strip()
         f.write(clean_portrait)
 
-    # Generate constitution
+    # Generate and save constitution
     constitution_text = generate_constitution(
-        client, sess.transcript, yaml_doc,
+        client, transcript, yaml_doc,
         pseudonym=pseudonym, model=gen_model,
     )
     constitution_filename = f"{gen_key}_{date_str}_constitution.txt"
@@ -388,10 +453,10 @@ def generate_spine():
     with open(constitution_path, "w", encoding="utf-8") as f:
         f.write(constitution_text)
 
-    # Store in session for /portrait and /download-constitution routes
+    # Store in flask session for download routes
     flask_session["portrait_file"] = portrait_filename
     flask_session["constitution_file"] = constitution_filename
-    flask_session["pseudonym"] = flask_session.get("pseudonym", "Anonymous")
+    flask_session["pseudonym"] = pseudonym
     flask_session["date"] = date_str
     flask_session["user_id"] = gen_key
 
@@ -405,10 +470,7 @@ def portrait():
     if not portrait_filename:
         return render_template(
             "portrait.html",
-            pseudonym="Anonymous",
-            date="",
-            user_id="",
-            portrait_text="",
+            pseudonym="Anonymous", date="", user_id="", portrait_text="",
         )
 
     portrait_path = os.path.join(SPINE_DIR, portrait_filename)
@@ -453,10 +515,8 @@ def download_portrait():
     pseudonym = flask_session.get("pseudonym", "Anonymous")
     date_str = flask_session.get("date", "")
 
-    # Parse SHADOW/SURPRISE markers into HTML
     portrait_html = _parse_portrait_markers(raw_text, pseudonym)
 
-    # Render the PDF template
     html_string = render_template(
         "portrait_pdf.html",
         pseudonym=pseudonym,
@@ -464,7 +524,6 @@ def download_portrait():
         portrait_html=portrait_html,
     )
 
-    # Generate PDF with WeasyPrint
     from weasyprint import HTML
     pdf_buffer = BytesIO()
     HTML(string=html_string).write_pdf(pdf_buffer)
@@ -480,9 +539,9 @@ def download_portrait():
     )
 
 
-@app.route("/download-constitution")
-def download_constitution():
-    """Download the personal constitution as a text file."""
+@app.route("/download-meridian")
+def download_meridian():
+    """Download the personal meridian as a text file."""
     import re
 
     constitution_filename = flask_session.get("constitution_file")
@@ -499,7 +558,7 @@ def download_constitution():
     pseudonym = flask_session.get("pseudonym", "Anonymous")
     date_str = flask_session.get("date", "")
     safe_name = re.sub(r"[^a-zA-Z0-9]", "_", pseudonym)
-    filename = f"constitution_{safe_name}_{date_str}.txt"
+    filename = f"meridian_{safe_name}_{date_str}.txt"
 
     return Response(
         constitution_text,
@@ -512,7 +571,6 @@ def _parse_portrait_markers(raw_text: str, pseudonym: str) -> str:
     """Parse SHADOW/SURPRISE markers and convert to HTML paragraphs."""
     import re
 
-    # Split into typed blocks
     blocks: list[dict] = []
     remaining = raw_text
 
@@ -558,12 +616,10 @@ def _parse_portrait_markers(raw_text: str, pseudonym: str) -> str:
 
         remaining = after_open[close_idx + len(close_tag):]
 
-    # Convert blocks to HTML paragraphs
     html_parts: list[str] = []
     for block in blocks:
         paragraphs = [p.strip() for p in block["text"].split("\n\n") if p.strip()]
         for para in paragraphs:
-            # Escape HTML
             safe = para.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
             safe = safe.replace("\n", " ")
 
@@ -574,7 +630,6 @@ def _parse_portrait_markers(raw_text: str, pseudonym: str) -> str:
             else:
                 html_parts.append(f'<div class="para-wrap"><p>{safe}</p></div>')
 
-    # Highlight pseudonym in the final paragraph
     if html_parts:
         last = html_parts[-1]
         if pseudonym in last:
@@ -591,11 +646,9 @@ def _parse_portrait_markers(raw_text: str, pseudonym: str) -> str:
 @app.route("/test-generate", methods=["POST"])
 def test_generate():
     """Dev-only route: run generation against a mock transcript."""
-    import os
-
     mock_path = os.path.join(os.path.dirname(__file__), "tests", "mock_transcript.json")
     if not os.path.exists(mock_path):
-        return {"error": "No mock transcript found. Create tests/mock_transcript.json first."}, 404
+        return {"error": "No mock transcript found."}, 404
 
     with open(mock_path, encoding="utf-8") as f:
         transcript = json.load(f)
