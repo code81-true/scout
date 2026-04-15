@@ -327,9 +327,10 @@ def chat():
     # Normal turn
     sess.add_user(message)
 
-    # Pseudonym detection — during arrival phase
+    # Pseudonym detection — during arrival phase (skip for test keys)
     exchange_count = len(sess.transcript) // 2
-    if (flask_session.get("pseudonym", "Anonymous") == "Anonymous"
+    if (not _is_test_key(active_key)
+            and flask_session.get("pseudonym", "Anonymous") == "Anonymous"
             and 2 <= exchange_count <= 7
             and len(message) < 80):
         candidate = message.strip()
@@ -568,36 +569,40 @@ def download_meridian():
 
 
 def _parse_portrait_markers(raw_text: str, pseudonym: str) -> str:
-    """Parse SHADOW/SURPRISE markers and convert to HTML paragraphs."""
+    """Parse SHADOW/SURPRISE/EXTRACT markers and convert to HTML paragraphs."""
     import re
+
+    # Strip any unrecognised [TAG]...[/TAG] markers, keeping content
+    raw_text = re.sub(r"\[(?!SHADOW\]|/SHADOW\]|SURPRISE\]|/SURPRISE\]|EXTRACT\]|/EXTRACT\])([A-Z_]+)\]", "", raw_text)
+    raw_text = re.sub(r"\[/(?!SHADOW\]|SURPRISE\]|EXTRACT\])([A-Z_]+)\]", "", raw_text)
+
+    # Known markers and their types (EXTRACT treated as surprise)
+    marker_defs = [
+        ("[SHADOW]", "[/SHADOW]", "shadow"),
+        ("[SURPRISE]", "[/SURPRISE]", "surprise"),
+        ("[EXTRACT]", "[/EXTRACT]", "surprise"),
+    ]
 
     blocks: list[dict] = []
     remaining = raw_text
 
     while remaining:
-        shadow_start = remaining.find("[SHADOW]")
-        surprise_start = remaining.find("[SURPRISE]")
-
+        # Find nearest known marker
         nearest = -1
-        marker_type = ""
-        open_tag = ""
-        close_tag = ""
+        nearest_def = None
 
-        if shadow_start != -1 and (surprise_start == -1 or shadow_start < surprise_start):
-            nearest = shadow_start
-            marker_type = "shadow"
-            open_tag = "[SHADOW]"
-            close_tag = "[/SHADOW]"
-        elif surprise_start != -1:
-            nearest = surprise_start
-            marker_type = "surprise"
-            open_tag = "[SURPRISE]"
-            close_tag = "[/SURPRISE]"
+        for open_tag, close_tag, mtype in marker_defs:
+            idx = remaining.find(open_tag)
+            if idx != -1 and (nearest == -1 or idx < nearest):
+                nearest = idx
+                nearest_def = (open_tag, close_tag, mtype)
 
         if nearest == -1:
             if remaining.strip():
                 blocks.append({"type": "normal", "text": remaining.strip()})
             break
+
+        open_tag, close_tag, marker_type = nearest_def
 
         before = remaining[:nearest].strip()
         if before:
