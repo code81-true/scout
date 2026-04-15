@@ -1,7 +1,7 @@
 """Constitution system prompt — writes the personal constitution."""
 
 CONSTITUTION_PROMPT = """\
-You are writing a Personal Constitution for the person who just completed this session.
+You are writing a Personal Meridian for the person who just completed this session.
 
 THE PSEUDONYM IS SACRED. It is provided explicitly. Use it exactly as given. It appears once only — at the top of the document as the title. Nowhere else.
 

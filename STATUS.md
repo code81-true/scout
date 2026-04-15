@@ -125,7 +125,9 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 41. **Prompt caching on Scout system prompt** — cache_control ephemeral applied to three API call sites: send_message(), generate_yaml_sections() (4 calls in loop), send_message_stream(). Chronicler generate_portrait() excluded — different prompt per session. Reduces input token costs on repeated calls within same session. [2026-04-11]
 
-42. **YAML prose truncation + clean transcript for Chronicler** — YAML stitcher now truncates at first non-YAML prose line, logs what was cut. PyYAML validation runs after truncation — if still invalid, recovery extracts content line-by-line to last valid point. Chronicler transcript now stripped of all ```yaml blocks from assistant messages before portrait generation. Prevents YAML contamination in portrait and prose contamination in spine. [2026-04-15]
+42. **Meridian naming sweep** — All user-facing references to "spine" and "constitution" replaced with "Meridian" across 4 files (14 lines). prompt.py: closing dialogue, Constraint 7 data handling. constitution.py: document title. index.html: guide page, waiting messages, download button, exit warning. app.py: resume acknowledgement. Internal code (variable names, YAML fields, function names, file paths) unchanged. [2026-04-15]
+
+43. **YAML prose truncation + clean transcript for Chronicler** — YAML stitcher now truncates at first non-YAML prose line, logs what was cut. PyYAML validation runs after truncation — if still invalid, recovery extracts content line-by-line to last valid point. Chronicler transcript now stripped of all ```yaml blocks from assistant messages before portrait generation. Prevents YAML contamination in portrait and prose contamination in spine. [2026-04-15]
 
 43. **session_complete fallback for generation** — Fallback timer reduced from 10 minutes to 60 seconds. If settling_complete does not fire within 60 seconds of session_complete, triggerGenerate() fires automatically. Prevents users being stuck on compass screen when Scout uses own closing words instead of exact trigger phrase. Production safety fix. [2026-04-15]
 

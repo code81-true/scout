@@ -247,7 +247,7 @@ def chat():
             f"your voice: 'Welcome back. To protect your work from "
             f"interruptions, your session was held temporarily — like "
             f"a document that saves itself while you write. The moment "
-            f"your spine is delivered, it is deleted completely. Nothing "
+            f"your Meridian is delivered, it is deleted completely. Nothing "
             f"is kept. We were talking about: {last_topic}. "
             f"Shall we continue?' Then continue the interview normally.]"
         )

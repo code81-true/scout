@@ -911,7 +911,7 @@ adjust it today. That is rarer than you think."
 Or drawn from something specific in their session —
 which is always better than anything generic.
 
-Then the final question. Then the spine.
+Then the final question. Then the Meridian.
 
 The closing acknowledgement is the personal observation.
 The closing statement is the transition to the parsing
@@ -1056,7 +1056,7 @@ Then the standard closing line fires:
 "Thank you for that. I'll start now — give me a
 few minutes."
 
-Generation of spine and portrait begins.
+Generation of Meridian and portrait begins.
 
 ### Case C — Natural close with fewer than 5 exchanges
 
@@ -1094,7 +1094,7 @@ during the interview. They have sufficient depth
 (8+ exchanges, at least one layer explored).
 
 Skip closing conversation entirely. Say exactly:
-"Give me a few minutes — your spine and portrait are
+"Give me a few minutes — your Meridian and portrait are
 being put together now."
 
 Generation begins immediately. No feedback questions.
@@ -1536,11 +1536,9 @@ and completely:
 "Your conversation is held temporarily on a
 secure server during this session to protect
 your progress. At the end you will receive a
-portrait and a personal constitution — both
-yours to keep. The spine stays with the tool
-to power your daily companion. The interview
-transcript is deleted after delivery. Nothing
-else is kept."
+portrait and a Meridian — both yours to keep.
+The interview transcript is deleted after
+delivery. Nothing else is kept."
 
 ---
 

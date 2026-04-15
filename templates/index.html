@@ -557,9 +557,9 @@
     <div class="guide-body">
       <p>Set aside two hours. Not ninety minutes. Two hours. The people who got the most from this gave it that.</p>
       <p>Scout will sit with you in a conversation that goes somewhere you always wanted to go, but never had the company — following what you say, and sometimes what you don't.</p>
-      <p>At the end you will receive two things — a portrait written about you, and a personal constitution. Both belong to you alone. Download both before you close the window.</p>
-      <p>During your session, your conversation is held in a temporary file — like a document that saves itself while you write. If your connection drops or your browser closes, you can return with the same key and Scout picks up exactly where you left off. The moment your spine is delivered and you close this window, that file is deleted permanently. Nothing is kept after that point. Nothing.</p>
-      <p>Your key expires the moment your spine is delivered. It cannot be reused.</p>
+      <p>At the end you will receive two things — a portrait written about you, and a Meridian. Both belong to you alone. Download both before you close the window.</p>
+      <p>During your session, your conversation is held in a temporary file — like a document that saves itself while you write. If your connection drops or your browser closes, you can return with the same key and Scout picks up exactly where you left off. The moment your Meridian is delivered and you close this window, that file is deleted permanently. Nothing is kept after that point. Nothing.</p>
+      <p>Your key expires the moment your Meridian is delivered. It cannot be reused.</p>
     </div>
     <div class="guide-section-title">With truth</div>
     <div class="guide-body">
@@ -699,7 +699,7 @@ function deactivateExitWarning() {
 
 function onBeforeUnload(e) {
   e.preventDefault();
-  e.returnValue = "Your key expires when you close this window. Download your spine before leaving — it cannot be retrieved.";
+  e.returnValue = "Your key expires when you close this window. Download your Meridian before leaving — it cannot be retrieved.";
   return e.returnValue;
 }
 
@@ -988,7 +988,7 @@ async function triggerGenerate(hasDepth) {
   }
   const messages = [
     "The finest things take a little longer.",
-    "Your spine is being assembled — each section carefully, in order.",
+    "Your Meridian is being assembled — each section carefully, in order.",
     "This cannot be rushed. It should not be.",
     "What you gave this conversation deserves precision. We are giving it that.",
     "Almost there. Patience will pay."
@@ -1056,7 +1056,7 @@ async function triggerGenerate(hasDepth) {
   msgEl.appendChild(compassDiv);
 
   const staticMsg = document.createElement("p");
-  staticMsg.textContent = "Your spine and portrait are being composed. The depth of the session determines the time.";
+  staticMsg.textContent = "Your Meridian and portrait are being composed. The depth of the session determines the time.";
   staticMsg.style.cssText = "font-family:'Cormorant Garant',serif;font-style:italic;font-size:14px;color:#8A7A6A;text-align:center;margin:12px auto;max-width:360px;";
   msgEl.appendChild(staticMsg);
 
@@ -1162,7 +1162,7 @@ async function triggerGenerate(hasDepth) {
     viewBtn.style.cssText = "display:block;width:100%;max-width:320px;text-align:center;background:transparent;color:#8A8078;border:1px solid #3A3028;border-radius:6px;padding:10px 20px;font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.12em;cursor:pointer;text-decoration:none;opacity:0;transition:opacity 1s ease-in-out;";
 
     const constBtn = document.createElement("button");
-    constBtn.textContent = "Download Constitution";
+    constBtn.textContent = "Download Meridian";
     constBtn.style.cssText = "background:transparent;color:#6A6560;border:1px solid #333;border-radius:6px;padding:10px 20px;font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.12em;cursor:pointer;opacity:0;transition:opacity 1s ease-in-out;";
     constBtn.addEventListener("click", () => {
       window.location.href = "/download-constitution";
