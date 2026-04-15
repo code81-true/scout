@@ -536,6 +536,120 @@
     #input-area { padding: 12px; }
     .landing-statement { font-size: 14px; }
   }
+
+  @media (max-width: 480px) {
+    /* --- Landing page --- */
+    .wordmark {
+      font-size: 52px !important;
+    }
+    .landing-statement {
+      font-size: 15px;
+      line-height: 1.7;
+      margin-bottom: 32px;
+    }
+    .guide-link {
+      font-size: 13px;
+      margin-bottom: 32px;
+    }
+    .age-notice {
+      font-size: 13px;
+    }
+    .key-console {
+      max-width: 100%;
+      padding: 0 16px;
+    }
+    .key-input {
+      width: 100%;
+      font-size: 16px;
+    }
+    .reveal-btn {
+      width: 100%;
+      min-height: 48px;
+      font-size: 13px;
+    }
+    #landing {
+      padding: 24px 16px;
+    }
+
+    /* --- Guide page --- */
+    #guide {
+      padding: 32px 20px 60px;
+    }
+    .guide-body {
+      font-size: 15px;
+      line-height: 1.7;
+    }
+    .guide-content {
+      max-width: 100%;
+    }
+    .guide-nav {
+      padding-bottom: 32px;
+    }
+    .guide-scroll-top {
+      position: static;
+      width: 48px;
+      height: 48px;
+    }
+    .guide-return {
+      padding: 14px 24px;
+      font-size: 12px;
+    }
+
+    /* --- Conversation UI --- */
+    .message {
+      max-width: 92%;
+      padding: 12px 14px;
+    }
+    .message.scout {
+      font-size: 16px;
+      line-height: 1.8;
+    }
+    .message.user {
+      font-size: 14px;
+    }
+    #input-area {
+      position: sticky;
+      bottom: 0;
+      padding: 10px;
+      gap: 8px;
+    }
+    #user-input {
+      font-size: 16px;
+      padding: 10px 12px;
+      min-height: 44px;
+    }
+    #send-btn {
+      min-width: 48px;
+      min-height: 48px;
+      padding: 10px 14px;
+      font-size: 13px;
+    }
+    #conversation {
+      padding: 16px 10px;
+      padding-bottom: 70px;
+      gap: 16px;
+    }
+
+    /* --- Compass + generation wait --- */
+    .compass-generating {
+      width: 100px !important;
+      height: 100px !important;
+    }
+    .generating-message {
+      font-size: 13px;
+      max-width: 300px;
+      padding: 24px 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* --- Maintenance page --- */
+    #maintenance p {
+      font-size: 15px;
+      max-width: 320px;
+    }
+  }
 </style>
 </head>
 <body>

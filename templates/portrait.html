@@ -215,6 +215,57 @@
     .compass-watermark { width: 160px; height: 160px; }
   }
 
+  @media (max-width: 480px) {
+    .container {
+      padding: 32px 20px 80px;
+    }
+    .pseudonym {
+      font-size: 32px;
+    }
+    .compass-watermark {
+      width: 140px;
+      height: 140px;
+    }
+    body {
+      font-size: 16px;
+      line-height: 1.8;
+    }
+    .portrait-text p {
+      margin-bottom: 1.6em;
+    }
+    .portrait-text p.drop-cap::first-letter {
+      font-size: 42px;
+      padding-right: 6px;
+      padding-top: 4px;
+    }
+    .portrait-text p.shadow-passage {
+      padding-left: 16px;
+      font-size: 15px;
+    }
+    .portrait-text p.surprise-moment {
+      padding-left: 16px;
+      font-size: 16px;
+    }
+    .final-line {
+      font-size: 16px;
+    }
+    .colophon {
+      font-size: 9px;
+    }
+    .save-btn {
+      width: 100%;
+      min-height: 52px;
+      font-size: 11px;
+      margin-bottom: 24px;
+    }
+    .north-needle {
+      width: 20px;
+    }
+    .movement-break .line {
+      width: 30px;
+    }
+  }
+
   @media print {
     .save-btn { display: none; }
     .container { padding: 40px 0; }
