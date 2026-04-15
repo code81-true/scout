@@ -550,13 +550,12 @@
   </div>
   <div class="wordmark-wrap"><div class="wordmark">Scout</div></div>
   <a class="guide-link guide-breathe" id="guide-link">Important — read completely before entering the key.</a>
-  <p class="unlock-hint" id="unlock-hint">Key entry unlocks after reading.</p>
   <div class="key-console">
     <div class="key-label breathe">Key</div>
-    <input type="password" class="key-input" id="key-input" autocomplete="off" spellcheck="false" disabled>
+    <input type="password" class="key-input" id="key-input" autocomplete="off" spellcheck="false">
     <p class="age-notice">Not yet eighteen? Come back later. This will still be here.</p>
     <div class="key-error" id="key-error"></div>
-    <button class="reveal-btn breathe-delayed" id="reveal-btn" disabled>Reveal</button>
+    <button class="reveal-btn breathe-delayed" id="reveal-btn">Reveal</button>
   </div>
   <div class="colophon-landing">By invitation only</div>
 </div>
@@ -616,18 +615,8 @@ function showState(id) {
   document.getElementById(id).classList.add("active");
 }
 
-// Guide link — unlocks key input on first visit
-let guideRead = false;
-document.getElementById("guide-link").addEventListener("click", () => {
-  showState("guide");
-  if (!guideRead) {
-    guideRead = true;
-    document.getElementById("key-input").disabled = false;
-    document.getElementById("reveal-btn").disabled = false;
-    const hint = document.getElementById("unlock-hint");
-    if (hint) { hint.style.opacity = "0"; setTimeout(() => hint.remove(), 500); }
-  }
-});
+// Guide link
+document.getElementById("guide-link").addEventListener("click", () => showState("guide"));
 document.getElementById("guide-back").addEventListener("click", () => showState("landing"));
 
 // Maintenance check on page load
