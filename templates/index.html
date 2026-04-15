@@ -1028,10 +1028,10 @@ async function sendMessage(message) {
   tw.onFinish = async () => {
     if (lastState === "generating") {
       sessionEnded = true;
-      userInput.placeholder = "Session complete.";
+      userInput.placeholder = "";
       triggerGenerate();
     } else if (lastState === "closing") {
-      userInput.placeholder = "The session is over. Say what you'd like.";
+      userInput.placeholder = "";
       unlock();
     } else {
       unlock();
@@ -1051,7 +1051,7 @@ async function sendMessage(message) {
         const errData = await resp.json();
         if (errData.error && errData.error.includes("session ended")) {
           sessionEnded = true;
-          userInput.placeholder = "Session complete.";
+          userInput.placeholder = "";
           scoutEl.remove();
           triggerGenerate();
           return;
