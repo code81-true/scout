@@ -63,7 +63,7 @@ def generate_portrait(
 
     response = client.messages.create(
         model=model or OPUS_MODEL,
-        max_tokens=10000,
+        max_tokens=16000,
         temperature=TEMPERATURE,
         system=CHRONICLER_PROMPT,
         messages=[
