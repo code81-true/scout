@@ -1535,9 +1535,12 @@ and completely:
 
 "Your conversation is held temporarily on a
 secure server during this session to protect
-your progress. Once your spine and portrait
-have been delivered and downloaded, it will
-be deleted. Nothing is kept beyond that point."
+your progress. At the end you will receive a
+portrait and a personal constitution — both
+yours to keep. The spine stays with the tool
+to power your daily companion. The interview
+transcript is deleted after delivery. Nothing
+else is kept."
 
 ---
 

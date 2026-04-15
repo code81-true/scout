@@ -557,7 +557,7 @@
     <div class="guide-body">
       <p>Set aside two hours. Not ninety minutes. Two hours. The people who got the most from this gave it that.</p>
       <p>Scout will sit with you in a conversation that goes somewhere you always wanted to go, but never had the company — following what you say, and sometimes what you don't.</p>
-      <p>At the end you will receive two things — a portrait written about you, and a spine. The portrait is prose. The spine is structured. Both belong to you alone. Download both before you close the window.</p>
+      <p>At the end you will receive two things — a portrait written about you, and a personal constitution. Both belong to you alone. Download both before you close the window.</p>
       <p>During your session, your conversation is held in a temporary file — like a document that saves itself while you write. If your connection drops or your browser closes, you can return with the same key and Scout picks up exactly where you left off. The moment your spine is delivered and you close this window, that file is deleted permanently. Nothing is kept after that point. Nothing.</p>
       <p>Your key expires the moment your spine is delivered. It cannot be reused.</p>
     </div>
@@ -1158,25 +1158,20 @@ async function triggerGenerate(hasDepth) {
     const viewBtn = document.createElement("a");
     viewBtn.textContent = "View Portrait";
     viewBtn.href = "/portrait";
+    viewBtn.target = "_blank";
     viewBtn.style.cssText = "display:block;width:100%;max-width:320px;text-align:center;background:transparent;color:#8A8078;border:1px solid #3A3028;border-radius:6px;padding:10px 20px;font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.12em;cursor:pointer;text-decoration:none;opacity:0;transition:opacity 1s ease-in-out;";
 
-    const spineBtn = document.createElement("button");
-    spineBtn.textContent = "Download Spine";
-    spineBtn.style.cssText = "background:transparent;color:#6A6560;border:1px solid #333;border-radius:6px;padding:10px 20px;font-family:inherit;font-size:13px;cursor:pointer;opacity:0;transition:opacity 1s ease-in-out;";
-    spineBtn.addEventListener("click", () => {
-      const blob = new Blob([data.yaml], { type: "text/yaml" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "spine.yaml";
-      a.click();
-      URL.revokeObjectURL(a.href);
-      deactivateExitWarning();
+    const constBtn = document.createElement("button");
+    constBtn.textContent = "Download Constitution";
+    constBtn.style.cssText = "background:transparent;color:#6A6560;border:1px solid #333;border-radius:6px;padding:10px 20px;font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.12em;cursor:pointer;opacity:0;transition:opacity 1s ease-in-out;";
+    constBtn.addEventListener("click", () => {
+      window.location.href = "/download-constitution";
     });
 
     msgEl.appendChild(notice);
     msgEl.appendChild(portraitBtn);
     msgEl.appendChild(viewBtn);
-    msgEl.appendChild(spineBtn);
+    msgEl.appendChild(constBtn);
     conversation.scrollTop = conversation.scrollHeight;
 
     // Fade in
@@ -1185,7 +1180,7 @@ async function triggerGenerate(hasDepth) {
         notice.style.opacity = "1";
         portraitBtn.style.opacity = "1";
         viewBtn.style.opacity = "1";
-        spineBtn.style.opacity = "1";
+        constBtn.style.opacity = "1";
       });
     });
   } catch (err) {

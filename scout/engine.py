@@ -82,6 +82,44 @@ def generate_portrait(
     return response.content[0].text
 
 
+def generate_constitution(
+    client: anthropic.Anthropic,
+    transcript: list[dict[str, str]],
+    spine_yaml: str,
+    pseudonym: str = "Anonymous",
+    model: str | None = None,
+) -> str:
+    """Generate a personal constitution from the session transcript and spine.
+
+    Uses Opus by default. Returns the constitution text.
+    """
+    from scout.constitution import CONSTITUTION_PROMPT
+
+    lines: list[str] = []
+    for turn in transcript:
+        role = "Scout" if turn["role"] == "assistant" else "Person"
+        lines.append(f"{role}: {turn['content']}")
+    transcript_text = "\n\n".join(lines)
+
+    response = client.messages.create(
+        model=model or OPUS_MODEL,
+        max_tokens=2000,
+        temperature=TEMPERATURE,
+        system=CONSTITUTION_PROMPT,
+        messages=[
+            {
+                "role": "user",
+                "content": (
+                    f"The person's pseudonym is: {pseudonym}.\n\n"
+                    f"SPINE YAML:\n{spine_yaml}\n\n"
+                    f"FULL TRANSCRIPT:\n{transcript_text}"
+                ),
+            }
+        ],
+    )
+    return response.content[0].text
+
+
 def generate_yaml_sections(
     client: anthropic.Anthropic,
     transcript: list[dict[str, str]],

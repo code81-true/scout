@@ -17,6 +17,7 @@ from flask_session import Session as FlaskSessionExt
 from scout.engine import (
     TEST_MODEL,
     create_client,
+    generate_constitution,
     generate_portrait,
     generate_yaml_sections,
     send_message_stream,
@@ -179,6 +180,12 @@ def auth():
                     if len(parts) == 2:
                         flask_session["date"] = parts[1]
                     flask_session["user_id"] = key
+                # Restore constitution file if it exists on disk
+                constitution_matches = sorted(
+                    glob.glob(os.path.join(SPINE_DIR, f"{key}_*_constitution.txt"))
+                )
+                if constitution_matches:
+                    flask_session["constitution_file"] = os.path.basename(constitution_matches[-1])
                 return {"success": True}
             # Unused key — fresh session
             lines[i] = f"{k}:active"
@@ -371,8 +378,19 @@ def generate_spine():
         ).strip()
         f.write(clean_portrait)
 
-    # Store in session for /portrait route
+    # Generate constitution
+    constitution_text = generate_constitution(
+        client, sess.transcript, yaml_doc,
+        pseudonym=pseudonym, model=gen_model,
+    )
+    constitution_filename = f"{gen_key}_{date_str}_constitution.txt"
+    constitution_path = os.path.join(SPINE_DIR, constitution_filename)
+    with open(constitution_path, "w", encoding="utf-8") as f:
+        f.write(constitution_text)
+
+    # Store in session for /portrait and /download-constitution routes
     flask_session["portrait_file"] = portrait_filename
+    flask_session["constitution_file"] = constitution_filename
     flask_session["pseudonym"] = flask_session.get("pseudonym", "Anonymous")
     flask_session["date"] = date_str
     flask_session["user_id"] = gen_key
@@ -458,6 +476,34 @@ def download_portrait():
     return Response(
         pdf_buffer.read(),
         mimetype="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@app.route("/download-constitution")
+def download_constitution():
+    """Download the personal constitution as a text file."""
+    import re
+
+    constitution_filename = flask_session.get("constitution_file")
+    if not constitution_filename:
+        return {"error": "No constitution available."}, 404
+
+    constitution_path = os.path.join(SPINE_DIR, constitution_filename)
+    if not os.path.exists(constitution_path):
+        return {"error": "Constitution file not found."}, 404
+
+    with open(constitution_path, "r", encoding="utf-8") as f:
+        constitution_text = f.read()
+
+    pseudonym = flask_session.get("pseudonym", "Anonymous")
+    date_str = flask_session.get("date", "")
+    safe_name = re.sub(r"[^a-zA-Z0-9]", "_", pseudonym)
+    filename = f"constitution_{safe_name}_{date_str}.txt"
+
+    return Response(
+        constitution_text,
+        mimetype="text/plain; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
