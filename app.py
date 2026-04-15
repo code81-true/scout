@@ -542,28 +542,303 @@ def download_portrait():
 
 @app.route("/download-meridian")
 def download_meridian():
-    """Download the personal meridian as a text file."""
+    """Generate Meridian PDF with ReportLab and return as download."""
+    import math
     import re
+    from io import BytesIO
+
+    from reportlab.lib.colors import Color
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import mm
+    from reportlab.pdfgen import canvas
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
 
     constitution_filename = flask_session.get("constitution_file")
     if not constitution_filename:
-        return {"error": "No constitution available."}, 404
+        return {"error": "No Meridian available."}, 404
 
     constitution_path = os.path.join(SPINE_DIR, constitution_filename)
     if not os.path.exists(constitution_path):
-        return {"error": "Constitution file not found."}, 404
+        return {"error": "Meridian file not found."}, 404
 
     with open(constitution_path, "r", encoding="utf-8") as f:
         constitution_text = f.read()
 
     pseudonym = flask_session.get("pseudonym", "Anonymous")
     date_str = flask_session.get("date", "")
+
+    # Parse five paragraphs
+    paragraphs = [p.strip() for p in constitution_text.split("\n\n") if p.strip()]
+    # Strip any markdown headers from paragraphs
+    paragraphs = [p for p in paragraphs if not p.startswith("#")]
+    while len(paragraphs) < 5:
+        paragraphs.append("")
+    paragraphs = paragraphs[:5]
+
+    section_titles = [
+        "WHAT YOU ARE",
+        "WHAT DRIVES YOU",
+        "WHAT YOU CANNOT ESCAPE",
+        "WHAT YOU EXPECT OF YOURSELF",
+        "WHAT REMAINS OPEN",
+    ]
+
+    # Colours
+    gold = Color(184 / 255, 150 / 255, 90 / 255)
+    dark = Color(42 / 255, 31 / 255, 20 / 255)
+    ivory = Color(253 / 255, 250 / 255, 245 / 255)
+    muted = Color(154 / 255, 138 / 255, 122 / 255)
+
+    W, H = A4
+    margin = 18 * mm
+
+    # Register Lora-Italic if available
+    lora_available = False
+    lora_path = "/usr/share/fonts/truetype/google-fonts/Lora-Italic-Variable.ttf"
+    try:
+        if os.path.exists(lora_path):
+            pdfmetrics.registerFont(TTFont("Lora-Italic", lora_path))
+            lora_available = True
+    except Exception:
+        pass
+    preamble_font = "Lora-Italic" if lora_available else "Times-Italic"
+
+    buf = BytesIO()
+    c = canvas.Canvas(buf, pagesize=A4)
+
+    # Ivory background
+    c.setFillColor(ivory)
+    c.rect(0, 0, W, H, fill=1, stroke=0)
+
+    # --- Globe watermark ---
+    cx, cy = W / 2, H / 2
+    R = 100 * mm
+
+    def ortho(lat, lon, clat=20, clon=15):
+        """Orthographic projection. Returns (x, y, visible)."""
+        rlat = math.radians(lat)
+        rlon = math.radians(lon)
+        rclat = math.radians(clat)
+        rclon = math.radians(clon)
+        x = R * math.cos(rlat) * math.sin(rlon - rclon)
+        y = R * (math.cos(rclat) * math.sin(rlat) - math.sin(rclat) * math.cos(rlat) * math.cos(rlon - rclon))
+        vis = math.sin(rclat) * math.sin(rlat) + math.cos(rclat) * math.cos(rlat) * math.cos(rlon - rclon)
+        return (cx + x, cy + y, vis > 0)
+
+    c.saveState()
+
+    # Outer circle
+    c.setStrokeColor(Color(184 / 255, 150 / 255, 90 / 255, alpha=0.13))
+    c.setLineWidth(0.5)
+    c.circle(cx, cy, R, fill=0, stroke=1)
+
+    # Meridian ellipses
+    c.setLineWidth(0.3)
+    for lon in range(-60, 181, 30):
+        pts = []
+        for lat in range(-90, 91, 3):
+            x, y, v = ortho(lat, lon)
+            if v:
+                pts.append((x, y))
+        if len(pts) > 1:
+            p = c.beginPath()
+            p.moveTo(pts[0][0], pts[0][1])
+            for px, py in pts[1:]:
+                p.lineTo(px, py)
+            c.drawPath(p, fill=0, stroke=1)
+
+    # Parallel ellipses
+    for lat in range(-60, 61, 30):
+        pts = []
+        for lon in range(-180, 181, 3):
+            x, y, v = ortho(lat, lon)
+            if v:
+                pts.append((x, y))
+        if len(pts) > 1:
+            p = c.beginPath()
+            p.moveTo(pts[0][0], pts[0][1])
+            for px, py in pts[1:]:
+                p.lineTo(px, py)
+            c.drawPath(p, fill=0, stroke=1)
+
+    # Prime meridian (bold)
+    c.setLineWidth(2.0)
+    pts = []
+    for lat in range(-90, 91, 2):
+        x, y, v = ortho(lat, 0)
+        if v:
+            pts.append((x, y))
+    if len(pts) > 1:
+        p = c.beginPath()
+        p.moveTo(pts[0][0], pts[0][1])
+        for px, py in pts[1:]:
+            p.lineTo(px, py)
+        c.drawPath(p, fill=0, stroke=1)
+
+    # Equator (bold)
+    c.setLineWidth(1.2)
+    pts = []
+    for lon in range(-180, 181, 2):
+        x, y, v = ortho(0, lon)
+        if v:
+            pts.append((x, y))
+    if len(pts) > 1:
+        p = c.beginPath()
+        p.moveTo(pts[0][0], pts[0][1])
+        for px, py in pts[1:]:
+            p.lineTo(px, py)
+        c.drawPath(p, fill=0, stroke=1)
+
+    # Simplified continent polygons
+    continent_fill = Color(184 / 255, 150 / 255, 90 / 255, alpha=0.06)
+    c.setFillColor(continent_fill)
+    c.setStrokeColor(Color(184 / 255, 150 / 255, 90 / 255, alpha=0.10))
+    c.setLineWidth(0.3)
+
+    continents = {
+        "europe": [(36, -9), (36, 0), (38, 3), (43, 5), (46, 3), (48, 7), (54, 10), (55, 14), (57, 10), (60, 5), (63, 10), (70, 20), (71, 28), (68, 35), (60, 30), (55, 28), (50, 30), (47, 35), (42, 28), (38, 24), (36, 22), (35, 12), (36, -9)],
+        "africa": [(35, -6), (37, 10), (33, 12), (30, 32), (20, 40), (10, 42), (0, 42), (-5, 38), (-10, 40), (-15, 35), (-25, 33), (-34, 25), (-34, 18), (-28, 15), (-15, 12), (-5, 10), (0, 1), (5, -5), (5, -15), (10, -15), (15, -17), (25, -13), (30, -10), (35, -6)],
+        "north_america": [(30, -85), (25, -100), (30, -115), (35, -120), (40, -125), (48, -125), (55, -130), (60, -140), (65, -165), (70, -160), (72, -130), (70, -90), (65, -65), (55, -60), (48, -55), (45, -65), (42, -70), (35, -75), (30, -85)],
+        "south_america": [(12, -72), (5, -77), (0, -80), (-5, -80), (-10, -78), (-15, -75), (-20, -70), (-25, -65), (-30, -60), (-35, -57), (-40, -62), (-45, -65), (-50, -68), (-55, -70), (-50, -75), (-40, -73), (-30, -52), (-25, -47), (-20, -40), (-10, -37), (-5, -35), (0, -50), (5, -60), (10, -65), (12, -72)],
+        "greenland": [(60, -45), (65, -55), (70, -55), (75, -60), (80, -50), (83, -35), (80, -20), (75, -18), (70, -22), (65, -40), (60, -45)],
+        "britain": [(50, -5), (52, 1), (55, -2), (58, -5), (58, -3), (56, -2), (53, 0), (51, 1), (50, -5)],
+        "iceland": [(64, -24), (65, -18), (66, -14), (65, -14), (64, -18), (63, -22), (64, -24)],
+        "madagascar": [(-12, 49), (-16, 50), (-20, 48), (-24, 47), (-25, 44), (-20, 44), (-16, 46), (-12, 49)],
+        "scandinavia": [(56, 8), (58, 6), (60, 5), (63, 10), (66, 14), (69, 16), (70, 20), (71, 26), (70, 28), (68, 16), (64, 12), (60, 12), (58, 12), (56, 8)],
+    }
+
+    for name, coords in continents.items():
+        visible_pts = []
+        for lat, lon in coords:
+            x, y, v = ortho(lat, lon)
+            if v:
+                visible_pts.append((x, y))
+        if len(visible_pts) > 2:
+            p = c.beginPath()
+            p.moveTo(visible_pts[0][0], visible_pts[0][1])
+            for px, py in visible_pts[1:]:
+                p.lineTo(px, py)
+            p.close()
+            c.drawPath(p, fill=1, stroke=1)
+
+    c.restoreState()
+
+    # --- Top rule ---
+    c.setStrokeColor(gold)
+    c.setLineWidth(0.6)
+    y_top = H - margin
+    c.line(margin, y_top, W - margin, y_top)
+
+    # --- Pseudonym ---
+    c.setFillColor(gold)
+    c.setFont("Times-BoldItalic", 38)
+    y_pseudo = y_top - 18 * mm
+    c.drawCentredString(W / 2, y_pseudo, pseudonym)
+
+    # Thin gold rule under pseudonym
+    c.setLineWidth(0.4)
+    y_rule = y_pseudo - 4 * mm
+    c.line(W / 2 - 20 * mm, y_rule, W / 2 + 20 * mm, y_rule)
+
+    # --- Preamble at bottom ---
+    preamble_y = margin + 25 * mm
+
+    # "THIS IS MERIDIAN"
+    c.setFillColor(gold)
+    title_text = "THIS IS MERIDIAN"
+    spaced = "  ".join(title_text)
+    c.setFont("Helvetica-Bold", 6.5)
+    c.drawCentredString(W / 2, preamble_y + 14 * mm, spaced)
+
+    # Two preamble lines
+    c.setFillColor(muted)
+    c.setFont(preamble_font, 7.2)
+    c.drawCentredString(W / 2, preamble_y + 8 * mm,
+                        "This is not advice. It does not tell you what to think or how to live.")
+    c.drawCentredString(W / 2, preamble_y + 3 * mm,
+                        "It shows you what was visible in one serious, sincere hour with yourself.")
+
+    # Colophon
+    c.setStrokeColor(gold)
+    c.setLineWidth(0.3)
+    c.line(W / 2 - 11 * mm, preamble_y - 3 * mm, W / 2 + 11 * mm, preamble_y - 3 * mm)
+    c.setFillColor(muted)
+    c.setFont("Helvetica", 5.5)
+    c.drawCentredString(W / 2, preamble_y - 8 * mm,
+                        f"This Meridian was written for you alone. \u00b7 Scout \u00b7 {date_str}")
+
+    # --- Sections ---
+    content_top = y_rule - 8 * mm
+    content_bottom = preamble_y + 22 * mm
+    available = content_top - content_bottom
+    section_height = available / 5
+
+    def draw_spaced_text(c, x, y, text, font, size, spacing_mm):
+        """Draw text with manual letter-spacing."""
+        c.setFont(font, size)
+        total_w = sum(c.stringWidth(ch, font, size) + spacing_mm for ch in text) - spacing_mm
+        cx = x - total_w / 2
+        for ch in text:
+            c.drawString(cx, y, ch)
+            cx += c.stringWidth(ch, font, size) + spacing_mm
+
+    for i, (title, body) in enumerate(zip(section_titles, paragraphs)):
+        sec_y = content_top - i * section_height
+
+        # Title
+        c.setFillColor(gold)
+        draw_spaced_text(c, W / 2, sec_y, title, "Helvetica-Bold", 7.5, 0.8 * mm)
+
+        # Body — wrap text
+        if body:
+            c.setFillColor(dark)
+            c.setFont("Times-Roman", 9.5)
+            text_width = W - 2 * margin - 10 * mm
+            leading = 5 * mm
+            ty = sec_y - 6 * mm
+
+            # Simple word-wrap
+            words = body.split()
+            line = ""
+            for word in words:
+                test = f"{line} {word}".strip()
+                if c.stringWidth(test, "Times-Roman", 9.5) < text_width:
+                    line = test
+                else:
+                    if line:
+                        # Check if this is the final section's last line with pseudonym
+                        c.drawCentredString(W / 2, ty, line)
+                        ty -= leading
+                    line = word
+            # Last line
+            if line:
+                # Final section — check for pseudonym in last line
+                if i == 4 and pseudonym in line:
+                    # Split at pseudonym
+                    before = line[:line.rfind(pseudonym)]
+                    c.setFont("Times-Roman", 9.5)
+                    c.setFillColor(dark)
+                    bw = c.stringWidth(before, "Times-Roman", 9.5)
+                    pw = c.stringWidth(pseudonym, "Times-BoldItalic", 10.5)
+                    total = bw + pw
+                    start_x = W / 2 - total / 2
+                    c.drawString(start_x, ty, before)
+                    c.setFont("Times-BoldItalic", 10.5)
+                    c.setFillColor(gold)
+                    c.drawString(start_x + bw, ty, pseudonym)
+                else:
+                    c.drawCentredString(W / 2, ty, line)
+
+    c.save()
+    buf.seek(0)
+
     safe_name = re.sub(r"[^a-zA-Z0-9]", "_", pseudonym)
-    filename = f"meridian_{safe_name}_{date_str}.txt"
+    filename = f"meridian_{safe_name}_{date_str}.pdf"
 
     return Response(
-        constitution_text,
-        mimetype="text/plain; charset=utf-8",
+        buf.read(),
+        mimetype="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
