@@ -165,6 +165,20 @@ def auth():
                      if m["role"] == "assistant"), ""
                 )
                 flask_session["last_topic"] = last_assistant[:120]
+                # Restore portrait file if it exists on disk
+                import glob
+                portrait_matches = sorted(
+                    glob.glob(os.path.join(SPINE_DIR, f"{key}_*_portrait.txt"))
+                )
+                if portrait_matches:
+                    portrait_path = portrait_matches[-1]
+                    portrait_filename = os.path.basename(portrait_path)
+                    flask_session["portrait_file"] = portrait_filename
+                    # Parse date from filename: KEY_YYYY-MM-DD_portrait.txt
+                    parts = portrait_filename.replace("_portrait.txt", "").split("_", 1)
+                    if len(parts) == 2:
+                        flask_session["date"] = parts[1]
+                    flask_session["user_id"] = key
                 return {"success": True}
             # Unused key — fresh session
             lines[i] = f"{k}:active"
@@ -311,7 +325,7 @@ def chat():
                 and "spine:" in full_reply
             )
         # Settling complete — triggers generation
-        settling = "I'll start now \u2014 give me a few minutes" in full_reply
+        settling = "I'll start now" in full_reply and "give me a few minutes" in full_reply
         # Depth check
         depth = _can_generate(sess.transcript)
         yield f"data: {json.dumps({'done': True, 'session_complete': complete, 'settling_complete': settling, 'session_depth': depth})}\n\n"
