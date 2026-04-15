@@ -54,11 +54,18 @@ def generate_portrait(
     """
     from scout.chronicler import CHRONICLER_PROMPT
 
-    # Flatten the transcript into a readable block
+    # Flatten the transcript into a readable block — strip any YAML blocks
     lines: list[str] = []
     for turn in transcript:
+        content = turn["content"]
+        # Strip YAML blocks from assistant messages
+        if turn["role"] == "assistant" and "```yaml" in content:
+            import re
+            content = re.sub(r"```yaml[\s\S]*?```", "", content).strip()
+            if not content:
+                continue
         role = "Scout" if turn["role"] == "assistant" else "Person"
-        lines.append(f"{role}: {turn['content']}")
+        lines.append(f"{role}: {content}")
     transcript_text = "\n\n".join(lines)
 
     response = client.messages.create(
@@ -171,13 +178,57 @@ def generate_yaml_sections(
     # Stitch sections into a single valid spine.yaml
     assembled = _stitch_yaml_sections(yaml_parts)
 
-    # Validate with PyYAML — return raw if parsing fails
+    # Strip trailing prose — truncate at first non-YAML line
     import logging
+    import yaml
+
+    clean_lines: list[str] = []
+    truncated_lines: list[str] = []
+    hit_prose = False
+    for line in assembled.splitlines():
+        if hit_prose:
+            truncated_lines.append(line)
+            continue
+        stripped = line.strip()
+        # Empty lines and YAML content pass through
+        if not stripped or stripped.startswith("-") or ":" in stripped or stripped.startswith("#"):
+            clean_lines.append(line)
+        # Indented continuation lines pass through
+        elif line and line[0] == " ":
+            clean_lines.append(line)
+        else:
+            # Prose detected — stop here
+            hit_prose = True
+            truncated_lines.append(line)
+    assembled = "\n".join(clean_lines).rstrip() + "\n"
+
+    if truncated_lines:
+        logging.warning("YAML prose truncation — removed %d lines: %s",
+                        len(truncated_lines), truncated_lines[:3])
+
+    # Validate with PyYAML
     try:
-        import yaml
         yaml.safe_load(assembled)
     except Exception as exc:
-        logging.error("spine.yaml failed PyYAML validation: %s", exc)
+        logging.error("spine.yaml failed PyYAML validation after truncation: %s", exc)
+        # Attempt recovery — extract from spine: to last parseable point
+        try:
+            recovery_lines: list[str] = []
+            for line in assembled.splitlines():
+                recovery_lines.append(line)
+                test = "\n".join(recovery_lines) + "\n"
+                try:
+                    yaml.safe_load(test)
+                except Exception:
+                    recovery_lines.pop()
+                    break
+            if recovery_lines:
+                assembled = "\n".join(recovery_lines).rstrip() + "\n"
+                logging.warning("YAML recovery — truncated to %d valid lines", len(recovery_lines))
+            else:
+                logging.error("YAML recovery failed — no valid lines found. Saving raw output.")
+        except Exception as recovery_exc:
+            logging.error("YAML recovery exception: %s. Saving raw output.", recovery_exc)
 
     return assembled
 

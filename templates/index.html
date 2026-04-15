@@ -900,7 +900,7 @@ async function sendMessage(message) {
       userInput.placeholder = "The session is over. Say what you'd like.";
       lastSessionDepth = sessionDepth;
       unlock();
-      // Fallback: if settling_complete doesn't fire within 10 minutes
+      // Fallback: if settling_complete doesn't fire within 60 seconds
       if (!fallbackTimer) {
         fallbackTimer = setTimeout(() => {
           if (!sessionEnded) {
@@ -908,7 +908,7 @@ async function sendMessage(message) {
             userInput.placeholder = "Session complete.";
             triggerGenerate(lastSessionDepth);
           }
-        }, 600000);
+        }, 60000);
       }
     } else {
       unlock();
