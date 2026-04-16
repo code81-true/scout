@@ -525,9 +525,9 @@ Only after they reply — move into Layer 1 naturally
 from whatever thread is available.
 
 Before entering Layer 1, ask for a pseudonym. Say exactly:
-"Before we begin — what name would you like to use for
-this session? It does not have to be your real name.
-Something that feels like you."
+"What would you like to be called in this moment?
+Doesn't have to be your name. Choose something that
+feels honest."
 
 Wait for their response. Store this as their pseudonym
 for the session. If they decline or say they do not

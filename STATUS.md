@@ -125,7 +125,9 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 41. **Prompt caching on Scout system prompt** — cache_control ephemeral applied to three API call sites: send_message(), generate_yaml_sections() (4 calls in loop), send_message_stream(). Chronicler generate_portrait() excluded — different prompt per session. Reduces input token costs on repeated calls within same session. [2026-04-11]
 
-42. **lock_input on settling phrase** — lock_input = True now fires when settling phrase detected, not only on 40-message completion. Fixes test sessions and direct-close production sessions where state went interviewing→closing→generating without lock_input, leaving compass and input lock unfired. [2026-04-16]
+42. **Landing subline + pseudonym question rewrite** — New line under Scout wordmark: "Built to sharpen what everyone wants to blur." (Cormorant Garant 300 italic, 16px, #6A6560, still). Pseudonym question rewritten: "What would you like to be called in this moment? Doesn't have to be your name. Choose something that feels honest." [2026-04-16]
+
+43. **lock_input on settling phrase** — lock_input = True now fires when settling phrase detected, not only on 40-message completion. Fixes test sessions and direct-close production sessions where state went interviewing→closing→generating without lock_input, leaving compass and input lock unfired. [2026-04-16]
 
 43. **Copy refinements across 3 files** — Tagline: "An examined life is not for everyone. / That is why you are here." Guide link: "Read this before you enter your key — it will make the difference." Colophon: "For those who are ready to look." Guide headings: "While you are here", "What this asks of you", "One thing to know first". Generation wait: single breathing message replacing 5 rotating messages ("What you brought to this session is being carefully woven." with 4s opacity pulse). Download copy: "Both documents are yours alone." Constitution section 4: "Where you draw in stone." Portrait PDF colophon: "Written for you alone, and for no one else." [2026-04-16]
 
