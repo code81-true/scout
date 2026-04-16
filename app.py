@@ -380,6 +380,7 @@ def chat():
             # Settling phrase detection — works for both production and test mode
             settling = "I'll start now" in full_reply and "give me a few minutes" in full_reply
             if settling:
+                lock_input = True
                 if current_state == "interviewing":
                     # Direct close — skip closing state, go straight to generating
                     transition_state(active_key, "closing")
