@@ -855,6 +855,7 @@ const sendBtn = document.getElementById("send-btn");
 let locked = true;
 let sessionEnded = false;
 let generateCalled = false;
+let inSettling = false;
 
 // --- Typing delay logic (client-side) ---
 
@@ -1018,19 +1019,23 @@ function unlock() {
 }
 
 async function sendMessage(message) {
-  if (sessionEnded) return;
+  if (sessionEnded && !inSettling) return;
   lock();
   const scoutEl = addMessage("scout");
   const tw = new TypeWriter(scoutEl);
 
   let lastState = "interviewing";
+  let gotLockInput = false;
 
   tw.onFinish = async () => {
     if (lastState === "generating") {
       sessionEnded = true;
+      inSettling = false;
       userInput.placeholder = "";
       triggerGenerate();
-    } else if (lastState === "closing") {
+    } else if (gotLockInput || lastState === "closing") {
+      // Settling mode — lock for interview but allow settling exchanges
+      inSettling = true;
       userInput.placeholder = "";
       unlock();
     } else {
@@ -1076,6 +1081,7 @@ async function sendMessage(message) {
         const payload = JSON.parse(line.slice(6));
         if (payload.text) tw.append(payload.text);
         if (payload.session_state) lastState = payload.session_state;
+        if (payload.lock_input) gotLockInput = true;
         if (payload.done) tw.finish();
       }
     }

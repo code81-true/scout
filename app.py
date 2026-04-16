@@ -363,31 +363,35 @@ def chat():
         # State transition detection
         current = get_session_state(active_key)
         current_state = current["state"] if current else "interviewing"
+        lock_input = False
 
         if current_state == "interviewing":
-            # Check for interview completion
+            # Interview completion: "Give me a moment" + 40 messages
             complete = (
                 "Give me a moment" in full_reply
                 and len(sess.transcript) >= 40
             )
-            if _is_test_key(active_key) and not complete:
-                complete = (
-                    "```yaml" in full_reply
-                    and "spine:" in full_reply
-                )
             if complete:
                 transition_state(active_key, "closing")
                 current_state = "closing"
+                lock_input = True
 
-        if current_state == "closing":
-            # Check for settling completion
+        if current_state == "closing" or current_state == "interviewing":
+            # Settling phrase detection — works for both production and test mode
             settling = "I'll start now" in full_reply and "give me a few minutes" in full_reply
             if settling:
+                if current_state == "interviewing":
+                    # Direct close — skip closing state, go straight to generating
+                    transition_state(active_key, "closing")
                 transition_state(active_key, "generating")
                 current_state = "generating"
-            # 90-second timeout handled by background scheduler
 
-        yield f"data: {json.dumps({'done': True, 'session_state': current_state})}\n\n"
+        # 90-second timeout handled by background scheduler
+
+        done_payload = {"done": True, "session_state": current_state}
+        if lock_input:
+            done_payload["lock_input"] = True
+        yield f"data: {json.dumps(done_payload)}\n\n"
 
     return Response(generate(), mimetype="text/event-stream")
 
