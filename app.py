@@ -21,7 +21,6 @@ from scout.database import (
     create_session,
     delete_transcript,
     get_closing_duration,
-    get_pseudonym,
     get_session_state,
     get_stale_closing_sessions,
     init_db,
@@ -29,7 +28,6 @@ from scout.database import (
     load_transcript,
     mark_started,
     save_transcript,
-    set_pseudonym,
     transition_state,
 )
 from scout.engine import (
@@ -179,7 +177,7 @@ def auth():
 
                 # Resume: load transcript from DB
                 flask_session["scout_key"] = key
-                flask_session["pseudonym"] = get_pseudonym(key)
+                flask_session["pseudonym"] = "Anonymous"
 
                 transcript = load_transcript(key)
                 if transcript:
@@ -327,26 +325,6 @@ def chat():
     # Normal turn
     sess.add_user(message)
 
-    # Pseudonym detection — during arrival phase (skip for test keys)
-    exchange_count = len(sess.transcript) // 2
-    if (not _is_test_key(active_key)
-            and flask_session.get("pseudonym", "Anonymous") == "Anonymous"
-            and 2 <= exchange_count <= 7
-            and len(message) < 80):
-        candidate = message.strip()
-        for prefix in ["you can call me ", "i'd like to be called ", "just call me ",
-                        "let's go with ", "how about ", "call me ", "my name is ",
-                        "use ", "i'll be ", "i am ", "im ", "i'm "]:
-            if candidate.lower().startswith(prefix):
-                candidate = candidate[len(prefix):].strip()
-                break
-        decline_signals = ["anonymous", "i don't mind", "doesn't matter",
-                          "no preference", "don't care", "anything", "whatever"]
-        if not any(s in candidate.lower() for s in decline_signals) and candidate:
-            detected_pseudonym = candidate.strip(' "\'.,')
-            flask_session["pseudonym"] = detected_pseudonym
-            set_pseudonym(active_key, detected_pseudonym)
-
     collected: list[str] = []
 
     def generate():
@@ -430,7 +408,7 @@ def generate_spine():
 
     gen_model = TEST_MODEL if _is_test_key(gen_key) else None
     yaml_doc = generate_yaml_sections(client, transcript, model=gen_model)
-    pseudonym = flask_session.get("pseudonym", get_pseudonym(gen_key))
+    pseudonym = flask_session.get("pseudonym", "Anonymous")
     portrait_text = generate_portrait(client, transcript, model=gen_model, pseudonym=pseudonym)
 
     # Save YAML

@@ -125,7 +125,9 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 41. **Prompt caching on Scout system prompt** — cache_control ephemeral applied to three API call sites: send_message(), generate_yaml_sections() (4 calls in loop), send_message_stream(). Chronicler generate_portrait() excluded — different prompt per session. Reduces input token costs on repeated calls within same session. [2026-04-11]
 
-42. **Guide closing line** — After "When you are ready — enter your key.": gold hairline rule (0.5px, 40px, opacity 0.25) + "One suffers less not by controlling life more, but by understanding oneself more deeply." (Cormorant Garant 300 italic, 17px, gold, still). Last element before return button. [2026-04-16]
+42. **Pseudonym removed — all sessions anonymous** — Pseudonym question replaced with "I won't ask your name. You are anonymous. It is the point here, not a limitation." All pseudonym detection code removed from app.py (prefix scanning, set_pseudonym, get_pseudonym). All sessions use "Anonymous". Chronicler and constitution still receive "Anonymous" as pseudonym parameter. [2026-04-16]
+
+43. **Guide closing line** — After "When you are ready — enter your key.": gold hairline rule (0.5px, 40px, opacity 0.25) + "One suffers less not by controlling life more, but by understanding oneself more deeply." (Cormorant Garant 300 italic, 17px, gold, still). Last element before return button. [2026-04-16]
 
 43. **Landing stripped back, guide opens with subline + tagline** — Landing page: removed tagline lines and subline, now shows only wordmark → guide link → key console → colophon. Guide page: opens with "Scout is built to sharpen what everyone wants to blur." (20px gold) + "An examined life is not for everyone. That is why you are here." (17px muted) + gold hairline rule before existing content. [2026-04-16]
 
