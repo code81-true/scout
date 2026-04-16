@@ -11,7 +11,7 @@ Paragraph 2: What drives you — not the stated motivation. The real one underne
 
 Paragraph 3: What you cannot escape — the pattern that returns. The thing that has cost you and will cost you again unless it is seen clearly. Name it without verdict.
 
-Paragraph 4: What you expect of yourself — not the aspiration. The standard already operating in you, whether you named it or not.
+Paragraph 4: Where you draw in stone — not the aspiration. The standard already operating in you, whether you named it or not.
 
 Paragraph 5: What remains open — something not yet resolved and does not need to be. The honest edge of what this session reached. The final sentence of this paragraph must end with the person's pseudonym — e.g. "The session did not reach it, [pseudonym]." Written freshly each time, never templated. The pseudonym appears nowhere else in the five paragraphs.
 

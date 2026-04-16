@@ -455,6 +455,11 @@
     opacity: 1;
   }
 
+  @keyframes gen-breathe {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1.0; }
+  }
+
   /* --- Compass waiting animation --- */
 
   .compass-generating {
@@ -659,11 +664,11 @@
 <!-- ====== STATE 1 — Landing ====== -->
 <div id="landing" class="state active page-landing">
   <div class="landing-statement">
-    <p>Knowing oneself is a big headstart.</p>
-    <p>You are here because someone believes you deserve it.</p>
+    <p>An examined life is not for everyone.</p>
+    <p>That is why you are here.</p>
   </div>
   <div class="wordmark-wrap"><div class="wordmark">Scout</div></div>
-  <a class="guide-link guide-breathe" id="guide-link">Important — read completely before entering the key.</a>
+  <a class="guide-link guide-breathe" id="guide-link">Read this before you enter your key — it will make the difference.</a>
   <div class="key-console">
     <div class="key-label breathe">Key</div>
     <input type="password" class="key-input" id="key-input" autocomplete="off" spellcheck="false">
@@ -671,7 +676,7 @@
     <div class="key-error" id="key-error"></div>
     <button class="reveal-btn breathe-delayed" id="reveal-btn">Reveal</button>
   </div>
-  <div class="colophon-landing">By invitation only</div>
+  <div class="colophon-landing">For those who are ready to look.</div>
 </div>
 
 <!-- ====== STATE — Maintenance ====== -->
@@ -690,20 +695,20 @@
       <p>Scout will sit with you in a conversation that goes somewhere most conversations never reach — following what you say, and sometimes what you don't.</p>
       <p>At the end you will receive two things — a portrait written about you, and a Meridian. Both belong to you alone. Download both before you close the window.</p>
     </div>
-    <div class="guide-section-title">Your session</div>
+    <div class="guide-section-title">While you are here</div>
     <div class="guide-body">
       <p>Your conversation is held privately during your session — like a document that saves itself while you write. If your connection drops or your browser closes, you can return with the same key and Scout picks up exactly where you left off.</p>
       <p>Once your documents are delivered and you close this window, the conversation is permanently removed. Nothing is retained. Your inner life passes through this system and leaves no trace.</p>
       <p>Your key expires the moment your documents are delivered. It cannot be reused.</p>
     </div>
-    <div class="guide-section-title">What this requires</div>
+    <div class="guide-section-title">What this asks of you</div>
     <div class="guide-body">
       <p>This will only work if you are willing to think carefully, speak plainly, and go into as much detail as the question deserves.</p>
       <p>Scout will not judge you. It will not give you advice. It will not tell you what to do. It will listen without agenda and reflect back what it actually hears — including the things you gestured at without quite landing on.</p>
       <p>The people who get the most from this are the ones who treat it seriously. Who answer the question that was asked rather than the one that was easier. Who stay with a thought rather than moving past it.</p>
       <p>What emerges becomes the foundation of something that will serve you every day. Not a plan. A companion — already in development — that reads your portrait and Meridian every morning and speaks to you from that knowledge. On the days when you cannot hear yourself clearly, it knows who you are at your core and does not forget. The quality of that companion depends entirely on the quality of what you bring today.</p>
     </div>
-    <div class="guide-section-title">Before you begin</div>
+    <div class="guide-section-title">One thing to know first</div>
     <div class="guide-body">
       <p>Scout works best when you are in a stable place. If you are currently in a difficult period — or receiving support for your mental health — this is not the right moment. Not because anything is wrong with you. Because this kind of careful self-examination deserves the right conditions. Please speak with your doctor or therapist before proceeding.</p>
       <p>If questions about your relationships or personal life arise during the session — Scout will acknowledge them. But some territory deserves a human specialist, and Scout will say so.</p>
@@ -1102,14 +1107,6 @@ async function sendMessage(message) {
 async function triggerGenerate() {
   if (generateCalled) return;
   generateCalled = true;
-  const messages = [
-    "The finest things take a little longer.",
-    "Your Meridian is being assembled — each section carefully, in order.",
-    "This cannot be rushed. It should not be.",
-    "What you gave this conversation deserves precision. We are giving it that.",
-    "Almost there. Patience will pay."
-  ];
-
   // Create compass + generating message element
   const msgEl = addMessage("scout");
   msgEl.innerHTML = "";
@@ -1171,35 +1168,17 @@ async function triggerGenerate() {
   </svg>`;
   msgEl.appendChild(compassDiv);
 
-  const staticMsg = document.createElement("p");
-  staticMsg.textContent = "Your Meridian and portrait are being composed. The depth of the session determines the time.";
-  staticMsg.style.cssText = "font-family:'Cormorant Garant',serif;font-style:italic;font-size:14px;color:#8A7A6A;text-align:center;margin:12px auto;max-width:360px;";
-  msgEl.appendChild(staticMsg);
-
-  const genMsg = document.createElement("div");
-  genMsg.className = "generating-message";
-  genMsg.textContent = messages[0];
+  const genMsg = document.createElement("p");
+  genMsg.textContent = "What you brought to this session is being carefully woven.";
+  genMsg.style.cssText = "font-family:'Cormorant Garant',serif;font-style:italic;font-size:17px;color:#B8965A;text-align:center;margin:20px auto;max-width:400px;animation:gen-breathe 4s ease-in-out infinite;";
   msgEl.appendChild(genMsg);
   conversation.scrollTop = conversation.scrollHeight;
 
-  // Fade in compass and first message (50ms delay for DOM paint)
+  // Fade in compass and message (50ms delay for DOM paint)
   setTimeout(() => {
     compassDiv.classList.add("visible");
-    genMsg.classList.add("visible");
     compassDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, 50);
-
-  // Rotate messages every 18 seconds
-  let msgIndex = 0;
-  const rotateInterval = setInterval(() => {
-    msgIndex++;
-    if (msgIndex >= messages.length) msgIndex = 0;
-    genMsg.classList.remove("visible");
-    setTimeout(() => {
-      genMsg.textContent = messages[msgIndex];
-      genMsg.classList.add("visible");
-    }, 1000);
-  }, 18000);
 
   try {
     const resp = await fetch("/generate", {
@@ -1209,7 +1188,7 @@ async function triggerGenerate() {
     });
     const data = await resp.json();
 
-    clearInterval(rotateInterval);
+
 
     // Burn the key
     await fetch("/burn", { method: "POST" });
@@ -1253,7 +1232,7 @@ async function triggerGenerate() {
     msgEl.style.borderLeft = "none";
 
     const notice = document.createElement("p");
-    notice.textContent = "Download both before you close this window.";
+    notice.textContent = "Both documents are yours alone. Download them now.";
     notice.style.cssText = "font-family:'Cormorant Garant',serif;font-style:italic;font-size:15px;color:#6A6560;margin:0;opacity:0;transition:opacity 1s ease-in-out;";
 
     const portraitBtn = document.createElement("button");
@@ -1292,7 +1271,7 @@ async function triggerGenerate() {
       });
     });
   } catch (err) {
-    clearInterval(rotateInterval);
+
     genMsg.textContent = "Generation failed. " + err.message;
   }
 }
