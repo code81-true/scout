@@ -125,7 +125,9 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 41. **Prompt caching on Scout system prompt** — cache_control ephemeral applied to three API call sites: send_message(), generate_yaml_sections() (4 calls in loop), send_message_stream(). Chronicler generate_portrait() excluded — different prompt per session. Reduces input token costs on repeated calls within same session. [2026-04-11]
 
-42. **Pseudonym removed — all sessions anonymous** — Pseudonym question replaced with "I won't ask your name. You are anonymous. It is the point here, not a limitation." All pseudonym detection code removed from app.py (prefix scanning, set_pseudonym, get_pseudonym). All sessions use "Anonymous". Chronicler and constitution still receive "Anonymous" as pseudonym parameter. [2026-04-16]
+42. **Admin dashboard + new key format + outcome tracking** — Admin at /admin-7x9k2m (no auth Phase 1). Key format: 12-char mixed case (A-Z, a-z, 0-9), old uppercase keys still valid. keys.txt format extended to key:status:recipient (third field optional). Session outcomes tracked in SQLite: completed, sufficient, user_terminated, safety_exit, abandoned, technical_failure. Outcome set in /burn based on transcript length and state. Admin dashboard: summary stats, key generation with recipient note, all-keys table with manual outcome override. Sessions table permanent — cleanup_session deletes transcripts only. /auth: .upper() removed (case-sensitive keys), recipient copied from keys.txt to database on first auth. Migration adds outcome + recipient columns to existing databases. [2026-04-19]
+
+43. **Pseudonym removed — all sessions anonymous** — Pseudonym question replaced with "I won't ask your name. You are anonymous. It is the point here, not a limitation." All pseudonym detection code removed from app.py (prefix scanning, set_pseudonym, get_pseudonym). All sessions use "Anonymous". Chronicler and constitution still receive "Anonymous" as pseudonym parameter. [2026-04-16]
 
 43. **Guide closing line** — After "When you are ready — enter your key.": gold hairline rule (0.5px, 40px, opacity 0.25) + "One suffers less not by controlling life more, but by understanding oneself more deeply." (Cormorant Garant 300 italic, 17px, gold, still). Last element before return button. [2026-04-16]
 
@@ -223,6 +225,19 @@ Scout is a single-session AI interview engine that guides one person through sev
 | YAML generation (generate_yaml_sections) | claude-sonnet-4-5 | Structured output, follows schema reliably. [2026-04-06] |
 | Portrait (generate_portrait) | claude-opus-4-6 | Literary quality, emotional precision. [2026-04-07] |
 | Test mode (all functions) | claude-haiku-4-5-20251001 | Fast and cheap for logistics testing. [2026-04-07] |
+
+---
+
+## Key Decisions
+
+- **DEC-SCOUT-001**: Key format changed from 10-character uppercase alphanumeric to 12-character mixed case alphanumeric (A-Z, a-z, 0-9). Old keys remain valid. New format example: aK7mP2xQr9Nw. [2026-04-19]
+- **DEC-SCOUT-002**: Admin dashboard at unpredictable URL /admin-7x9k2m. No authentication in Phase 1. Password protection deferred to Phase 2. [2026-04-19]
+- **DEC-SCOUT-003**: Session outcomes tracked in SQLite sessions table. Six values: completed, sufficient, user_terminated, safety_exit, abandoned, technical_failure. Manual override available via admin dashboard. [2026-04-19]
+- **DEC-SCOUT-004**: Key recipient name/email recorded at generation time as a note field. Email invitation system deferred to Phase 2. [2026-04-19]
+- **DEC-SCOUT-005**: All sessions are Anonymous. Pseudonym detection removed entirely. No name is ever asked or stored. [2026-04-16]
+- **DEC-SCOUT-006**: Meridian replaces constitution as the user-facing name for the personal constitution document. [2026-04-15]
+- **DEC-SCOUT-007**: Portrait and Meridian generated as PDFs using ReportLab (Meridian) and WeasyPrint (Portrait). Text file delivery removed. [2026-04-15]
+- **DEC-SCOUT-008**: YAML parsing pass removed from prompt.py. Scout never produces YAML in conversation. YAML generated server-side by generate_yaml_sections() only. [2026-04-16]
 
 ---
 

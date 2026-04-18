@@ -23,7 +23,7 @@ def _connect() -> sqlite3.Connection:
 
 
 def init_db() -> None:
-    """Create tables if they do not exist."""
+    """Create tables if they do not exist, run migrations."""
     conn = _connect()
     conn.executescript("""
         CREATE TABLE IF NOT EXISTS sessions (
@@ -32,7 +32,9 @@ def init_db() -> None:
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             state_changed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             pseudonym TEXT DEFAULT 'Anonymous',
-            started INTEGER DEFAULT 0
+            started INTEGER DEFAULT 0,
+            outcome TEXT DEFAULT NULL,
+            recipient TEXT DEFAULT NULL
         );
         CREATE TABLE IF NOT EXISTS transcripts (
             key TEXT PRIMARY KEY,
@@ -40,6 +42,17 @@ def init_db() -> None:
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
     """)
+    # Migration: add outcome and recipient columns if missing
+    try:
+        conn.execute("SELECT outcome FROM sessions LIMIT 1")
+    except sqlite3.OperationalError:
+        conn.execute("ALTER TABLE sessions ADD COLUMN outcome TEXT DEFAULT NULL")
+        logger.info("Migration: added outcome column to sessions")
+    try:
+        conn.execute("SELECT recipient FROM sessions LIMIT 1")
+    except sqlite3.OperationalError:
+        conn.execute("ALTER TABLE sessions ADD COLUMN recipient TEXT DEFAULT NULL")
+        logger.info("Migration: added recipient column to sessions")
     conn.commit()
     conn.close()
     logger.info("Database initialised at %s", DB_PATH)
@@ -113,20 +126,37 @@ def transition_state(key: str, new_state: str) -> None:
     logger.info("Session %s: %s → %s", key, current, new_state)
 
 
-def set_pseudonym(key: str, pseudonym: str) -> None:
-    """Store the pseudonym for a session."""
+def set_outcome(key: str, outcome: str) -> None:
+    """Set the outcome for a session."""
+    valid_outcomes = {
+        "completed", "sufficient", "user_terminated",
+        "safety_exit", "abandoned", "technical_failure",
+    }
+    if outcome not in valid_outcomes:
+        logger.warning("Invalid outcome %s for key %s", outcome, key)
+        return
     conn = _connect()
-    conn.execute("UPDATE sessions SET pseudonym = ? WHERE key = ?", (pseudonym, key))
+    conn.execute("UPDATE sessions SET outcome = ? WHERE key = ?", (outcome, key))
     conn.commit()
     conn.close()
 
 
-def get_pseudonym(key: str) -> str:
-    """Return the pseudonym for a session."""
+def set_recipient(key: str, recipient: str) -> None:
+    """Set the recipient name/email for a key."""
     conn = _connect()
-    row = conn.execute("SELECT pseudonym FROM sessions WHERE key = ?", (key,)).fetchone()
+    conn.execute("UPDATE sessions SET recipient = ? WHERE key = ?", (recipient, key))
+    conn.commit()
     conn.close()
-    return row["pseudonym"] if row else "Anonymous"
+
+
+def get_all_sessions() -> list[dict]:
+    """Return all sessions ordered by creation date descending."""
+    conn = _connect()
+    rows = conn.execute(
+        "SELECT key, state, outcome, recipient, created_at, pseudonym FROM sessions ORDER BY created_at DESC"
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
 
 
 def save_transcript(key: str, transcript: list[dict]) -> None:
@@ -205,9 +235,38 @@ def get_stale_closing_sessions(timeout_seconds: float = 90.0) -> list[str]:
 
 
 def cleanup_session(key: str) -> None:
-    """Remove all database records for a key."""
+    """Delete transcript only. Sessions row is permanent history."""
     conn = _connect()
-    conn.execute("DELETE FROM sessions WHERE key = ?", (key,))
     conn.execute("DELETE FROM transcripts WHERE key = ?", (key,))
     conn.commit()
     conn.close()
+
+
+def get_session_stats() -> dict:
+    """Return summary statistics for the admin dashboard."""
+    conn = _connect()
+    total = conn.execute("SELECT COUNT(*) FROM sessions").fetchone()[0]
+    active = conn.execute(
+        "SELECT COUNT(*) FROM sessions WHERE state IN ('interviewing', 'closing')"
+    ).fetchone()[0]
+    completed = conn.execute(
+        "SELECT COUNT(*) FROM sessions WHERE outcome = 'completed'"
+    ).fetchone()[0]
+    sufficient = conn.execute(
+        "SELECT COUNT(*) FROM sessions WHERE outcome = 'sufficient'"
+    ).fetchone()[0]
+    abandoned = conn.execute(
+        "SELECT COUNT(*) FROM sessions WHERE outcome = 'abandoned'"
+    ).fetchone()[0]
+    technical = conn.execute(
+        "SELECT COUNT(*) FROM sessions WHERE outcome = 'technical_failure'"
+    ).fetchone()[0]
+    conn.close()
+    return {
+        "total": total,
+        "active": active,
+        "completed": completed,
+        "sufficient": sufficient,
+        "abandoned": abandoned,
+        "technical_failure": technical,
+    }

@@ -20,14 +20,18 @@ from scout.database import (
     cleanup_session,
     create_session,
     delete_transcript,
+    get_all_sessions,
     get_closing_duration,
     get_session_state,
+    get_session_stats,
     get_stale_closing_sessions,
     init_db,
     is_started,
     load_transcript,
     mark_started,
     save_transcript,
+    set_outcome,
+    set_recipient,
     transition_state,
 )
 from scout.engine import (
@@ -154,7 +158,7 @@ def auth():
         return {"error": "maintenance", "message": "Scout is briefly offline. Back shortly."}, 503
 
     data = request.get_json()
-    key = data.get("key", "").strip().upper()
+    key = data.get("key", "").strip()
 
     if not key:
         return {"success": False, "reason": "invalid"}
@@ -162,9 +166,10 @@ def auth():
     lines = _read_keys()
     for i, line in enumerate(lines):
         parts = line.split(":")
-        if len(parts) != 2:
+        if len(parts) < 2:
             continue
         k, key_status = parts[0], parts[1]
+        file_recipient = parts[2] if len(parts) >= 3 else ""
         if k == key:
             if key_status == "used":
                 return {"success": False, "reason": "expired"}
@@ -213,13 +218,15 @@ def auth():
                 return {"success": True, "session_state": db_session["state"]}
 
             # Unused key — fresh session
-            lines[i] = f"{k}:active"
+            lines[i] = f"{k}:active:{file_recipient}" if file_recipient else f"{k}:active"
             _write_keys(lines)
             flask_session["scout_key"] = key
             flask_session["pseudonym"] = "Anonymous"
             flask_session["resumed"] = False
             flask_session["last_topic"] = ""
             create_session(key)
+            if file_recipient:
+                set_recipient(key, file_recipient)
             return {"success": True, "session_state": "interviewing"}
 
     return {"success": False, "reason": "invalid"}
@@ -235,12 +242,26 @@ def burn():
     lines = _read_keys()
     for i, line in enumerate(lines):
         parts = line.split(":")
-        if len(parts) == 2 and parts[0] == key:
-            lines[i] = f"{key}:used"
+        if len(parts) >= 2 and parts[0] == key:
+            file_recip = parts[2] if len(parts) >= 3 else ""
+            lines[i] = f"{key}:used:{file_recip}" if file_recip else f"{key}:used"
             _write_keys(lines)
             break
 
-    # Transition to delivered and clean up
+    # Record outcome before cleanup
+    db_state = get_session_state(key)
+    if db_state:
+        transcript = load_transcript(key)
+        msg_count = len(transcript) if transcript else 0
+        if db_state["state"] == "generating" or db_state["state"] == "delivered":
+            outcome = "completed" if msg_count >= 40 else "sufficient"
+        elif msg_count < 8:
+            outcome = "abandoned"
+        else:
+            outcome = "sufficient"
+        set_outcome(key, outcome)
+
+    # Transition to delivered and clean up transcript
     transition_state(key, "delivered")
     delete_transcript(key)
     cleanup_session(key)
@@ -824,6 +845,71 @@ def download_meridian():
         mimetype="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+@app.route("/admin-7x9k2m", methods=["GET", "POST"])
+def admin_dashboard():
+    """Admin dashboard — key management, outcomes, stats."""
+    if request.method == "POST":
+        action = request.form.get("action", "")
+
+        if action == "generate_keys":
+            count = min(int(request.form.get("count", 5)), 50)
+            recipient = request.form.get("recipient", "").strip()
+            import string
+            import random
+            alphabet = string.ascii_letters + string.digits
+            new_keys = []
+            for _ in range(count):
+                key = "".join(random.choices(alphabet, k=12))
+                new_keys.append(key)
+                # Write to keys.txt — no session record until /auth
+                entry = f"{key}:unused:{recipient}" if recipient else f"{key}:unused"
+                with open(KEYS_PATH, "a", encoding="utf-8") as f:
+                    f.write(entry + "\n")
+            return render_template("admin.html",
+                keys=_read_keys_with_db(),
+                stats=get_session_stats(),
+                generated=new_keys,
+                recipient=recipient,
+            )
+
+        if action == "set_outcome":
+            key = request.form.get("key", "")
+            outcome = request.form.get("outcome", "")
+            if key and outcome:
+                set_outcome(key, outcome)
+
+    return render_template("admin.html",
+        keys=_read_keys_with_db(),
+        stats=get_session_stats(),
+        generated=None,
+        recipient="",
+    )
+
+
+def _read_keys_with_db() -> list[dict]:
+    """Read keys.txt and merge with database session data."""
+    lines = _read_keys()
+    db_sessions = {s["key"]: s for s in get_all_sessions()}
+    result = []
+    for line in lines:
+        parts = line.split(":")
+        if len(parts) < 2:
+            continue
+        key = parts[0]
+        status = parts[1]
+        file_recipient = parts[2] if len(parts) >= 3 else ""
+        db = db_sessions.get(key, {})
+        result.append({
+            "key": key,
+            "status": status,
+            "outcome": db.get("outcome", ""),
+            "recipient": db.get("recipient", "") or file_recipient,
+            "created_at": db.get("created_at", ""),
+            "state": db.get("state", ""),
+        })
+    return result
 
 
 def _parse_portrait_markers(raw_text: str, pseudonym: str) -> str:

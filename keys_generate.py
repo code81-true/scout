@@ -4,21 +4,25 @@ from __future__ import annotations
 
 import os
 import random
+import string
 import sys
 
-# Exclude 0, O, I, 1 to avoid ambiguity
-ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-KEY_LENGTH = 10
+# New format: 12-char mixed case alphanumeric (A-Z, a-z, 0-9)
+ALPHABET = string.ascii_letters + string.digits
+KEY_LENGTH = 12
+
+# Test keys still use uppercase-only for visual distinction
+TEST_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 
 
 def generate_key() -> str:
-    """Generate a single 10-character key."""
+    """Generate a single 12-character mixed-case key."""
     return "".join(random.choices(ALPHABET, k=KEY_LENGTH))
 
 
 def generate_test_key() -> str:
-    """Generate a test key: TEST- followed by 6 characters."""
-    return "TEST-" + "".join(random.choices(ALPHABET, k=6))
+    """Generate a test key: TEST- followed by 6 uppercase characters."""
+    return "TEST-" + "".join(random.choices(TEST_ALPHABET, k=6))
 
 
 def main() -> None:

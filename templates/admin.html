@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Scout Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garant:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0D0B0A;
+    color: #e8e8e8;
+    font-family: "Cormorant Garant", Georgia, serif;
+    font-size: 15px;
+    line-height: 1.6;
+    padding: 40px 24px;
+  }
+  .container { max-width: 900px; margin: 0 auto; }
+  h1 {
+    font-family: "Cormorant Garant", serif;
+    font-weight: 300;
+    font-size: 28px;
+    color: #B8965A;
+    margin-bottom: 32px;
+  }
+  h2 {
+    font-family: "Cormorant Garant", serif;
+    font-weight: 300;
+    font-size: 20px;
+    color: #B8965A;
+    margin: 32px 0 16px;
+    border-bottom: 1px solid #2A2520;
+    padding-bottom: 8px;
+  }
+  .stats {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .stat {
+    background: #1a1a1a;
+    padding: 16px 20px;
+    border-radius: 6px;
+    min-width: 120px;
+  }
+  .stat-value {
+    font-size: 28px;
+    color: #B8965A;
+    font-weight: 300;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: #6A6560;
+    margin-top: 4px;
+  }
+  form { margin-bottom: 16px; }
+  label {
+    display: block;
+    font-size: 13px;
+    color: #8A8480;
+    margin-bottom: 4px;
+  }
+  input[type="number"], input[type="text"] {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #e8e8e8;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 14px;
+    width: 200px;
+    margin-bottom: 12px;
+  }
+  button[type="submit"] {
+    background: transparent;
+    color: #B8965A;
+    border: 1px solid #B8965A;
+    padding: 8px 20px;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  button[type="submit"]:hover { background: rgba(184,150,90,0.1); }
+  .generated-keys {
+    background: #1a1a1a;
+    padding: 16px;
+    border-radius: 6px;
+    margin: 16px 0;
+    font-family: monospace;
+    font-size: 14px;
+    line-height: 2;
+    color: #B8965A;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+  }
+  th {
+    text-align: left;
+    font-size: 11px;
+    color: #6A6560;
+    padding: 8px 10px;
+    border-bottom: 1px solid #2A2520;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #1a1a1a;
+    font-size: 13px;
+    color: #ccc;
+  }
+  td.key-cell {
+    font-family: monospace;
+    font-size: 12px;
+    color: #B8965A;
+  }
+  .status-unused { color: #6A6560; }
+  .status-active { color: #4A9A4A; }
+  .status-used { color: #8A8480; }
+  select {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #ccc;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+  }
+  .outcome-form { display: inline; }
+  .outcome-form button {
+    background: transparent;
+    border: 1px solid #333;
+    color: #6A6560;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    cursor: pointer;
+    margin-left: 4px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Scout Admin</h1>
+
+  <h2>Summary</h2>
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-value">{{ stats.total }}</div>
+      <div class="stat-label">Total sessions</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">{{ stats.active }}</div>
+      <div class="stat-label">Active now</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">{{ stats.completed }}</div>
+      <div class="stat-label">Completed</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">{{ stats.sufficient }}</div>
+      <div class="stat-label">Sufficient</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">{{ stats.abandoned }}</div>
+      <div class="stat-label">Abandoned</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">{{ stats.technical_failure }}</div>
+      <div class="stat-label">Technical failures</div>
+    </div>
+  </div>
+
+  <h2>Generate Keys</h2>
+  <form method="POST">
+    <input type="hidden" name="action" value="generate_keys">
+    <label>Number of keys (max 50)</label>
+    <input type="number" name="count" value="5" min="1" max="50"><br>
+    <label>Recipient name or email (optional)</label>
+    <input type="text" name="recipient" placeholder="e.g. John Smith or john@example.com"><br>
+    <button type="submit">Generate</button>
+  </form>
+
+  {% if generated %}
+  <div class="generated-keys">
+    <strong style="color:#8A8480;font-family:'Cormorant Garant',serif;">Generated {{ generated|length }} key(s){% if recipient %} for {{ recipient }}{% endif %}:</strong><br>
+    {% for key in generated %}{{ key }}<br>{% endfor %}
+  </div>
+  {% endif %}
+
+  <h2>All Keys</h2>
+  <table>
+    <tr>
+      <th>Key</th>
+      <th>Status</th>
+      <th>State</th>
+      <th>Outcome</th>
+      <th>Recipient</th>
+      <th>Created</th>
+      <th>Override</th>
+    </tr>
+    {% for k in keys %}
+    <tr>
+      <td class="key-cell">{{ k.key }}</td>
+      <td class="status-{{ k.status }}">{{ k.status }}</td>
+      <td>{{ k.state or '—' }}</td>
+      <td>{{ k.outcome or '—' }}</td>
+      <td>{{ k.recipient or '—' }}</td>
+      <td>{{ k.created_at[:10] if k.created_at else '—' }}</td>
+      <td>
+        <form class="outcome-form" method="POST">
+          <input type="hidden" name="action" value="set_outcome">
+          <input type="hidden" name="key" value="{{ k.key }}">
+          <select name="outcome">
+            <option value="">—</option>
+            <option value="completed">completed</option>
+            <option value="sufficient">sufficient</option>
+            <option value="user_terminated">user_terminated</option>
+            <option value="safety_exit">safety_exit</option>
+            <option value="abandoned">abandoned</option>
+            <option value="technical_failure">technical_failure</option>
+          </select>
+          <button type="submit">Set</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+</body>
+</html>
