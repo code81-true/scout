@@ -1,6 +1,6 @@
 # Scout — Project Status
 
-Last updated: 2026-04-09
+Last updated: 2026-04-19
 
 ---
 
@@ -127,6 +127,10 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 42. **Admin dashboard + new key format + outcome tracking** — Admin at /admin-7x9k2m (no auth Phase 1). Key format: 12-char mixed case (A-Z, a-z, 0-9), old uppercase keys still valid. keys.txt format extended to key:status:recipient (third field optional). Session outcomes tracked in SQLite: completed, sufficient, user_terminated, safety_exit, abandoned, technical_failure. Outcome set in /burn based on transcript length and state. Admin dashboard: summary stats, key generation with recipient note, all-keys table with manual outcome override. Sessions table permanent — cleanup_session deletes transcripts only. /auth: .upper() removed (case-sensitive keys), recipient copied from keys.txt to database on first auth. Migration adds outcome + recipient columns to existing databases. [2026-04-19]
 
+44. **Admin dashboard — notes field + test key generation** — sessions table gains `notes` column with migration (set_note() in scout/database.py). Admin UI adds a Notes column to the all-keys table with inline save form per row. Key generation form adds a "Test keys" checkbox that emits TEST- prefixed 6-char keys (Crockford-safe alphabet) instead of the 12-char production format. Committed but not yet deployed — requires PRE-DEPLOY CHECKLIST run. [2026-04-19]
+
+45. **Documentation sprint — six authoritative documents written** — SOUL.md (why Scout exists, what it must never compromise, Planes Architecture, Boss/David standard), ARCHITECTURE.md (stack, domains, session lifecycle, model allocation, key system, DB, deploy pipeline, Scout→MTN manual bridge), DECISIONS.md (14 numbered decisions with date, reasoning, status), KNOWN_ISSUES.md (active bugs, parked features, known model behaviour issues), ROADMAP.md (v1.0–v3.0 + A01–A12 aesthetics register), HANDOVER.md (replaces founding handover — who Pope is, what Scout is today, deployment state, next agenda, read order). Committed in 417d839. These six files are now the source of truth; if a CC session contradicts them, the docs win. [2026-04-19]
+
 43. **Pseudonym removed — all sessions anonymous** — Pseudonym question replaced with "I won't ask your name. You are anonymous. It is the point here, not a limitation." All pseudonym detection code removed from app.py (prefix scanning, set_pseudonym, get_pseudonym). All sessions use "Anonymous". Chronicler and constitution still receive "Anonymous" as pseudonym parameter. [2026-04-16]
 
 43. **Guide closing line** — After "When you are ready — enter your key.": gold hairline rule (0.5px, 40px, opacity 0.25) + "One suffers less not by controlling life more, but by understanding oneself more deeply." (Cormorant Garant 300 italic, 17px, gold, still). Last element before return button. [2026-04-16]
@@ -198,7 +202,7 @@ Scout is a single-session AI interview engine that guides one person through sev
 - [SUPERSEDED 2026-04-09: "No rate limiting on /auth" — Flask-Limiter added, 5/min/IP on /auth]
 - **SECURITY BACKLOG v1.2** — Gunicorn running as root user — acceptable for beta, must create dedicated scout system user and run Gunicorn under that account before commercial launch. [2026-04-09]
 - **FUTURE** — No logging or monitoring beyond Flask debug output. [2026-04-06]
-- **FUTURE** — No admin interface for key management. [2026-04-06]
+- [SUPERSEDED 2026-04-19: "No admin interface for key management" — admin dashboard at /admin-7x9k2m with key generation, outcome override, recipient field, notes field, test-key toggle; committed but not yet deployed]
 - **FUTURE** — Portrait page requires active flask session. If session expires, /portrait returns empty state. [2026-04-09]
 - **FUTURE** — send_message() sync function unused by web app (only run_session.py). [2026-04-06]
 - [SUPERSEDED 2026-04-09: "No VPS deployment" — VPS is now live at scout.regtool.org]
@@ -209,11 +213,14 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 ## Next Session Priorities
 
-1. **Pseudonym collection** — ask user for pseudonym before or after interview. [2026-04-09]
-2. **Gunicorn WSGI server** — replace Flask dev server. [2026-04-07]
-3. **Chronicler output review** — evaluate portrait quality after real sessions. [2026-04-07]
-4. **Stripe donation page** — separate discoverable URL, 24–48hrs post session. [2026-04-07]
-5. **Scout → MTN handshake button design** [2026-04-07]
+1. **Deploy the admin dashboard.** Commits 876f7cc + (current) are on master but not on the VPS. Run the PRE-DEPLOY CHECKLIST in CLAUDE.md end to end. Smoke-test with a TEST- key before lifting maintenance. [2026-04-19]
+2. **Open a fresh CC chat for MyTrueNorth.** Run the same documentation arc for MTN (SOUL, ARCHITECTURE, DECISIONS, KNOWN_ISSUES, ROADMAP, HANDOVER). [2026-04-19]
+3. **Design the Scout → MTN YAML bridge.** Once MTN documentation is complete. This is the most important conversion point in the product — see HANDOVER.md "Next session agenda". [2026-04-19]
+4. **Chronicler output review** — evaluate portrait quality after real sessions against the Boss/David bar (SOUL.md §sessions that set the standard). [2026-04-07]
+5. **Stripe donation page** — deferred to v2.0 per ROADMAP.md. Kept here for visibility only. [2026-04-07]
+
+- [SUPERSEDED 2026-04-19: "Pseudonym collection" — DEC-SCOUT-005, all sessions Anonymous, pseudonym detection removed]
+- [SUPERSEDED 2026-04-19: "Gunicorn WSGI server" — Gunicorn 25.3.0 shipped 2026-04-09, already live]
 
 ---
 

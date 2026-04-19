@@ -30,6 +30,7 @@ from scout.database import (
     load_transcript,
     mark_started,
     save_transcript,
+    set_note,
     set_outcome,
     set_recipient,
     transition_state,
@@ -856,12 +857,17 @@ def admin_dashboard():
         if action == "generate_keys":
             count = min(int(request.form.get("count", 5)), 50)
             recipient = request.form.get("recipient", "").strip()
+            is_test = request.form.get("test_keys") == "on"
             import string
             import random
             alphabet = string.ascii_letters + string.digits
+            test_alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
             new_keys = []
             for _ in range(count):
-                key = "".join(random.choices(alphabet, k=12))
+                if is_test:
+                    key = "TEST-" + "".join(random.choices(test_alphabet, k=6))
+                else:
+                    key = "".join(random.choices(alphabet, k=12))
                 new_keys.append(key)
                 # Write to keys.txt — no session record until /auth
                 entry = f"{key}:unused:{recipient}" if recipient else f"{key}:unused"
@@ -879,6 +885,12 @@ def admin_dashboard():
             outcome = request.form.get("outcome", "")
             if key and outcome:
                 set_outcome(key, outcome)
+
+        if action == "set_note":
+            key = request.form.get("key", "")
+            note = request.form.get("note", "").strip()
+            if key:
+                set_note(key, note)
 
     return render_template("admin.html",
         keys=_read_keys_with_db(),
@@ -906,6 +918,7 @@ def _read_keys_with_db() -> list[dict]:
             "status": status,
             "outcome": db.get("outcome", ""),
             "recipient": db.get("recipient", "") or file_recipient,
+            "notes": db.get("notes", ""),
             "created_at": db.get("created_at", ""),
             "state": db.get("state", ""),
         })

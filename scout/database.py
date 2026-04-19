@@ -34,7 +34,8 @@ def init_db() -> None:
             pseudonym TEXT DEFAULT 'Anonymous',
             started INTEGER DEFAULT 0,
             outcome TEXT DEFAULT NULL,
-            recipient TEXT DEFAULT NULL
+            recipient TEXT DEFAULT NULL,
+            notes TEXT DEFAULT NULL
         );
         CREATE TABLE IF NOT EXISTS transcripts (
             key TEXT PRIMARY KEY,
@@ -53,6 +54,11 @@ def init_db() -> None:
     except sqlite3.OperationalError:
         conn.execute("ALTER TABLE sessions ADD COLUMN recipient TEXT DEFAULT NULL")
         logger.info("Migration: added recipient column to sessions")
+    try:
+        conn.execute("SELECT notes FROM sessions LIMIT 1")
+    except sqlite3.OperationalError:
+        conn.execute("ALTER TABLE sessions ADD COLUMN notes TEXT DEFAULT NULL")
+        logger.info("Migration: added notes column to sessions")
     conn.commit()
     conn.close()
     logger.info("Database initialised at %s", DB_PATH)
@@ -149,11 +155,19 @@ def set_recipient(key: str, recipient: str) -> None:
     conn.close()
 
 
+def set_note(key: str, note: str) -> None:
+    """Set a note for a session."""
+    conn = _connect()
+    conn.execute("UPDATE sessions SET notes = ? WHERE key = ?", (note, key))
+    conn.commit()
+    conn.close()
+
+
 def get_all_sessions() -> list[dict]:
     """Return all sessions ordered by creation date descending."""
     conn = _connect()
     rows = conn.execute(
-        "SELECT key, state, outcome, recipient, created_at, pseudonym FROM sessions ORDER BY created_at DESC"
+        "SELECT key, state, outcome, recipient, notes, created_at, pseudonym FROM sessions ORDER BY created_at DESC"
     ).fetchall()
     conn.close()
     return [dict(r) for r in rows]

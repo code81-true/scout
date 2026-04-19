@@ -184,6 +184,7 @@
     <input type="number" name="count" value="5" min="1" max="50"><br>
     <label>Recipient name or email (optional)</label>
     <input type="text" name="recipient" placeholder="e.g. John Smith or john@example.com"><br>
+    <label style="display:inline;margin-right:12px;"><input type="checkbox" name="test_keys" style="margin-right:6px;">Test keys (short session, 3 exchanges)</label><br><br>
     <button type="submit">Generate</button>
   </form>
 
@@ -202,6 +203,7 @@
       <th>State</th>
       <th>Outcome</th>
       <th>Recipient</th>
+      <th>Notes</th>
       <th>Created</th>
       <th>Override</th>
     </tr>
@@ -212,6 +214,14 @@
       <td>{{ k.state or '—' }}</td>
       <td>{{ k.outcome or '—' }}</td>
       <td>{{ k.recipient or '—' }}</td>
+      <td>
+        <form class="outcome-form" method="POST">
+          <input type="hidden" name="action" value="set_note">
+          <input type="hidden" name="key" value="{{ k.key }}">
+          <input type="text" name="note" value="{{ k.notes or '' }}" style="width:120px;background:#1a1a1a;border:1px solid #333;color:#ccc;padding:3px 6px;border-radius:3px;font-size:11px;">
+          <button type="submit">Save</button>
+        </form>
+      </td>
       <td>{{ k.created_at[:10] if k.created_at else '—' }}</td>
       <td>
         <form class="outcome-form" method="POST">
