@@ -1,296 +1,254 @@
-# Scout — Handover Document
+# HANDOVER.md — Scout Project Handover
 
-Last updated: 2026-04-07
+This document replaces the founding handover. A new
+Claude Code chat reading this file should be able to
+continue the project cold, without any other context
+from prior conversations.
 
-This document contains everything a new Claude session needs to continue the Scout project with no loss of context. Read it completely before doing anything.
-
----
-
-## 1. Who Pope Is
-
-Pope is the principal at Bridge Medtech Ltd, London. He is a regulatory affairs, design controls, and quality management system contractor — and a self-taught developer building AI-powered tools for regulated industries under the "RegTool" brand.
-
-**Working style:**
-- Direct. Skip preamble. Lead with the answer.
-- He reviews every change before it lands. Never proceed without approval on anything that matters.
-- He writes the product copy himself — guide pages, statement text, closing language. CC implements, Pope writes.
-- He thinks in terms of how something feels to the person using it, not just whether it functions.
-- He will correct you clearly and constructively. Accept corrections without defensiveness.
-
-**Non-negotiables:**
-- Never change prompt.py or chronicler.py without explicit instruction. These are the brain. Pope writes them.
-- Never commit without updating STATUS.md first. It must be coherent and current at every commit.
-- Never run deploy.sh from the local machine. Deployment happens on the VPS only.
-- Never read, write, or log .env contents. Never print API keys.
-- When tests and code disagree, docs win. Read docs/ first.
-- Show changes before and after. Pope reviews diffs, not descriptions.
-
-**Engineering rules:**
-- Use conventional commits (feat:, fix:, docs:, refactor:, test:)
-- Python: type hints, explicit over implicit, small single-purpose functions
-- Do not add features beyond what was asked. A bug fix does not need surrounding cleanup.
-- Do not add Co-Authored-By lines unless Pope says it's a major version commit.
+If anything in this document conflicts with SOUL.md,
+SOUL.md wins.
 
 ---
 
-## 2. What Scout Is
+## Who Pope is
 
-Scout is not a chatbot. It is not a therapy tool. It is not an assessment.
+**Identity.** Principal at Bridge Medtech Ltd, London.
+Works as a regulatory affairs, design controls, and
+quality management system contractor in medical devices,
+pharma, and combination products. Self-taught developer.
+Building AI-powered tools for regulated industries under
+the "RegTool" brand. Scout is part of that portfolio —
+it sits adjacent to MyTrueNorth (MTN), the daily layer
+that reads the spine YAML Scout produces.
 
-Scout is a calibrated witness. It interviews one person, one time, and produces two things:
+**Working style.**
+- Direct. Skip unnecessary preamble.
+- Wants assumptions challenged when they are flawed.
+- Wants the "why" behind significant decisions, not
+  just the "what."
+- Uses conventional commits (`feat:`, `fix:`, `docs:`,
+  `refactor:`, `test:`).
+- Runs CC in auto-approve mode — which means the review
+  gates in `CLAUDE.md` matter. Respect them.
+- Updates `STATUS.md` at the end of every session and
+  before every commit. Date-stamp every entry.
 
-1. **A spine.yaml** — a structured personal constitution that captures who someone actually is: their roles, values, boundaries, shadows, fears, and purpose. This document becomes the foundation of MyTrueNorth — an AI companion system that reads the spine every day before speaking to the person.
+**Non-negotiable rules.**
+1. Never touch `.env`. Do not read, print, log, or
+   modify it.
+2. Never commit anything from `access/` except
+   `keys_generate.py`. `keys.txt` lives on the VPS only.
+3. Never deploy without running the PRE-DEPLOY CHECKLIST
+   in `CLAUDE.md`. Maintenance mode goes on *before* the
+   deploy and comes off only after a confirmed smoke
+   test.
+4. Never fix tests to match code or code to match tests
+   without first checking the `docs/` source of truth.
+5. Never delete files without explicit instruction.
 
-2. **A portrait** — continuous prose written by the Chronicler (a separate AI persona using Opus). The portrait is not a summary. It is the closest approximation to who someone actually is, written with the precision of a great biographer and the restraint of someone who knows that truth does not need decoration.
+**Where Pope struggles (attention errors, not
+comprehension errors).**
 
-The product philosophy: one person, one session, one spine. No accounts. No passwords. A single-use key issued by invitation. When the spine is delivered, the key burns. Nothing is stored. The spine belongs to the person alone.
+- Copy-pasting commands into the wrong window (terminal
+  vs chat).
+- SSH-ing into the VPS from inside the VPS (already
+  connected).
+- Running commands in the wrong directory.
 
-Scout's voice: calm, direct, slightly formal. Warm in the way that genuine attention is warm — not in the way that performance is warm. It never flatters. It never rushes. It never fills silence with noise.
+These happen when tired or multitasking — not because
+he does not understand.
 
----
+**Solution:** always give the full command suite,
+including `cd` to the correct directory first. Never
+say "run the usual command." Always include what to
+expect to see after the command runs.
 
-## 2a. Product Vision
-
-There are days — sometimes weeks — when we cannot connect with ourselves. Not because anything is wrong with us, but because the noise is too loud. Circumstance, exhaustion, the accumulated weight of everything that needs doing. In those moments we cannot know what to do or what is right.
-
-MyTrueNorth does not suffer from that problem. It has the spine. It knows who you are at your core — your values, your roles, your shadows, your long game — and it never forgets. On the days you cannot hear yourself, North is the compass that still points true.
-
-This is not motivation. It is not a productivity system. It is a trusted companion that knows you better than you know yourself on your worst days — and speaks to you from that knowledge, without agenda, without the noise.
-
----
-
-## 2b. Commercial Model
-
-- **Scout is free indefinitely** for early users. No paywall. No trial period. The tool earns trust before it earns revenue.
-- **MyTrueNorth subscription** is the primary revenue model. Scout builds the spine; MTN is the daily companion that reads it. The subscription value is in the ongoing relationship, not the one-time interview.
-- **Optional post-session donation via Stripe** — placed 24–48 hours after the session or on a separate discoverable page. Never immediately after the portrait. The person should sit with what they received before being asked for anything. The emotional weight of the session must not be leveraged for conversion.
-- **Scout → MTN handshake button** is a first-class feature to be designed. After the spine is delivered, there should be a clear, elegant path from Scout to MyTrueNorth. This is not upselling — it is the natural next step in the product journey.
-- **Private cost threshold** — Pope will set a threshold when Scout API costs exceed sustainable levels. Until then, Scout remains free. This decision is Pope's alone and is not automated.
-
----
-
-## 3. Technical Architecture
-
-**Stack:**
-- Python 3.12+
-- Flask web application (debug=False in production)
-- Anthropic API — claude-sonnet-4-5 (interview), claude-opus-4-6 (portrait), claude-haiku-4-5-20251001 (test mode)
-- Single context window — full transcript sent on every API call, no summarisation
-- Server-side filesystem sessions via flask-session
-- Per-key session isolation in memory
-- Transcript persistence to disk for resumption
-
-**Key files:**
-
-| File | What it does |
-|---|---|
-| `app.py` | Flask application. All routes: `/` (landing), `/auth`, `/burn`, `/chat` (streaming SSE), `/generate`, `/portrait`, `/test-generate`. Per-key session isolation via `_sessions` dict + `_started_keys` set. Test mode detection via `_is_test_key()`. |
-| `scout/prompt.py` | Scout system prompt. ~1,312 lines. 7 sections, 7 layers, 11 safety constraints, full spine.yaml schema. The brain. |
-| `scout/chronicler.py` | Chronicler prompt. ~405 lines. Portrait writing with [SHADOW] and [SURPRISE] markers. Length guidance. Advice prohibition. |
-| `scout/test_prompt.py` | Test mode prompt. 3-exchange minimal interview. |
-| `scout/engine.py` | API call functions. `send_message()`, `send_message_stream()` (with optional prompt/model override), `generate_portrait()` (Opus), `generate_yaml_sections()` (4 sequential calls + YAML stitching + PyYAML validation). Three model constants. |
-| `scout/session.py` | In-memory transcript holder. `add_user()`, `add_assistant()`. |
-| `templates/index.html` | Three-state SPA: landing page, guide page, conversation UI. All animations, auth flow, typewriter effect, generating messages, YAML block rendering. |
-| `templates/portrait.html` | Compass portrait page. Marker-based passage detection. Drop cap. Movement breaks. North needle. Colophon with legal notices. |
-| `keys_generate.py` | Key generator. Production keys (10-char) and TEST- prefixed keys (6-char). Lives in project root so it deploys via git. |
-| `access/keys.txt` | Key store. Never committed to git. Lives on VPS only. Format: `KEY:status` (unused/active/used). |
-| `deploy.sh` | VPS deployment script. Cleans sessions, pulls git, installs deps, restarts systemd service. |
-| `generate_keys.bat` | Windows batch: SSHs into VPS, generates 10 production keys, downloads keys.txt. |
-| `generate_test_keys.bat` | Windows batch: SSHs into VPS, generates 5 test keys, downloads keys.txt. |
-| `run_session.py` | Terminal-only entry point (original PR 1). Still works for local testing without the web UI. |
-| `tests/mock_transcript.json` | 8-exchange mock transcript for testing the generation pipeline without a live session. |
-| `STATUS.md` | Single source of truth for project status. Must be updated before every commit. |
-| `CLAUDE.md` | Project instructions, review gates, security rules, session priorities for CC. |
-
-**Dependencies** (requirements.txt):
-- anthropic>=0.39.0
-- flask>=3.0.0
-- python-dotenv>=1.0.0
-- pyyaml>=6.0
-- flask-session>=0.8.0
+**How Pope collaborates with CC.** Pope will pause you
+at review gates — system prompt changes, API call
+structure, YAML schema, first real session, anything
+that feels like a big decision. If you are unsure
+whether something needs review, it does. Overcommunicate.
 
 ---
 
-## 4. Current Production State
+## What Scout is today
 
-**VPS:** 178.104.57.52 (root access via SSH)
-**Domain:** scout.regtool.org
-**Git repo:** https://github.com/code81-true/scout.git (master branch)
-**Local dev path:** C:\Users\Manmo\Projectns\Scout
+Scout is a two-hour, single-session AI interview system,
+live on the public internet behind an invitation-key
+gate. A person enters their key, sits the interview,
+and — after a settling conversation and a generation
+pass — receives a Portrait PDF and a Meridian PDF
+delivered to the recipient address bound to their key.
 
-**What is live:**
-- The codebase is pushed to GitHub and can be pulled to the VPS
-- deploy.sh exists and handles: git clean sessions, git pull, pip install, systemctl restart
-- Key generation bat files work from Windows via SSH
+What exists today:
+- Full interview engine with settling conversation
+  before generation (DEC-SCOUT-006)
+- Server-owned four-state session machine
+  (DEC-SCOUT-003): `interviewing → closing →
+  generating → delivered`
+- SQLite-backed session and transcript persistence
+  (DEC-SCOUT-002)
+- Portrait PDF (WeasyPrint) and Meridian PDF
+  (ReportLab) generation
+- All sessions labelled Anonymous — pseudonym detection
+  removed (DEC-SCOUT-004)
+- 12-character mixed-case alphanumeric keys, single use
+  (DEC-SCOUT-013)
+- Maintenance mode toggle via `.env` on the VPS
+- Admin dashboard at an unpredictable URL, no auth
+  (DEC-SCOUT-010) — **committed, not yet deployed**
+- System-prompt caching on Anthropic calls
+  (DEC-SCOUT-011)
 
-**What is NOT yet live:**
-- No Gunicorn WSGI server — still using Flask dev server
-- nginx, SSL, systemd service need configuration on VPS
-- First real user session has not been conducted
-
-**How to deploy:**
-1. Push changes to GitHub from local machine
-2. SSH into VPS: `ssh root@178.104.57.52`
-3. Run: `cd /home/scout && bash deploy.sh`
-
-**How to generate keys:**
-- Production: double-click `generate_keys.bat` on Windows (generates 10 on VPS, downloads keys.txt)
-- Test: double-click `generate_test_keys.bat` (generates 5 TEST- keys)
-- Manual: `ssh root@178.104.57.52 "cd /home/scout && /home/scout/venv/bin/python keys_generate.py 10"`
-
----
-
-## 5. Design Language
-
-Scout's visual identity is built on restraint. Everything is deliberately understated. The aesthetic says: this is not a consumer product. This is something that takes itself seriously because the person using it deserves that.
-
-**Landing page (State 1):**
-- Background: #0D0B0A (near-black)
-- Wordmark: "Scout" in Cormorant Garant italic, forged bronze gradient (16-stop, 108deg), clamp(96px–172px)
-- Statement text: Cormorant Garant 300, 16px, #5a5550
-- Key input: bottom-border only, gold on focus (#B8965A)
-- Breathing animation on interactive elements (2s cycle, guide link + key label in phase, reveal button 0.5s offset)
-- Vignette pulse: 12s cycle, inset box-shadow
-- Black fade transition on auth: 1.5s to black → 0.5s hold → 1s fade in
-
-**Conversation (State 3):**
-- Scout messages: Cormorant Garant italic, 18px, 300 weight, #B8965A (gold), dark background
-- User messages: system sans-serif, 15px, 400 weight, #E8E4DC, opacity 0.85, right-aligned
-- YAML blocks in Scout messages: monospace, 12px, #8A9A8A (soft green-grey), #111 background
-- Typewriter effect: 28ms base, ±8ms jitter, punctuation pauses (600ms period, 250ms comma, 900ms paragraph)
-- Generating messages: 5 rotating messages, 18s intervals, Cormorant Garant italic 22px, #B8965A
-
-**Portrait page:**
-- Background: #F5F0E8 (warm ivory)
-- Text: #1C1917 (warm near-black)
-- Accent: #B8965A (antique gold)
-- Compass SVG watermark behind pseudonym (220px, opacity 0.07)
-- Pseudonym: Bodoni Moda italic, 58px, gold
-- Body: Cormorant Garant 300, 19px, line-height 1.95
-- Drop capital: Bodoni Moda italic, 52px, gold
-- Shadow passages: italic, 1px gold left border
-- Surprise moments: 400 weight, 19.5px, 2px gold left border, subtle gold tint
-- Movement breaks: two 40px gold lines flanking a rotated diamond
-- North needle SVG above final line
-- Colophon: Cormorant SC, 11px, gold, opacity 0.65
-
-**Typefaces:**
-- Cormorant Garant (300, 400, italic) — primary everywhere
-- Cormorant SC — labels, colophons, buttons
-- Bodoni Moda italic — portrait pseudonym and drop capital only
-- SF Mono / Fira Code / Cascadia Code / Consolas — YAML blocks and user input
-
-**The compass metaphor:** Scout helps someone find their true north. The compass watermark on the portrait is not decorative — it is the visual expression of what the document represents. The north needle above the final line points to what comes next.
+This is the v1.0 "Stabilise" state. It is not the
+founding vision. See ROADMAP.md for what is next and
+SOUL.md for why.
 
 ---
 
-## 6. The Brain
+## Current deployment
 
-**Scout (prompt.py, ~1,312 lines):**
+**Live on the VPS (scout.regtool.org):**
+- The Scout interview engine
+- The key gate
+- The settling conversation
+- PDF generation and delivery
+- Maintenance mode
+- Rate limiting on /auth
+- robots.txt blocking search indexing
 
-Scout interviews through seven layers, in order. It does not announce layers. It moves only when the current layer has yielded at least one clear, concrete, honest statement.
+**Committed but not yet deployed:**
+- Admin dashboard
+- New key format (old keys remain valid — DEC-SCOUT-013)
+- Outcome tracking
+- Pseudonym detection removal (DEC-SCOUT-004)
+- Parsing pass removal and settling phrase lock
+  (DEC-SCOUT-005)
+- Landing page copy refinements and guide page polish
 
-1. **Roles** — the hats they wear, which are chosen vs inherited, which energise vs drain
-2. **Work** — what the work means and costs, not the job description
-3. **People** — relational architecture, energy flow, who is absent
-4. **Body** — honest physical/mental health reality (health data never appears in output)
-5. **Beliefs** — tested values with cost-instances, not abstract virtue-listing
-6. **Shadows** — the gap between who they are and who they want to be, with external cost
-7. **Long Game** — real ambition and real fear, in unpolished language
-
-**Key techniques:**
-- 5-level listening: emotional charge, qualifiers, unprompted elaboration, conspicuous absence, self-type (present vs cast)
-- Priority stack: unresolved emotional charge → contradiction → absence → insufficient depth → natural progression
-- Three modes: Socratic (default), elicitation through statements, Columbo (for avoidance)
-- Smokescreen detection: high word count, low information content
-- Reflection discipline: max once per five exchanges
-- Layer transitions: never announced, always through natural threads
-
-**11 safety constraints:** crisis intervention (stop + helpline), health data exclusion, no real names, no advice, no political positions, no manipulation, data transparency, scope limits, minor detection (adults only), mental health boundary (pause not burn), sexual complexity (acknowledge not explore).
-
-**Chronicler (chronicler.py, ~405 lines):**
-
-Writes the portrait in second person. Continuous prose, no headers, no bullets. Four to six movements following emotional logic. Two required moments:
-- **Half-Seen Shadow** — something the person tried hardest not to say, presented as glimpsed, not exposed. Wrapped in [SHADOW] markers.
-- **Unacknowledged Greatness** — a quality they know they possess but never felt entitled to name, stated with complete confidence. Wrapped in [SURPRISE] markers.
-
-Length tied to session depth (600–1800 words). Final third must never become advice or coaching. Last line opens something — it does not conclude.
+**MyTrueNorth (compass.regtool.org):** separate
+application, separate systemd unit. The Scout → MTN
+bridge is still manual — spine YAML is copied by hand
+(ARCHITECTURE.md §Scout → MTN bridge).
 
 ---
 
-## 7. Operations
+## Top of mind
 
-**Local development:**
-```bash
-cd "c:/Users/Manmo/Projectns/Scout"
-source venv/Scripts/activate
-python app.py  # runs on localhost:5000
-```
+Three things are current:
 
-**VPS deployment:**
-```bash
-ssh root@178.104.57.52
-cd /home/scout && bash deploy.sh
-```
+1. **Admin dashboard needs deploying.** It is committed
+   (876f7cc on master) but has not yet passed through
+   the PRE-DEPLOY CHECKLIST. This is the next
+   production deploy.
 
-**Key generation (from Windows):**
-- Double-click `generate_keys.bat` (10 production keys)
-- Double-click `generate_test_keys.bat` (5 test keys)
+2. **MTN session needs opening.** A fresh Claude Code
+   chat for MyTrueNorth — to run the same documentation
+   exercise Scout just completed (SOUL, ARCHITECTURE,
+   DECISIONS, KNOWN_ISSUES, ROADMAP, HANDOVER).
 
-**Test mode:**
-- Use any TEST- prefixed key
-- Routes to Haiku model with 3-exchange test prompt
-- Session completes when YAML appears in response (no "Give me a moment" needed)
-
-**Key lifecycle:** unused → active (on auth) → used (on burn). Active + no transcript = rejected (hijack prevention). Active + transcript exists = resume allowed.
-
-**Transcript persistence:** saved to `sessions/transcripts/{key}_transcript.json` after every exchange. Deleted on burn. Enables resume after disconnection.
-
-**Git workflow:** Push from local → deploy.sh on VPS pulls and restarts. Never commit access/keys.txt. Update STATUS.md before every commit.
+3. **Documentation sprint just completed.** Six
+   documents written and saved: SOUL.md, ARCHITECTURE.md,
+   DECISIONS.md, KNOWN_ISSUES.md, ROADMAP.md, and this
+   file. They are the current source of truth. If a new
+   CC session contradicts them, the docs win.
 
 ---
 
-## 8. Next Session Priorities
+## Next session agenda
 
-1. **First real user session** — monitor and note any issues with the full flow end-to-end
-2. **Post-session Chronicler output review** — evaluate portrait quality, marker placement, length, final-third behaviour
-3. **Gunicorn production WSGI server** — replace Flask dev server with Gunicorn behind nginx
-4. **SSH key authentication on VPS** — replace password auth
-5. **Prompt compression** — a compression analysis report exists (produced in this session). Estimated 34% token reduction possible. Six specific cuts identified. Awaiting Pope's decision on implementation.
+In order:
 
----
+1. **Deploy the admin dashboard.** Run the PRE-DEPLOY
+   CHECKLIST in `CLAUDE.md` end to end. Do not skip
+   steps. Smoke-test with a TEST- key before lifting
+   maintenance mode.
 
-## 9. Known Gaps and Future Work
+2. **Open the MTN Claude Code chat.** Paste the
+   handover prompt. Begin the same documentation arc
+   for MyTrueNorth.
 
-**Must fix soon:**
-- Spine save path hardcoded to `/home/scout/spines` — doesn't exist on Windows, will fail on /generate locally
-- No pseudonym collection — portrait defaults to "Anonymous"
-- YAML stitching sometimes double-indents content that was already indented in section responses
+3. **Design the Scout → MTN YAML bridge.** Once MTN
+   documentation is complete. The handshake is the most
+   important conversion point in the product.
 
-**Future:**
-- No rate limiting on /auth (30^10 keyspace makes brute force impractical but not impossible)
-- No logging or monitoring beyond Flask debug output
-- No admin interface for key management
-- Portrait page depends on sessionStorage — direct navigation shows nothing
-- `send_message()` sync function unused by web app (only by run_session.py)
-- Prompt compression implementation pending
+Everything else is downstream of these three.
 
 ---
 
-## 10. How to Start the Next Session
+## VPS access and deploy pattern
 
-1. Read CLAUDE.md and STATUS.md completely before doing anything
-2. Read HANDOVER.md (this file) for full context
-3. Check `git log --oneline -10` to see recent commits
-4. Check access/keys.txt status if relevant to the task
-5. Ask Pope what the priority is — do not assume
-6. Never touch prompt.py or chronicler.py without explicit instruction
-7. Show changes before implementing. Pope reviews first.
-8. Update STATUS.md before every commit
-9. Do not run deploy.sh — that happens on the VPS only
+**Host:** Hetzner VPS, IP `178.104.57.52`, Ubuntu 24.04.
+**Home:** `/home/scout/` on the VPS.
+**Source of truth:** GitHub. The VPS pulls; it does not
+push.
 
-**The working directory is:** `C:\Users\Manmo\Projectns\Scout`
-**The venv activation is:** `source venv/Scripts/activate`
-**The server starts with:** `python app.py` (localhost:5000)
-**The VPS is:** `ssh root@178.104.57.52`, project at `/home/scout`
-**The repo is:** `https://github.com/code81-true/scout.git` (master branch)
+**Deploy pattern — always:**
+1. Commit and push locally.
+2. SSH to the VPS.
+3. Run the PRE-DEPLOY CHECKLIST (`CLAUDE.md` §PRE-DEPLOY
+   CHECKLIST — MANDATORY). No exceptions.
+4. Maintenance mode on → `deploy.sh` → smoke test →
+   maintenance mode off.
+
+**`deploy.sh` runs on the VPS only.** Not from the
+developer's machine.
+
+**Secrets:** `.env` lives on the VPS only. `access/keys.txt`
+lives on the VPS only. Neither is ever in git.
+
+---
+
+## How to start a CC session on Scout
+
+Read these files in order before touching any code:
+
+1. **`CLAUDE.md`** — the project contract. Review
+   gates, pre-deploy checklist, security rules,
+   STATUS.md rules.
+2. **`SOUL.md`** — why Scout exists and what it must
+   never compromise. If a proposed change conflicts
+   with SOUL.md, the change is wrong.
+3. **`ARCHITECTURE.md`** — the physical shape: stack,
+   domains, session lifecycle, model allocation, key
+   system, database, deploy pipeline.
+4. **`KNOWN_ISSUES.md`** — active bugs, parked
+   features, known model behaviour issues. Many future
+   temptations rhyme with past bugs documented here.
+
+After those four: `DECISIONS.md` for the "why" behind
+any specific choice, `ROADMAP.md` for what is next,
+and `STATUS.md` for the live state at the moment of
+the last commit.
+
+---
+
+## The standard — Boss and David
+
+Two sessions set the bar. Every future session is
+measured against them.
+
+**Boss** — a 20-year-old who gave two honest hours and
+received a portrait that named what he carried without
+being asked. His session proved Scout can see a young
+person clearly, without pretending to wisdom, without
+reaching for advice. It proved that a portrait can
+arrive as recognition rather than interpretation.
+
+**David** — a politician who named his own deficit in
+numbers like a budget, and then needed to leave. His
+session proved Scout can hold a person of standing
+without flattering them, and can close cleanly even when
+the person ends the interview on their terms. It also
+proved that transcripts must survive process restarts
+(DEC-SCOUT-002) — the lesson that SQLite persistence
+was built from.
+
+Both portraits cleared the bar. That bar is not moved
+downward by later sessions that fall short of it. When
+in doubt about whether an output is good enough, the
+question is always:
+
+> Would this portrait have served Boss or David?
+
+If the answer is no, the output is not ready to ship.
