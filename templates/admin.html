@@ -195,6 +195,24 @@
   </div>
   {% endif %}
 
+  {% if delivery_link %}
+  <div style="background:#1a1a1a;padding:16px;border-radius:6px;margin:16px 0;">
+    <div style="color:#8A8480;font-family:'Cormorant Garant',serif;margin-bottom:8px;">
+      Delivery link for <span style="color:#B8965A;font-family:monospace;">{{ delivery_key }}</span>
+      — expires in 48 hours, single-use:
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input type="text" id="delivery-link-input" value="{{ delivery_link }}" readonly
+             style="flex:1;background:#0D0B0A;border:1px solid #333;color:#B8965A;padding:8px 12px;font-family:monospace;font-size:12px;border-radius:4px;">
+      <button type="button"
+              onclick="navigator.clipboard.writeText(document.getElementById('delivery-link-input').value).then(() => { this.textContent = 'Copied'; });"
+              style="background:transparent;color:#B8965A;border:1px solid #B8965A;padding:8px 16px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:13px;">
+        Copy
+      </button>
+    </div>
+  </div>
+  {% endif %}
+
   <h2>All Keys</h2>
   <table>
     <tr>
@@ -204,7 +222,8 @@
       <th>Outcome</th>
       <th>Recipient</th>
       <th>Notes</th>
-      <th>Created</th>
+      <th>Deliver</th>
+      <th>First used</th>
       <th>Override</th>
     </tr>
     {% for k in keys %}
@@ -222,7 +241,17 @@
           <button type="submit">Save</button>
         </form>
       </td>
-      <td>{{ k.created_at[:10] if k.created_at else '—' }}</td>
+      <td>
+        {% if k.status in ('active', 'used') and k.has_transcript %}
+        <form class="outcome-form" method="POST" action="/admin-7x9k2m/generate">
+          <input type="hidden" name="key" value="{{ k.key }}">
+          <button type="submit">Generate &amp; Deliver</button>
+        </form>
+        {% else %}
+        —
+        {% endif %}
+      </td>
+      <td>{{ k.first_used[:10] if k.first_used else '—' }}</td>
       <td>
         <form class="outcome-form" method="POST">
           <input type="hidden" name="action" value="set_outcome">

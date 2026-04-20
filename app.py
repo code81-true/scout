@@ -18,16 +18,21 @@ from flask_session import Session as FlaskSessionExt
 
 from scout.database import (
     cleanup_session,
+    create_delivery,
     create_session,
     delete_transcript,
     get_all_sessions,
     get_closing_duration,
+    get_delivery,
     get_session_state,
     get_session_stats,
     get_stale_closing_sessions,
+    has_transcript,
     init_db,
+    is_delivery_valid,
     is_started,
     load_transcript,
+    mark_downloaded,
     mark_started,
     save_transcript,
     set_note,
@@ -53,9 +58,11 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "scout-session-key-dev")
 TRANSCRIPT_DIR = os.getenv("TRANSCRIPT_DIR", "sessions/transcripts")
 FLASK_SESSION_DIR = os.getenv("FLASK_SESSION_DIR", "sessions/flask_sessions")
 SPINE_DIR = os.getenv("SPINE_DIR", "spines")
+DELIVERIES_DIR = os.getenv("DELIVERIES_DIR", "deliveries")
 os.makedirs(TRANSCRIPT_DIR, exist_ok=True)
 os.makedirs(FLASK_SESSION_DIR, exist_ok=True)
 os.makedirs(SPINE_DIR, exist_ok=True)
+os.makedirs(DELIVERIES_DIR, exist_ok=True)
 
 app.config["SESSION_TYPE"] = "filesystem"
 app.config["SESSION_FILE_DIR"] = FLASK_SESSION_DIR
@@ -440,13 +447,13 @@ def generate_spine():
         f.write(yaml_doc)
 
     # Save portrait
+    clean_portrait = "\n".join(
+        line for line in portrait_text.splitlines()
+        if not line.startswith("#")
+    ).strip()
     portrait_filename = f"{gen_key}_{date_str}_portrait.txt"
     portrait_path = os.path.join(SPINE_DIR, portrait_filename)
     with open(portrait_path, "w", encoding="utf-8") as f:
-        clean_portrait = "\n".join(
-            line for line in portrait_text.splitlines()
-            if not line.startswith("#")
-        ).strip()
         f.write(clean_portrait)
 
     # Generate and save constitution
@@ -458,6 +465,18 @@ def generate_spine():
     constitution_path = os.path.join(SPINE_DIR, constitution_filename)
     with open(constitution_path, "w", encoding="utf-8") as f:
         f.write(constitution_text)
+
+    # Save rendered PDFs to spines/ as canonical delivery artifacts (for admin recovery).
+    # Generation failures here should not break the session — log and move on.
+    try:
+        portrait_pdf = _render_portrait_pdf_bytes(pseudonym, date_str, clean_portrait)
+        meridian_pdf = _render_meridian_pdf_bytes(pseudonym, date_str, constitution_text)
+        with open(os.path.join(SPINE_DIR, f"{gen_key}_{date_str}_portrait_delivery.pdf"), "wb") as f:
+            f.write(portrait_pdf)
+        with open(os.path.join(SPINE_DIR, f"{gen_key}_{date_str}_meridian_delivery.pdf"), "wb") as f:
+            f.write(meridian_pdf)
+    except Exception as exc:
+        logger.error("Delivery PDF render failed for %s: %s", gen_key, exc)
 
     # Store in flask session for download routes
     flask_session["portrait_file"] = portrait_filename
@@ -501,11 +520,28 @@ def portrait():
     )
 
 
+def _render_portrait_pdf_bytes(pseudonym: str, date_str: str, portrait_text: str) -> bytes:
+    """Render portrait text as an A4 PDF via WeasyPrint. Returns raw PDF bytes."""
+    from io import BytesIO
+    from weasyprint import HTML
+
+    portrait_html = _parse_portrait_markers(portrait_text, pseudonym)
+    html_string = render_template(
+        "portrait_pdf.html",
+        pseudonym=pseudonym,
+        date=date_str,
+        portrait_html=portrait_html,
+    )
+    pdf_buffer = BytesIO()
+    HTML(string=html_string).write_pdf(pdf_buffer)
+    pdf_buffer.seek(0)
+    return pdf_buffer.read()
+
+
 @app.route("/download-portrait")
 def download_portrait():
     """Generate PDF portrait and return as download."""
     import re
-    from io import BytesIO
 
     portrait_filename = flask_session.get("portrait_file")
     if not portrait_filename:
@@ -521,35 +557,21 @@ def download_portrait():
     pseudonym = flask_session.get("pseudonym", "Anonymous")
     date_str = flask_session.get("date", "")
 
-    portrait_html = _parse_portrait_markers(raw_text, pseudonym)
-
-    html_string = render_template(
-        "portrait_pdf.html",
-        pseudonym=pseudonym,
-        date=date_str,
-        portrait_html=portrait_html,
-    )
-
-    from weasyprint import HTML
-    pdf_buffer = BytesIO()
-    HTML(string=html_string).write_pdf(pdf_buffer)
-    pdf_buffer.seek(0)
+    pdf_bytes = _render_portrait_pdf_bytes(pseudonym, date_str, raw_text)
 
     safe_name = re.sub(r"[^a-zA-Z0-9]", "_", pseudonym)
     filename = f"portrait_{safe_name}_{date_str}.pdf"
 
     return Response(
-        pdf_buffer.read(),
+        pdf_bytes,
         mimetype="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 
-@app.route("/download-meridian")
-def download_meridian():
-    """Generate Meridian PDF with ReportLab and return as download."""
+def _render_meridian_pdf_bytes(pseudonym: str, date_str: str, constitution_text: str) -> bytes:
+    """Render Meridian constitution text as an A4 PDF via ReportLab. Returns raw PDF bytes."""
     import math
-    import re
     from io import BytesIO
 
     from reportlab.lib.colors import Color
@@ -558,20 +580,6 @@ def download_meridian():
     from reportlab.pdfgen import canvas
     from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfbase.ttfonts import TTFont
-
-    constitution_filename = flask_session.get("constitution_file")
-    if not constitution_filename:
-        return {"error": "No Meridian available."}, 404
-
-    constitution_path = os.path.join(SPINE_DIR, constitution_filename)
-    if not os.path.exists(constitution_path):
-        return {"error": "Meridian file not found."}, 404
-
-    with open(constitution_path, "r", encoding="utf-8") as f:
-        constitution_text = f.read()
-
-    pseudonym = flask_session.get("pseudonym", "Anonymous")
-    date_str = flask_session.get("date", "")
 
     # Parse five paragraphs
     paragraphs = [p.strip() for p in constitution_text.split("\n\n") if p.strip()]
@@ -837,12 +845,35 @@ def download_meridian():
 
     c.save()
     buf.seek(0)
+    return buf.read()
+
+
+@app.route("/download-meridian")
+def download_meridian():
+    """Generate Meridian PDF with ReportLab and return as download."""
+    import re
+
+    constitution_filename = flask_session.get("constitution_file")
+    if not constitution_filename:
+        return {"error": "No Meridian available."}, 404
+
+    constitution_path = os.path.join(SPINE_DIR, constitution_filename)
+    if not os.path.exists(constitution_path):
+        return {"error": "Meridian file not found."}, 404
+
+    with open(constitution_path, "r", encoding="utf-8") as f:
+        constitution_text = f.read()
+
+    pseudonym = flask_session.get("pseudonym", "Anonymous")
+    date_str = flask_session.get("date", "")
+
+    pdf_bytes = _render_meridian_pdf_bytes(pseudonym, date_str, constitution_text)
 
     safe_name = re.sub(r"[^a-zA-Z0-9]", "_", pseudonym)
     filename = f"meridian_{safe_name}_{date_str}.pdf"
 
     return Response(
-        buf.read(),
+        pdf_bytes,
         mimetype="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
@@ -913,16 +944,222 @@ def _read_keys_with_db() -> list[dict]:
         status = parts[1]
         file_recipient = parts[2] if len(parts) >= 3 else ""
         db = db_sessions.get(key, {})
+        session_state = db.get("state", "")
+        created_at = db.get("created_at", "")
+        # first_used is created_at only once the key has been authenticated
+        # (pending rows are pre-auth admin annotations)
+        first_used = created_at if session_state and session_state != "pending" else ""
+        # has_transcript: true if either SQLite has a transcript OR a flat-file backup exists
+        transcript_present = (
+            has_transcript(key)
+            or os.path.exists(os.path.join(TRANSCRIPT_DIR, f"{key}_transcript.json"))
+        )
         result.append({
             "key": key,
             "status": status,
             "outcome": db.get("outcome", ""),
             "recipient": db.get("recipient", "") or file_recipient,
             "notes": db.get("notes", ""),
-            "created_at": db.get("created_at", ""),
-            "state": db.get("state", ""),
+            "created_at": created_at,
+            "first_used": first_used,
+            "state": session_state,
+            "has_transcript": transcript_present,
         })
     return result
+
+
+# --- Admin manual delivery ---
+
+@app.route("/admin-7x9k2m/generate", methods=["POST"])
+def admin_generate():
+    """Admin: create a one-time delivery link for a session's Portrait + Meridian.
+
+    Fast path: if {key}_*_portrait_delivery.pdf and {key}_*_meridian_delivery.pdf both exist
+    in SPINE_DIR, copy them to DELIVERIES_DIR and mint a token without any API calls.
+
+    Slow path (missing PDFs): load transcript from SQLite or flat-file backup, run the
+    full generation pipeline, save TXT + YAML + canonical delivery PDFs to SPINE_DIR,
+    copy PDFs to DELIVERIES_DIR, mint a token.
+    """
+    import glob
+    import shutil
+    import uuid
+    from datetime import datetime, timedelta, timezone as tz
+
+    key = request.form.get("key", "").strip()
+    if not key:
+        return {"error": "No key provided"}, 400
+
+    portrait_sources = sorted(glob.glob(os.path.join(SPINE_DIR, f"{key}_*_portrait_delivery.pdf")))
+    meridian_sources = sorted(glob.glob(os.path.join(SPINE_DIR, f"{key}_*_meridian_delivery.pdf")))
+
+    if portrait_sources and meridian_sources:
+        # Fast path — reuse existing PDFs
+        portrait_src = portrait_sources[-1]
+        meridian_src = meridian_sources[-1]
+        portrait_name = os.path.basename(portrait_src).replace("_portrait_delivery.pdf", "_portrait.pdf")
+        meridian_name = os.path.basename(meridian_src).replace("_meridian_delivery.pdf", "_meridian.pdf")
+        shutil.copy(portrait_src, os.path.join(DELIVERIES_DIR, portrait_name))
+        shutil.copy(meridian_src, os.path.join(DELIVERIES_DIR, meridian_name))
+    else:
+        # Slow path — load transcript and run the full pipeline
+        transcript = load_transcript(key)
+        if not transcript:
+            backup_path = os.path.join(TRANSCRIPT_DIR, f"{key}_transcript.json")
+            if os.path.exists(backup_path):
+                try:
+                    with open(backup_path, "r", encoding="utf-8") as f:
+                        transcript = json.load(f)
+                except (json.JSONDecodeError, IOError) as exc:
+                    logger.error("Failed to load transcript backup for %s: %s", key, exc)
+                    transcript = []
+        if not transcript:
+            return {"error": f"No transcript found for key {key}"}, 404
+
+        gen_model = TEST_MODEL if _is_test_key(key) else None
+        pseudonym = "Anonymous"
+
+        yaml_doc = generate_yaml_sections(client, transcript, model=gen_model)
+        portrait_text = generate_portrait(client, transcript, model=gen_model, pseudonym=pseudonym)
+        constitution_text = generate_constitution(
+            client, transcript, yaml_doc, pseudonym=pseudonym, model=gen_model,
+        )
+
+        date_str = datetime.now().strftime("%Y-%m-%d")
+
+        with open(os.path.join(SPINE_DIR, f"{key}_{date_str}.yaml"), "w", encoding="utf-8") as f:
+            f.write(yaml_doc)
+
+        clean_portrait = "\n".join(
+            line for line in portrait_text.splitlines() if not line.startswith("#")
+        ).strip()
+        with open(os.path.join(SPINE_DIR, f"{key}_{date_str}_portrait.txt"), "w", encoding="utf-8") as f:
+            f.write(clean_portrait)
+
+        with open(os.path.join(SPINE_DIR, f"{key}_{date_str}_constitution.txt"), "w", encoding="utf-8") as f:
+            f.write(constitution_text)
+
+        portrait_pdf = _render_portrait_pdf_bytes(pseudonym, date_str, clean_portrait)
+        meridian_pdf = _render_meridian_pdf_bytes(pseudonym, date_str, constitution_text)
+
+        portrait_canonical = os.path.join(SPINE_DIR, f"{key}_{date_str}_portrait_delivery.pdf")
+        meridian_canonical = os.path.join(SPINE_DIR, f"{key}_{date_str}_meridian_delivery.pdf")
+        with open(portrait_canonical, "wb") as f:
+            f.write(portrait_pdf)
+        with open(meridian_canonical, "wb") as f:
+            f.write(meridian_pdf)
+
+        shutil.copy(portrait_canonical, os.path.join(DELIVERIES_DIR, f"{key}_{date_str}_portrait.pdf"))
+        shutil.copy(meridian_canonical, os.path.join(DELIVERIES_DIR, f"{key}_{date_str}_meridian.pdf"))
+
+    token = uuid.uuid4().hex
+    expires_at = (datetime.now(tz.utc) + timedelta(hours=48)).isoformat()
+    create_delivery(key, token, expires_at)
+    link = f"{request.host_url.rstrip('/')}/collect/{token}"
+
+    return render_template("admin.html",
+        keys=_read_keys_with_db(),
+        stats=get_session_stats(),
+        generated=None,
+        recipient="",
+        delivery_link=link,
+        delivery_key=key,
+    )
+
+
+# --- Collect routes (recipient-facing) ---
+
+def _delivery_expired(delivery: dict) -> bool:
+    """True if the delivery's expires_at has passed or is malformed."""
+    from datetime import datetime, timezone as tz
+    try:
+        expires = datetime.fromisoformat(delivery["expires_at"])
+        if expires.tzinfo is None:
+            expires = expires.replace(tzinfo=tz.utc)
+        return datetime.now(tz.utc) >= expires
+    except (ValueError, TypeError, KeyError):
+        return True
+
+
+@app.route("/collect/<token>")
+def collect_page(token):
+    """Landing page for a delivery link."""
+    delivery = get_delivery(token)
+    if delivery is None:
+        return render_template("collect.html", status="expired"), 404
+    if _delivery_expired(delivery):
+        return render_template("collect.html", status="expired"), 410
+    if delivery["downloaded"]:
+        return render_template(
+            "collect.html",
+            status="closed",
+            token=token,
+            portrait_done=True,
+            meridian_done=True,
+        ), 410
+    return render_template(
+        "collect.html",
+        status="valid",
+        token=token,
+        portrait_done=bool(delivery["portrait_downloaded"]),
+        meridian_done=bool(delivery["meridian_downloaded"]),
+    )
+
+
+@app.route("/collect/<token>/verify", methods=["POST"])
+@limiter.limit("10 per minute")
+def collect_verify(token):
+    """Verify that the posted key matches the key bound to this delivery token."""
+    delivery = get_delivery(token)
+    if delivery is None:
+        return {"valid": False}
+    if _delivery_expired(delivery):
+        return {"valid": False}
+    data = request.get_json(silent=True) or {}
+    key = data.get("key", "").strip()
+    if not key:
+        return {"valid": False}
+    return {"valid": key == delivery["key"]}
+
+
+def _serve_delivery_pdf(token: str, kind: str):
+    """Serve a portrait or meridian PDF for a valid delivery. Marks the corresponding flag."""
+    import glob
+
+    delivery = get_delivery(token)
+    if delivery is None:
+        return "This link is not valid.", 404
+    if _delivery_expired(delivery):
+        return "This link has expired.", 410
+    if delivery[f"{kind}_downloaded"]:
+        return "This file has already been downloaded.", 410
+
+    key = delivery["key"]
+    matches = sorted(glob.glob(os.path.join(DELIVERIES_DIR, f"{key}_*_{kind}.pdf")))
+    if not matches:
+        logger.error("Delivery file missing for token=%s key=%s kind=%s", token, key, kind)
+        return "File not found.", 404
+    path = matches[-1]
+    with open(path, "rb") as f:
+        data = f.read()
+
+    mark_downloaded(token, kind)
+
+    return Response(
+        data,
+        mimetype="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{os.path.basename(path)}"'},
+    )
+
+
+@app.route("/collect/<token>/portrait")
+def collect_portrait(token):
+    return _serve_delivery_pdf(token, "portrait")
+
+
+@app.route("/collect/<token>/meridian")
+def collect_meridian(token):
+    return _serve_delivery_pdf(token, "meridian")
 
 
 def _parse_portrait_markers(raw_text: str, pseudonym: str) -> str:

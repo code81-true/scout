@@ -42,6 +42,16 @@ def init_db() -> None:
             transcript TEXT NOT NULL DEFAULT '[]',
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
+        CREATE TABLE IF NOT EXISTS deliveries (
+            token TEXT PRIMARY KEY,
+            key TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            expires_at DATETIME NOT NULL,
+            portrait_downloaded INTEGER DEFAULT 0,
+            meridian_downloaded INTEGER DEFAULT 0,
+            downloaded INTEGER DEFAULT 0,
+            downloaded_at DATETIME DEFAULT NULL
+        );
     """)
     # Migration: add outcome and recipient columns if missing
     try:
@@ -75,12 +85,19 @@ def get_session_state(key: str) -> dict | None:
 
 
 def create_session(key: str) -> None:
-    """Insert a new session in interviewing state."""
+    """Insert a new session in interviewing state. Promotes 'pending' rows created by admin annotations.
+
+    On promotion, created_at is reset to 'now' so it reflects the first /auth call, not the prior
+    admin-annotation timestamp.
+    """
     conn = _connect()
     now = datetime.now(timezone.utc).isoformat()
     conn.execute(
-        "INSERT OR IGNORE INTO sessions (key, state, created_at, state_changed_at) VALUES (?, 'interviewing', ?, ?)",
-        (key, now, now),
+        "INSERT INTO sessions (key, state, created_at, state_changed_at) "
+        "VALUES (?, 'interviewing', ?, ?) "
+        "ON CONFLICT(key) DO UPDATE SET state = 'interviewing', created_at = ?, state_changed_at = ? "
+        "WHERE sessions.state = 'pending'",
+        (key, now, now, now, now),
     )
     conn.commit()
     conn.close()
@@ -133,7 +150,7 @@ def transition_state(key: str, new_state: str) -> None:
 
 
 def set_outcome(key: str, outcome: str) -> None:
-    """Set the outcome for a session."""
+    """Set the outcome for a session. Creates a 'pending' row if the key has no session yet."""
     valid_outcomes = {
         "completed", "sufficient", "user_terminated",
         "safety_exit", "abandoned", "technical_failure",
@@ -142,25 +159,51 @@ def set_outcome(key: str, outcome: str) -> None:
         logger.warning("Invalid outcome %s for key %s", outcome, key)
         return
     conn = _connect()
-    conn.execute("UPDATE sessions SET outcome = ? WHERE key = ?", (outcome, key))
+    now = datetime.now(timezone.utc).isoformat()
+    conn.execute(
+        "INSERT INTO sessions (key, state, outcome, created_at, state_changed_at) "
+        "VALUES (?, 'pending', ?, ?, ?) "
+        "ON CONFLICT(key) DO UPDATE SET outcome = excluded.outcome",
+        (key, outcome, now, now),
+    )
     conn.commit()
     conn.close()
 
 
 def set_recipient(key: str, recipient: str) -> None:
-    """Set the recipient name/email for a key."""
+    """Set the recipient name/email for a key. Creates a 'pending' row if missing."""
     conn = _connect()
-    conn.execute("UPDATE sessions SET recipient = ? WHERE key = ?", (recipient, key))
+    now = datetime.now(timezone.utc).isoformat()
+    conn.execute(
+        "INSERT INTO sessions (key, state, recipient, created_at, state_changed_at) "
+        "VALUES (?, 'pending', ?, ?, ?) "
+        "ON CONFLICT(key) DO UPDATE SET recipient = excluded.recipient",
+        (key, recipient, now, now),
+    )
     conn.commit()
     conn.close()
 
 
 def set_note(key: str, note: str) -> None:
-    """Set a note for a session."""
+    """Set a note for a session. Creates a 'pending' row if the key has no session yet."""
     conn = _connect()
-    conn.execute("UPDATE sessions SET notes = ? WHERE key = ?", (note, key))
+    now = datetime.now(timezone.utc).isoformat()
+    conn.execute(
+        "INSERT INTO sessions (key, state, notes, created_at, state_changed_at) "
+        "VALUES (?, 'pending', ?, ?, ?) "
+        "ON CONFLICT(key) DO UPDATE SET notes = excluded.notes",
+        (key, note, now, now),
+    )
     conn.commit()
     conn.close()
+
+
+def has_transcript(key: str) -> bool:
+    """Check whether a transcript row exists for this key."""
+    conn = _connect()
+    row = conn.execute("SELECT 1 FROM transcripts WHERE key = ?", (key,)).fetchone()
+    conn.close()
+    return row is not None
 
 
 def get_all_sessions() -> list[dict]:
@@ -256,10 +299,64 @@ def cleanup_session(key: str) -> None:
     conn.close()
 
 
-def get_session_stats() -> dict:
-    """Return summary statistics for the admin dashboard."""
+def create_delivery(key: str, token: str, expires_at: str) -> None:
+    """Record a new delivery token bound to a key."""
     conn = _connect()
-    total = conn.execute("SELECT COUNT(*) FROM sessions").fetchone()[0]
+    conn.execute(
+        "INSERT INTO deliveries (token, key, expires_at) VALUES (?, ?, ?)",
+        (token, key, expires_at),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_delivery(token: str) -> dict | None:
+    """Return delivery row as dict, or None if not found."""
+    conn = _connect()
+    row = conn.execute("SELECT * FROM deliveries WHERE token = ?", (token,)).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def mark_downloaded(token: str, kind: str) -> None:
+    """Mark portrait or meridian as downloaded for this token. Sets combined flag if both done."""
+    if kind not in ("portrait", "meridian"):
+        return
+    column = f"{kind}_downloaded"
+    conn = _connect()
+    conn.execute(f"UPDATE deliveries SET {column} = 1 WHERE token = ?", (token,))
+    row = conn.execute(
+        "SELECT portrait_downloaded, meridian_downloaded FROM deliveries WHERE token = ?",
+        (token,),
+    ).fetchone()
+    if row and row["portrait_downloaded"] and row["meridian_downloaded"]:
+        now = datetime.now(timezone.utc).isoformat()
+        conn.execute(
+            "UPDATE deliveries SET downloaded = 1, downloaded_at = ? WHERE token = ?",
+            (now, token),
+        )
+    conn.commit()
+    conn.close()
+
+
+def is_delivery_valid(token: str) -> bool:
+    """True if the token exists, both files are not yet downloaded, and expiry is in the future."""
+    delivery = get_delivery(token)
+    if delivery is None or delivery["downloaded"]:
+        return False
+    try:
+        expires = datetime.fromisoformat(delivery["expires_at"])
+        if expires.tzinfo is None:
+            expires = expires.replace(tzinfo=timezone.utc)
+        return datetime.now(timezone.utc) < expires
+    except (ValueError, TypeError):
+        return False
+
+
+def get_session_stats() -> dict:
+    """Return summary statistics for the admin dashboard. Excludes 'pending' (admin-annotated, unauthenticated)."""
+    conn = _connect()
+    total = conn.execute("SELECT COUNT(*) FROM sessions WHERE state != 'pending'").fetchone()[0]
     active = conn.execute(
         "SELECT COUNT(*) FROM sessions WHERE state IN ('interviewing', 'closing')"
     ).fetchone()[0]

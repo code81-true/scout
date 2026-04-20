@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Scout</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@1,400&family=Cormorant+Garant:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #0D0B0A;
+    color: #E8E4DC;
+    font-family: "Cormorant Garant", Georgia, serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 72px 24px 48px;
+  }
+
+  .wordmark {
+    font-family: "Bodoni Moda", serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(72px, 11vw, 132px);
+    background: linear-gradient(108deg, #7A6138 0%, #B8965A 28%, #D8B87E 50%, #B8965A 72%, #7A6138 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    line-height: 1;
+    margin-bottom: 56px;
+    letter-spacing: 0.02em;
+  }
+
+  /* --- Expired state --- */
+  .message {
+    color: #8A8480;
+    font-style: italic;
+    font-size: 19px;
+    text-align: center;
+    max-width: 520px;
+    line-height: 1.6;
+    margin-top: 24px;
+  }
+
+  /* --- Key entry --- */
+  .key-entry {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 64px;
+    width: 100%;
+    max-width: 380px;
+  }
+  .key-entry label {
+    font-family: "Cormorant Garant", serif;
+    font-size: 15px;
+    color: #8A8480;
+    margin-bottom: 14px;
+    letter-spacing: 0.04em;
+  }
+  .key-input-row {
+    display: flex;
+    gap: 14px;
+    width: 100%;
+    align-items: center;
+  }
+  .key-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #3A3530;
+    color: #E8E4DC;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 16px;
+    padding: 10px 4px;
+    outline: none;
+    text-align: center;
+    letter-spacing: 0.08em;
+    transition: border-color 0.3s ease;
+  }
+  .key-input:focus { border-bottom-color: #B8965A; }
+  .key-input:disabled {
+    color: #6A6560;
+    border-bottom-color: #2A2520;
+  }
+  .key-input.shake { animation: shake 0.42s cubic-bezier(.36,.07,.19,.97); }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    16% { transform: translateX(-8px); }
+    32% { transform: translateX(8px); }
+    48% { transform: translateX(-6px); }
+    64% { transform: translateX(6px); }
+    80% { transform: translateX(-3px); }
+  }
+  .key-submit {
+    background: transparent;
+    border: 1px solid #3A3530;
+    color: #8A8480;
+    cursor: pointer;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: border-color 0.3s ease, color 0.3s ease;
+    font-family: inherit;
+    line-height: 1;
+  }
+  .key-submit:hover { border-color: #B8965A; color: #B8965A; }
+  .key-submit:disabled {
+    cursor: default;
+    opacity: 0.3;
+    border-color: #2A2520;
+  }
+
+  /* --- Buttons --- */
+  .buttons {
+    display: flex;
+    gap: 36px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 40px;
+  }
+  .download-btn {
+    background: #141210;
+    border: 1px solid #2A2520;
+    border-radius: 12px;
+    width: 240px;
+    height: 280px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 32px 24px 26px;
+    cursor: not-allowed;
+    opacity: 0.32;
+    filter: grayscale(0.85);
+    transition: opacity 0.4s ease, filter 0.4s ease, border-color 0.4s ease, background 0.3s ease, transform 0.25s ease, box-shadow 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .download-btn.active {
+    cursor: pointer;
+    opacity: 1;
+    filter: none;
+  }
+  .download-btn.active:hover {
+    border-color: #B8965A;
+    background: #1A1614;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 28px rgba(184, 150, 90, 0.15);
+  }
+  .download-btn.done {
+    cursor: not-allowed;
+    opacity: 0.28;
+    filter: grayscale(0.95);
+    transform: none;
+    box-shadow: none;
+  }
+  .download-btn .icon {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .download-btn .icon svg {
+    width: 150px;
+    height: 150px;
+    display: block;
+  }
+  .download-btn .label {
+    font-family: "Cormorant Garant", serif;
+    font-weight: 300;
+    font-size: 19px;
+    color: #B8965A;
+    margin-top: 14px;
+    text-align: center;
+    letter-spacing: 0.02em;
+  }
+  .download-btn .done-text {
+    font-family: "Cormorant Garant", serif;
+    font-size: 11px;
+    color: #6A6560;
+    margin-top: 6px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    display: none;
+  }
+  .download-btn.done .done-text { display: block; }
+  .download-btn.done .label { color: #6A6560; }
+
+  /* --- Closed message --- */
+  .closed {
+    font-family: "Cormorant Garant", serif;
+    font-style: italic;
+    font-size: 18px;
+    color: #8A8480;
+    text-align: center;
+    max-width: 460px;
+    line-height: 1.6;
+    margin-top: 28px;
+    opacity: 0;
+    transition: opacity 0.6s ease 0.2s;
+  }
+  .closed.visible { opacity: 1; }
+
+  @media (max-width: 540px) {
+    body { padding: 48px 20px 36px; }
+    .wordmark { font-size: clamp(58px, 18vw, 88px); margin-bottom: 40px; }
+    .buttons { flex-direction: column; gap: 20px; align-items: center; }
+    .download-btn { width: 100%; max-width: 300px; height: 240px; padding: 24px 20px; }
+    .download-btn .icon svg { width: 118px; height: 118px; }
+    .key-entry { margin-bottom: 48px; }
+  }
+</style>
+</head>
+<body>
+  <div class="wordmark">Scout</div>
+
+  {% if status == "expired" %}
+    <div class="message">This link has expired.</div>
+  {% elif status == "closed" %}
+    <div class="buttons">
+      <div class="download-btn done">
+        <div class="icon">
+          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="60" cy="60" r="56" fill="none" stroke="#B8965A" stroke-width="1.2"/>
+            <circle cx="60" cy="60" r="46" fill="none" stroke="#B8965A" stroke-width="0.4" opacity="0.5"/>
+            <polygon points="60,18 65,60 60,102 55,60" fill="none" stroke="#B8965A" stroke-width="0.8"/>
+            <polygon points="60,18 65,60 55,60" fill="#B8965A"/>
+            <polygon points="18,60 60,63 102,60 60,57" fill="none" stroke="#B8965A" stroke-width="0.5" opacity="0.55"/>
+            <circle cx="60" cy="60" r="2.8" fill="#0D0B0A" stroke="#B8965A" stroke-width="0.8"/>
+          </svg>
+        </div>
+        <div class="label">Download Portrait</div>
+        <div class="done-text">Downloaded</div>
+      </div>
+      <div class="download-btn done">
+        <div class="icon">
+          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <clipPath id="globe-clip-closed"><circle cx="60" cy="60" r="55"/></clipPath>
+            </defs>
+            <circle cx="60" cy="60" r="55" fill="none" stroke="#B8965A" stroke-width="1.2"/>
+            <g clip-path="url(#globe-clip-closed)" stroke="#B8965A" fill="none">
+              <ellipse cx="60" cy="60" rx="55" ry="28" stroke-width="0.4" opacity="0.45"/>
+              <line x1="5" y1="60" x2="115" y2="60" stroke-width="1.1"/>
+              <ellipse cx="60" cy="60" rx="28" ry="55" stroke-width="0.4" opacity="0.45"/>
+              <line x1="60" y1="5" x2="60" y2="115" stroke-width="1.6"/>
+            </g>
+          </svg>
+        </div>
+        <div class="label">Download Meridian</div>
+        <div class="done-text">Downloaded</div>
+      </div>
+    </div>
+    <div class="closed visible">Both documents have been saved. This link is now closed.</div>
+  {% else %}
+    <form class="key-entry" id="key-form" autocomplete="off">
+      <label>Enter your session key to unlock</label>
+      <div class="key-input-row">
+        <input type="text" class="key-input" id="key-input" autocomplete="off" spellcheck="false" aria-label="Session key">
+        <button type="submit" class="key-submit" aria-label="Verify">&rarr;</button>
+      </div>
+    </form>
+
+    <div class="buttons">
+      <a class="download-btn {% if portrait_done %}done{% endif %}" id="portrait-btn"
+         href="/collect/{{ token }}/portrait" data-kind="portrait">
+        <div class="icon">
+          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="60" cy="60" r="56" fill="none" stroke="#B8965A" stroke-width="1.2"/>
+            <circle cx="60" cy="60" r="46" fill="none" stroke="#B8965A" stroke-width="0.4" opacity="0.5"/>
+            <line x1="60" y1="6" x2="60" y2="16" stroke="#B8965A" stroke-width="1.6"/>
+            <line x1="60" y1="104" x2="60" y2="114" stroke="#B8965A" stroke-width="1"/>
+            <line x1="6" y1="60" x2="16" y2="60" stroke="#B8965A" stroke-width="1"/>
+            <line x1="104" y1="60" x2="114" y2="60" stroke="#B8965A" stroke-width="1"/>
+            <line x1="22" y1="22" x2="29" y2="29" stroke="#B8965A" stroke-width="0.6" opacity="0.6"/>
+            <line x1="91" y1="22" x2="98" y2="29" stroke="#B8965A" stroke-width="0.6" opacity="0.6"/>
+            <line x1="22" y1="98" x2="29" y2="91" stroke="#B8965A" stroke-width="0.6" opacity="0.6"/>
+            <line x1="91" y1="98" x2="98" y2="91" stroke="#B8965A" stroke-width="0.6" opacity="0.6"/>
+            <polygon points="60,18 65,60 60,102 55,60" fill="none" stroke="#B8965A" stroke-width="0.8"/>
+            <polygon points="60,18 65,60 55,60" fill="#B8965A"/>
+            <polygon points="18,60 60,63 102,60 60,57" fill="none" stroke="#B8965A" stroke-width="0.5" opacity="0.55"/>
+            <circle cx="60" cy="60" r="2.8" fill="#0D0B0A" stroke="#B8965A" stroke-width="0.8"/>
+            <text x="60" y="12" text-anchor="middle" fill="#B8965A" font-family="Cormorant Garant, serif" font-size="7" font-weight="300" letter-spacing="0.1em">N</text>
+          </svg>
+        </div>
+        <div class="label">Download Portrait</div>
+        <div class="done-text">Downloaded</div>
+      </a>
+
+      <a class="download-btn {% if meridian_done %}done{% endif %}" id="meridian-btn"
+         href="/collect/{{ token }}/meridian" data-kind="meridian">
+        <div class="icon">
+          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <clipPath id="globe-clip-{{ token }}"><circle cx="60" cy="60" r="55"/></clipPath>
+            </defs>
+            <circle cx="60" cy="60" r="55" fill="none" stroke="#B8965A" stroke-width="1.2"/>
+            <g clip-path="url(#globe-clip-{{ token }})" stroke="#B8965A" fill="none">
+              <ellipse cx="60" cy="60" rx="55" ry="28" stroke-width="0.4" opacity="0.45"/>
+              <ellipse cx="60" cy="60" rx="50" ry="45" stroke-width="0.3" opacity="0.3"/>
+              <line x1="5" y1="60" x2="115" y2="60" stroke-width="1.1"/>
+              <ellipse cx="60" cy="60" rx="28" ry="55" stroke-width="0.4" opacity="0.45"/>
+              <ellipse cx="60" cy="60" rx="45" ry="55" stroke-width="0.3" opacity="0.35"/>
+              <line x1="60" y1="5" x2="60" y2="115" stroke-width="1.6"/>
+            </g>
+            <g clip-path="url(#globe-clip-{{ token }})" fill="#B8965A" stroke="#B8965A" stroke-width="0.3" opacity="0.17">
+              <path d="M 64 28 Q 72 30 74 40 Q 76 48 71 56 Q 76 64 72 72 Q 66 82 60 84 Q 54 80 52 70 Q 50 60 55 52 Q 52 44 58 38 Q 58 30 64 28 Z"/>
+              <path d="M 36 30 Q 33 38 37 46 Q 34 54 36 62 Q 34 72 38 80 Q 43 82 45 78 Q 43 68 45 58 Q 47 48 42 40 Q 40 30 36 30 Z"/>
+            </g>
+          </svg>
+        </div>
+        <div class="label">Download Meridian</div>
+        <div class="done-text">Downloaded</div>
+      </a>
+    </div>
+
+    <div class="closed" id="closed-message">Both documents have been saved. This link is now closed.</div>
+
+    <script>
+      (function() {
+        const TOKEN = "{{ token }}";
+        const form = document.getElementById("key-form");
+        const input = document.getElementById("key-input");
+        const submit = form.querySelector(".key-submit");
+        const pBtn = document.getElementById("portrait-btn");
+        const mBtn = document.getElementById("meridian-btn");
+        const closed = document.getElementById("closed-message");
+        let activated = false;
+        let verifying = false;
+
+        function activate() {
+          activated = true;
+          input.disabled = true;
+          submit.disabled = true;
+          if (!pBtn.classList.contains("done")) pBtn.classList.add("active");
+          if (!mBtn.classList.contains("done")) mBtn.classList.add("active");
+          checkBothDone();
+        }
+
+        function freeze(btn) {
+          btn.classList.remove("active");
+          btn.classList.add("done");
+          checkBothDone();
+        }
+
+        function checkBothDone() {
+          if (pBtn.classList.contains("done") && mBtn.classList.contains("done")) {
+            closed.classList.add("visible");
+          }
+        }
+
+        function shake() {
+          input.classList.remove("shake");
+          void input.offsetWidth;
+          input.classList.add("shake");
+          input.value = "";
+          input.focus();
+        }
+
+        form.addEventListener("submit", async function(e) {
+          e.preventDefault();
+          if (verifying || activated) return;
+          const key = input.value.trim();
+          if (!key) { shake(); return; }
+          verifying = true;
+          try {
+            const res = await fetch("/collect/" + TOKEN + "/verify", {
+              method: "POST",
+              headers: {"Content-Type": "application/json"},
+              body: JSON.stringify({key: key}),
+            });
+            const data = await res.json();
+            if (data && data.valid) {
+              activate();
+            } else {
+              shake();
+            }
+          } catch (err) {
+            shake();
+          } finally {
+            verifying = false;
+          }
+        });
+
+        for (const btn of [pBtn, mBtn]) {
+          btn.addEventListener("click", function(e) {
+            if (!activated || btn.classList.contains("done")) {
+              e.preventDefault();
+              return;
+            }
+            // Download proceeds via href; freeze the button visually after a short beat.
+            setTimeout(function() { freeze(btn); }, 150);
+          });
+        }
+
+        // If the server says one is already done, make sure the closed-message
+        // check still fires correctly (no-op when only one is done).
+        checkBothDone();
+      })();
+    </script>
+  {% endif %}
+</body>
+</html>
