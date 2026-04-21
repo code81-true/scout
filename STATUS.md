@@ -1,6 +1,6 @@
 # Scout — Project Status
 
-Last updated: 2026-04-20
+Last updated: 2026-04-21
 
 ---
 
@@ -135,6 +135,12 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 47. **Bug fix — notes and outcome overrides on unauthenticated keys** — Root cause: set_note(), set_outcome(), set_recipient() ran UPDATE statements that matched zero rows for keys that had never been authenticated (no session row exists until /auth → create_session). All three are now UPSERTs that create a `state='pending'` row when missing. create_session() promotes pending → interviewing on first /auth and resets created_at so "First used" reflects the true first auth time, not the prior admin-annotation timestamp. get_session_stats total now excludes pending rows so admin annotations on unused keys don't inflate counts. [2026-04-20]
 
+48. **VPS now live with 25d1faa — admin dashboard + manual delivery in production** — Commits 876f7cc, 25fcdea, 25d1faa deployed successfully via PRE-DEPLOY CHECKLIST. Verified 2026-04-21: scout.regtool.org/admin-7x9k2m returns 200, /collect/<token>/verify accepts POST. VPS HEAD matches master. Supersedes the "committed but not yet deployed" status tracked in these commits. [2026-04-21]
+
+49. **PROJECT_STATE.md — cross-product manager snapshot created** — New top-level file for the project manager overseeing Scout, MTN, and commercialisation. Eleven sections: product identity, live state, committed-not-deployed, known issues, four-sprint plan, MTN dependencies, commercial dependencies, beta cohort (3/50 with Boss, JRMTWFU4FL, GHR7U6GEGU), decisions in effect (13 active + 2 pending for Sprint 1), manager priorities, reading order. Status tags: [LIVE], [COMMITTED], [IN SPRINT N], [BLOCKED ON MTN], [BLOCKED ON LEGAL], [PARKED], [PENDING], [VERIFY]. Updated at end of every CC session. [2026-04-21]
+
+50. **Portrait altitude fix scheduled for Sprint 1** — First cohort feedback (2026-04-21) from sessions JRMTWFU4FL and GHR7U6GEGU identified a portrait altitude issue. Not yet in code. Chronicler prompt tuning — adjust tone/depth calibration — scheduled for Sprint 1 alongside three-tier mental health and decision architecture YAML extraction work. No new portraits should go to beta users until the fix ships. [2026-04-21]
+
 43. **Pseudonym removed — all sessions anonymous** — Pseudonym question replaced with "I won't ask your name. You are anonymous. It is the point here, not a limitation." All pseudonym detection code removed from app.py (prefix scanning, set_pseudonym, get_pseudonym). All sessions use "Anonymous". Chronicler and constitution still receive "Anonymous" as pseudonym parameter. [2026-04-16]
 
 43. **Guide closing line** — After "When you are ready — enter your key.": gold hairline rule (0.5px, 40px, opacity 0.25) + "One suffers less not by controlling life more, but by understanding oneself more deeply." (Cormorant Garant 300 italic, 17px, gold, still). Last element before return button. [2026-04-16]
@@ -217,12 +223,13 @@ Scout is a single-session AI interview engine that guides one person through sev
 
 ## Next Session Priorities
 
-1. **Deploy admin dashboard + manual delivery to VPS.** Commits 876f7cc, 25fcdea + (current) are on master but not on the VPS. Run the PRE-DEPLOY CHECKLIST in CLAUDE.md end to end. New env var to consider: DELIVERIES_DIR (defaults to "deliveries", auto-created on startup). Smoke-test: generate a fresh TEST- key, run a TEST session through to completion, hit Generate & Deliver in admin, open the link in a fresh browser, verify with the test key, download both PDFs. [2026-04-20]
-2. **Open a fresh CC chat for MyTrueNorth.** Run the same documentation arc for MTN (SOUL, ARCHITECTURE, DECISIONS, KNOWN_ISSUES, ROADMAP, HANDOVER). [2026-04-19]
-3. **Design the Scout → MTN YAML bridge.** Once MTN documentation is complete. This is the most important conversion point in the product — see HANDOVER.md "Next session agenda". [2026-04-19]
+1. **Sprint 1 — three-tier mental health + decision architecture + portrait altitude fix.** Prompt.py: new CONSTRAINT 10 (three tiers), pre-session framing, Layer 2/5/6/7 listening enrichments, Layer 6 four-part shadow enrichment. Engine.py: Call 3 adds heuristics/failure_modes/context_triggers; Call 4 adds sensitive_areas. Chronicler tuning for portrait altitude. Deploy to VPS. Write DEC-SCOUT-015 and DEC-SCOUT-016 into DECISIONS.md on commit. [2026-04-21]
+2. **Open a fresh CC chat for MyTrueNorth.** Run the same documentation arc for MTN (SOUL, ARCHITECTURE, DECISIONS, KNOWN_ISSUES, ROADMAP, HANDOVER). Then Component 5 — update MTN Pydantic models to accept Sprint 1 YAML sections. Do not bridge any new spine until MTN is updated. [2026-04-19]
+3. **Design the Scout → MTN YAML bridge.** Once MTN documentation is complete and Pydantic models accept Sprint 1 sections. This is the most important conversion point in the product. [2026-04-19]
 4. **Chronicler output review** — evaluate portrait quality after real sessions against the Boss/David bar (SOUL.md §sessions that set the standard). [2026-04-07]
 5. **Stripe donation page** — deferred to v2.0 per ROADMAP.md. Kept here for visibility only. [2026-04-07]
 
+- [SUPERSEDED 2026-04-21: "Deploy admin dashboard + manual delivery to VPS" — shipped, verified live via HTTP 200 on /admin-7x9k2m and /collect/<token>/verify. VPS HEAD at 25d1faa matches master.]
 - [SUPERSEDED 2026-04-19: "Pseudonym collection" — DEC-SCOUT-005, all sessions Anonymous, pseudonym detection removed]
 - [SUPERSEDED 2026-04-19: "Gunicorn WSGI server" — Gunicorn 25.3.0 shipped 2026-04-09, already live]
 
