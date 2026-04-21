@@ -1,6 +1,6 @@
 # PROJECT_STATE.md — Scout
 
-Last updated: 2026-04-21
+Last updated: 2026-04-21 (Sprint 1 shipped, pending deploy)
 Purpose: single source of truth for the project manager
 overseeing Scout, MTN, and commercialisation in parallel.
 Read once a week. Updated at the end of every CC session.
@@ -76,9 +76,11 @@ master at commit 25d1faa (verified 2026-04-21).
 
 ## 3. Committed but not yet deployed
 
-None. VPS HEAD matches master (25d1faa) as of 2026-04-21.
-New work from Sprint 1 will populate this section as commits
-land on master but await the PRE-DEPLOY CHECKLIST.
+- **Sprint 1 — portrait altitude fix, three-tier mental health,
+  decision architecture YAML extraction** — prompt.py,
+  engine.py, chronicler.py. No new env vars. No database
+  migration. Prompt-and-engine changes only. Deploy via
+  PRE-DEPLOY CHECKLIST. See DEC-SCOUT-015 and DEC-SCOUT-016. [COMMITTED]
 
 ---
 
@@ -105,52 +107,49 @@ Four sprints, in order. Sprint 1 is the current in-flight
 work from the April 21 project update. Dependencies on MTN
 are flagged.
 
-### Sprint 1 — Three-tier mental health + decision architecture + portrait altitude (IN FLIGHT)
+### Sprint 1 — Three-tier mental health + decision architecture + portrait altitude (SHIPPED, DEPLOY PENDING)
 
-**Theme.** Replace binary pause-or-continue CONSTRAINT 10 with
+**Theme.** Replaced binary pause-or-continue CONSTRAINT 10 with
 a three-tier response (acknowledge / slow / close-for-safety).
-Enrich Scout's listening in Layers 2, 5, 6, 7 to extract
+Enriched Scout's listening in Layers 2, 5, 6, 7 to extract
 heuristics, failure-modes, context-triggers as byproducts of
-attention — not new question types. Fix portrait altitude
-identified from first cohort feedback (2026-04-21). Scout's
-interview register does not change.
+attention — not new question types. Shipped portrait altitude
+fix from first cohort feedback (2026-04-21). Scout's interview
+register is unchanged.
 
-**Items.**
-- Component 0 — Pre-session framing: one grounding statement
-  after the "Ready?" threshold, before Layer 1 [IN SPRINT 1]
-- Component 1 — New CONSTRAINT 10 with three tiers
-  (acknowledge / slow / close-for-safety). "We can stay here
-  as long as this needs" offer gated to heavier end of Tier 2
-  only [IN SPRINT 1]
-- Component 2 — Layer 6 (Shadows) enrichment: four-part
-  failure pattern listening (pattern/trigger/tells/interrupt),
-  reach-for-missing-parts questions only when door opens [IN SPRINT 1]
-- Component 3 — Layer 2 / 5 / 7 listening additions:
-  decision rules in Work, belief-origin in Beliefs, context
-  triggers in Long Game [IN SPRINT 1]
-- Component 4 — engine.py Call 3 adds `heuristics`,
-  enriched `failure_modes` (with `north_watch`),
-  `context_triggers` (with `north_watch`). Call 4 adds
-  `sensitive_areas` under `north_instructions` when Tier 2
-  handling occurred [IN SPRINT 1]
-- Portrait altitude fix — identified from first cohort
-  feedback on 2026-04-21; not yet in code. Chronicler prompt
-  tuning to adjust tone/depth calibration [IN SPRINT 1]
-- DEC-SCOUT-015 (three-tier mental health) and DEC-SCOUT-016
-  (decision architecture YAML extraction) to be written into
-  DECISIONS.md on commit
+**Items (all shipped).**
+- Component 0 — Pre-session framing after anonymity line,
+  before Layer 1 [COMMITTED]
+- Component 1 — CONSTRAINT 10 rewrite: three tiers, heavier-end
+  Tier 2 gating on "we can stay here" offer, exact
+  crisis-resources wording [COMMITTED]
+- Component 2 — Layer 6 four-part failure-pattern listening
+  with door-opens-only probing [COMMITTED]
+- Component 3 — Layer 2 decision rules, Layer 5 compiled
+  wisdom / origin, Layer 7 context triggers [COMMITTED]
+- Component 4 — engine.py Call 3 adds heuristics,
+  failure_modes (four-part, north_watch), context_triggers
+  (north_watch). Call 4 adds conditional sensitive_areas [COMMITTED]
+- P0 portrait altitude directive — chronicler.py:
+  "portrait must never merely confirm… win is not 'I didn't
+  know that' but 'I've never heard it said like that'" [COMMITTED]
+- DEC-SCOUT-015 and DEC-SCOUT-016 written into DECISIONS.md [COMMITTED]
 
-**Definition of done.**
-- Local test session produces YAML containing `heuristics`,
-  `failure_modes`, `context_triggers` keys (empty lists OK)
-- No invented content in any of the three sections
-- Scout behaviour verified against a simulated Tier 2
-  disclosure — slows down without announcing
-- Portrait altitude fix ships; next cohort session confirms
-  corrected tone
-- Deployed to VPS via PRE-DEPLOY CHECKLIST
-- MTN Pydantic models updated to accept new sections
-  (Component 5) before any spine is bridged [BLOCKED ON MTN]
+**Definition of done — status.**
+- ✓ YAML schema verified via isolated Sonnet call: all six
+  top-level keys present (shadows, long_game, relationships,
+  heuristics, failure_modes, context_triggers); full per-section
+  schema; honest `[]` and `null` honored; no invented content.
+- ✓ Chat flow end-to-end verified: auth → 4 turns → state
+  transitions interviewing → generating → /generate fires.
+- ✓ All prompt additions confirmed present in SYSTEM_PROMPT and
+  CHRONICLER_PROMPT via string-check.
+- ⧗ Deploy to VPS via PRE-DEPLOY CHECKLIST [PENDING]
+- ⧗ First post-deploy production session confirms in-session
+  behaviour (Component 0 framing delivery, Tier 1/2/3 handling,
+  portrait altitude lands)
+- ⧗ MTN Pydantic models updated to accept new sections
+  (Component 5) before any post-Sprint-1 spine is bridged [BLOCKED ON MTN]
 
 ### Sprint 2 — Portrait polish + delivery edge cases
 
@@ -355,29 +354,31 @@ planned for Sprint 1 commit and not yet in DECISIONS.md.
 
 ## 10. What the manager needs to know right now
 
-1. **Sprint 1 is the critical path, and it blocks on MTN.**
-   Three-tier mental health + decision architecture +
-   portrait altitude fix is the active Scout work. The new
-   YAML sections it emits (heuristics, failure_modes,
-   context_triggers, sensitive_areas) will crash or silently
-   drop in the current MTN Pydantic model. A new spine must
-   not be bridged until MTN updates. Ask about MTN session
-   start date.
-2. **Portrait altitude was flagged 2026-04-21 by the first
-   cohort.** JRMTWFU4FL and GHR7U6GEGU surfaced it. The fix
-   is scheduled for Sprint 1 but is not yet in code. No new
-   portraits should go to beta users until the fix ships.
-3. **Beta cohort is at 3/50.** Scout has fewer real sessions
-   than it has design decisions. Portrait tuning has limited
-   signal until the cohort grows. Ask about recruitment plan
-   and cadence.
-4. **Legal review has not started.** v2.0 commercial launch
-   depends on it — terms, privacy, GDPR, DPA. Long lead-time
+1. **Sprint 1 is shipped on master, deploy pending.** Portrait
+   altitude fix, three-tier mental health, decision
+   architecture YAML extraction (DEC-SCOUT-015, -016). No
+   database migration, no new env vars — prompt-and-engine
+   only. Deploy is a straightforward PRE-DEPLOY CHECKLIST run.
+   Ask about deploy window.
+2. **MTN Pydantic update blocks any new spine bridge.** The
+   moment Sprint 1 hits production, every spine will include
+   heuristics, failure_modes, context_triggers, and
+   (conditionally) sensitive_areas. The current MTN loader
+   cannot accept these. Do not load any post-Sprint-1 spine
+   into MTN until MTN's Pydantic models are updated. Ask
+   about MTN session start date.
+3. **Portrait altitude regression is closed in code.**
+   Shipped today from first-cohort feedback (JRMTWFU4FL,
+   GHR7U6GEGU, 2026-04-21). Deploy + one production session
+   will confirm it lands. Until deployed, do not send any new
+   portraits to beta users.
+4. **Beta cohort at 3/50.** Scout still has fewer real
+   sessions than it has design decisions. Portrait tuning
+   and altitude verification both need more real sessions.
+   Ask about recruitment plan.
+5. **Legal review has not started.** v2.0 commercial launch
+   blocks on it — terms, privacy, GDPR, DPA. Long lead-time
    item. Ask about engagement date.
-5. **Admin dashboard has no auth (Phase 1 obscurity only).**
-   Acceptable today — one operator, one unpredictable URL,
-   no public discovery path. Becomes unsafe the moment
-   operator count > 1. Sprint 4 commits to real auth.
 
 ---
 

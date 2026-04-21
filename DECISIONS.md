@@ -244,3 +244,77 @@ admin dashboard to show a true history of what Scout has
 done. Deleting the session row would leave the operator
 blind to their own system.
 **Status:** Active.
+
+---
+
+### DEC-SCOUT-015 | Three-tier mental health response replaces binary CONSTRAINT 10
+
+**Date:** 2026-04-21
+**Decision:** CONSTRAINT 10 is rewritten from a binary
+pause-or-continue rule to a three-tier response.
+Tier 1 (psychological complexity — past therapy, managed
+conditions, diagnosed history): acknowledge neutrally
+and continue without pause or change of pace. Tier 2
+(currently heavy — active stress, present-tense
+difficulty): slow down without announcing it; offer the
+"we can stay here as long as this needs" opening only at
+the heavier end of Tier 2, not as standard handling.
+Tier 3 (immediate safety — self-harm directly disclosed
+or strongly implied): close the session gently with the
+exact crisis-resources wording. Key remains active in
+all tiers. Tier detection lives entirely in Scout's
+judgment about the full context, not in individual words.
+**Reasoning:** The binary constraint was gate-keeping on
+psychological history — treating complexity as fragility
+and closing sessions that would have been served by
+presence. Two cohort observations informed the change:
+people with managed conditions were being paused out of
+conversations they were entirely capable of holding,
+and the only line that actually matters operationally
+is immediate safety. Scout is a calibrated witness; its
+job is to hold complexity with accuracy, not to
+gate-keep based on category. Close only for immediate
+safety. Everything else gets met with presence.
+**Status:** Active.
+
+---
+
+### DEC-SCOUT-016 | Decision architecture YAML extraction
+
+**Date:** 2026-04-21
+**Decision:** The spine.yaml schema gains three new
+sections produced server-side by `generate_yaml_sections`:
+`heuristics` (operating decision rules with
+id/statement/evidence/confidence/self_type/
+invocation_note), enriched `failure_modes` (with
+pattern/trigger/tells/interrupts/north_watch — migrated
+from shadow content that fits a behavioural pattern;
+shadows without a pattern remain in `shadows`), and
+`context_triggers` (id/condition/deviation/north_watch).
+Call 4 additionally adds `sensitive_areas` nested under
+`north_instructions` when Tier 2 mental-health handling
+was detected (signal: same territory across multiple
+consecutive exchanges, follow-up questions within a hat
+rather than progression, current-tense difficulty
+language). Scout's interview register is unchanged —
+Layer 2 listens for decision rules, Layer 5 for
+compiled wisdom / origin, Layer 6 for the four-part
+shadow, Layer 7 for context triggers. Extraction is a
+byproduct of richer listening, not new question types.
+Non-negotiable: honest empty list beats invented
+content; honest null beats an invented field.
+**Reasoning:** North needs direct, actionable material
+to surface in daily dialogue — "when X happens, return
+this as their own rule" rather than generic advice. The
+existing spine captured *what* a person believes; it did
+not capture *how* that person operates, *what trips
+them*, or *what context makes their values
+vulnerable*. Without that, North cannot act with
+specificity. The four-part failure mode (pattern, trigger,
+tells, interrupt) gives North observable signals to
+watch for; the `north_watch` directive makes the
+invocation explicit. Confirmed via isolated Sonnet run
+on production-mode transcript (2026-04-21): all six
+top-level keys present, full schema honored, empty list
+and null honoured, no invented content.
+**Status:** Active.
