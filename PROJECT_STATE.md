@@ -1,6 +1,6 @@
 # PROJECT_STATE.md — Scout
 
-Last updated: 2026-04-21 (Sprint 1 shipped, pending deploy)
+Last updated: 2026-04-22 (Sprint 1 + Sprint 2 shipped, pending deploy)
 Purpose: single source of truth for the project manager
 overseeing Scout, MTN, and commercialisation in parallel.
 Read once a week. Updated at the end of every CC session.
@@ -79,25 +79,40 @@ master at commit 25d1faa (verified 2026-04-21).
 - **Sprint 1 — portrait altitude fix, three-tier mental health,
   decision architecture YAML extraction** — prompt.py,
   engine.py, chronicler.py. No new env vars. No database
-  migration. Prompt-and-engine changes only. Deploy via
-  PRE-DEPLOY CHECKLIST. See DEC-SCOUT-015 and DEC-SCOUT-016. [COMMITTED]
+  migration. Prompt-and-engine changes only. See DEC-SCOUT-015
+  and DEC-SCOUT-016. [COMMITTED 2026-04-21]
+- **Sprint 2 — delivery edge cases + Meridian safe message +
+  A08/A10/A11/A12 fixes** — app.py, templates/collect.html,
+  templates/portrait_pdf.html, templates/index.html,
+  tests/test_collect.py. No new env vars. No database
+  migration. Six edge cases (A token-not-found, D returning-user
+  cue, E file-missing Scout-register, F already-collected
+  Scout-register, G rate-limit muted surface, H token
+  case-insensitive). Two-line "Keep your Meridian safe"
+  closed block. A08 paragraph-break fix, A10 cover compass
+  viewBox, A11 Meridian font bumps (9.5→11 body), A12
+  generation-wait container widths. 10 passing tests. [COMMITTED 2026-04-22]
+
+Both sprints deploy together via one PRE-DEPLOY CHECKLIST run.
+No new env vars. No database migration.
 
 ---
 
 ## 4. Known issues (live)
 
-Active bugs affecting real users today (ordered by severity).
-From KNOWN_ISSUES.md. Model-behaviour issues have defensive
-handling in production and are not listed here.
+Active bugs affecting real users *today*. A08/A10/A11/A12 all
+closed in Sprint 2 but the fixes are not live until deploy —
+what's listed below is what the currently-deployed VPS still
+exhibits.
 
 - **A08** — Portrait paragraphs occasionally break mid-paragraph
-  across page boundaries in WeasyPrint. [degraded]
+  across page boundaries in WeasyPrint. [degraded — fix committed 2026-04-22, awaiting deploy]
 - **A11** — Meridian body font scales too small on short
-  Meridians. [degraded]
+  Meridians. [degraded — fix committed 2026-04-22, awaiting deploy]
 - **A10** — Portrait PDF cover: compass north needle slightly
-  clipped at top on A4 print. [cosmetic]
+  clipped at top on A4 print. [cosmetic — fix committed 2026-04-22, awaiting deploy]
 - **A12** — Compass animation horizontal position shifts with
-  rotating message length. [cosmetic]
+  message length. [cosmetic — fix committed 2026-04-22, awaiting deploy]
 
 ---
 
@@ -151,26 +166,37 @@ register is unchanged.
 - ⧗ MTN Pydantic models updated to accept new sections
   (Component 5) before any post-Sprint-1 spine is bridged [BLOCKED ON MTN]
 
-### Sprint 2 — Portrait polish + delivery edge cases
+### Sprint 2 — Portrait polish + delivery edge cases (SHIPPED, DEPLOY PENDING)
 
-**Theme.** Complete the v1.1 polish items that tune around
-the live admin + delivery flow now that it's in users' hands.
+**Theme.** Polish around the live admin + delivery flow.
+No interview-register changes. No YAML schema changes. No MTN
+dependencies.
 
-**Items.**
-- Six delivery edge cases — design exists, implement [IN SPRINT 2]
-- "Keep your Meridian safe" post-download message [IN SPRINT 2]
-- Fix A08 (paragraph page-break) and A11 (Meridian font
-  size) — small code changes, ship with this sprint [IN SPRINT 2]
-- Fix A10 (compass needle clipped) and A12 (compass animation
-  shift) — cosmetic, ship with this sprint [IN SPRINT 2]
-- Chronicler portrait altitude post-fix review: confirm
-  Sprint 1 fix held across next three cohort sessions [IN SPRINT 2]
+**Items (all shipped 2026-04-22).**
+- Six delivery edge cases A/D/E/F/G/H — handled with 10
+  passing tests in tests/test_collect.py [COMMITTED]
+- "Keep your Meridian safe" post-download message —
+  two-line closed block, primary + muted safe-keeping [COMMITTED]
+- A08 portrait paragraph page-break — break-inside +
+  orphans/widows on <p> elements [COMMITTED]
+- A11 Meridian font bumps — 9.5→11 body, 5→5.8mm leading,
+  7.5→8.5 titles, 10.5→11.5 pseudonym [COMMITTED]
+- A10 cover compass viewBox — -10 -10 260 260 [COMMITTED]
+- A12 generation-wait container widths — fixed-width
+  wrapper so compass stays centred [COMMITTED]
+- ⧗ Chronicler portrait altitude post-fix review: pending
+  verification across next three real cohort sessions
+  after Sprint 1 deploys [PENDING — not blocking Sprint 2]
 
-**Definition of done.**
-- All six delivery edge cases handled with test coverage
-- A08, A10, A11, A12 closed in KNOWN_ISSUES.md
-- "Keep your Meridian safe" message reaches users after
-  download
+**Definition of done — status.**
+- ✓ All six edge cases implemented with test coverage
+- ✓ A08, A10, A11, A12 closed in KNOWN_ISSUES.md
+- ✓ "Keep your Meridian safe" message in both closed and
+  valid branches of collect.html
+- ✓ Full test suite passes (10/10 in tests/test_collect.py)
+- ⧗ Deploy to VPS via PRE-DEPLOY CHECKLIST [PENDING]
+- ⧗ Portrait altitude verification across next three cohort
+  sessions post-deploy [PENDING — carries from Sprint 1]
 
 ### Sprint 3 — MTN bridge + v1.1 polish
 

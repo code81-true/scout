@@ -1114,6 +1114,13 @@ async function triggerGenerate() {
   msgEl.style.background = "transparent";
   msgEl.style.borderLeft = "none";
   msgEl.style.textAlign = "center";
+  // A12 fix — pin the container to a fixed width so the compass centre stays
+  // put regardless of message content length. Without this, any future
+  // rotating or dynamic message shifts the compass horizontally.
+  msgEl.style.width = "100%";
+  msgEl.style.maxWidth = "480px";
+  msgEl.style.marginLeft = "auto";
+  msgEl.style.marginRight = "auto";
 
   // Animated compass
   const compassDiv = document.createElement("div");
@@ -1171,7 +1178,9 @@ async function triggerGenerate() {
 
   const genMsg = document.createElement("p");
   genMsg.textContent = "What you brought to this session is being carefully woven.";
-  genMsg.style.cssText = "font-family:'Cormorant Garant',serif;font-style:italic;font-size:17px;color:#B8965A;text-align:center;margin:20px auto;max-width:400px;animation:gen-breathe 4s ease-in-out infinite;";
+  // A12 fix — explicit width (not max-width) so the message container is
+  // stable across content changes and the compass above stays centred.
+  genMsg.style.cssText = "font-family:'Cormorant Garant',serif;font-style:italic;font-size:17px;color:#B8965A;text-align:center;margin:20px auto;width:400px;max-width:100%;animation:gen-breathe 4s ease-in-out infinite;";
   msgEl.appendChild(genMsg);
   conversation.scrollTop = conversation.scrollHeight;
 

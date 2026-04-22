@@ -4,6 +4,40 @@ Permanent changelog. Newest entry first.
 
 ---
 
+## 2026-04-22, end of session — Sprint 2 shipped: delivery edge cases, Meridian safe message, A08 A10 A11 A12 fixes
+**Trigger:** git push
+
+### Shipped
+- `app.py` — /collect routes rewritten for edge cases. Token normalised to lowercase at every route entry (case H). `_serve_delivery_pdf` now renders `collect.html` with Scout-register statuses (`invalid`, `error_missing`, `error_collected`) instead of raw text. Meridian PDF font bumps (A11) as named constants: body 9.5→11pt, leading 5→5.8mm, titles 7.5→8.5pt, pseudonym 10.5→11.5pt.
+- `templates/collect.html` — four new status branches (`invalid`, `error_missing`, `error_collected`, plus returning-user cue inside `valid`). Two-line closed block in both closed and valid branches: primary line retained, new muted `.closed-safe` line with the Keep-your-Meridian-safe copy. New `.rate-limit-note` element fades in on 429 (case G). JS now checks `res.status === 429` before JSON parse and does not shake on rate-limit (shake implies wrong key). Returning-user `.returning-note` shown when either `portrait_done` or `meridian_done` is true on page load (case D).
+- `templates/portrait_pdf.html` — A08: `break-inside: avoid` + `page-break-inside: avoid` + `orphans: 4` + `widows: 4` now applied to `<p>` elements inside `.para-wrap`, `.shadow-passage`, `.surprise-passage` (previously only on the wrappers). A10: cover compass SVG viewBox `0 0 240 240` → `-10 -10 260 260` — pure geometry, no design change.
+- `templates/index.html` — A12: `msgEl` container gets explicit `width: 100%` + `maxWidth: 480px` + `marginLeft/Right: auto`; generating-message inline style switches from `max-width:400px` to `width:400px; max-width:100%`. Compass horizontal position now independent of message content length.
+- `tests/test_collect.py` — new file, 10 unittest tests. Covers all six edge cases (A, D, E, F, G, H), three happy paths (correct key, wrong key no-leak, expired), and one case-normalisation on /verify. `setUp` hook resets Flask-Limiter state between tests so the rate-limit test doesn't poison downstream tests. All 10 pass.
+- `STATUS.md` — entry 52 added. Portrait altitude post-fix review flagged as pending verification across next three cohort sessions (not blocking Sprint 2).
+- `KNOWN_ISSUES.md` — A08, A10, A11, A12 removed from active bugs. "Six delivery edge cases" and "Keep your Meridian safe" moved from parked to shipped.
+- `PROJECT_STATE.md` — Section 3 now lists both Sprint 1 and Sprint 2 as committed-not-deployed. Section 4 active-bugs list annotates A08/A10/A11/A12 as "fix committed, awaiting deploy". Section 5 Sprint 2 marked SHIPPED, DEPLOY PENDING.
+
+### Deployed
+- Not yet deployed. VPS remains at previous commit. Pope holds the deploy gate manually. Sprint 1 and Sprint 2 will ship together — single PRE-DEPLOY CHECKLIST run covers both.
+
+### Decisions Made
+- None. Sprint 2 is implementation-only — existing decisions stood throughout.
+
+### Blockers Resolved
+- A08 (paragraph page-break), A10 (compass needle clip), A11 (Meridian font), A12 (compass shift) — all closed in KNOWN_ISSUES.md. Fixes committed; take effect on deploy.
+- Six delivery edge cases "designed on paper, not implemented" — now implemented with test coverage.
+- "Keep your Meridian safe" message — designed but not shipped → now shipped.
+
+### New Blockers
+- None.
+
+### PM Note
+- Two sprints now sitting on master awaiting deploy (ea43ede + the Sprint 2 commit). Pope holds the gate by design. Both together are: prompt/engine changes + delivery polish. No new env vars, no schema migration, no new routes. One PRE-DEPLOY CHECKLIST run covers both.
+- Portrait altitude post-fix verification is pending across the next three real cohort sessions. This carries across the Sprint 1/2 boundary. Beta cohort still at 3/50 (Boss, JRMTWFU4FL, GHR7U6GEGU) — recruitment is the blocker on closing the altitude loop.
+- MTN Pydantic update (Component 5) remains the critical dependency before any post-Sprint-1 spine can be bridged. Not touched in Sprint 2.
+
+---
+
 ## 2026-04-21, end of session — Sprint 1 shipped: portrait altitude fix, three-tier mental health, decision architecture YAML extraction
 **Trigger:** git push
 

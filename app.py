@@ -796,19 +796,26 @@ def _render_meridian_pdf_bytes(pseudonym: str, date_str: str, constitution_text:
             c.drawString(cx, y, ch)
             cx += c.stringWidth(ch, font, size) + spacing_mm
 
+    # A11 fix — body and title font sizes bumped for the target register.
+    # Previous values (too small for a Krishnamurti-register document):
+    #   body 9.5pt / title 7.5pt / leading 5mm / pseudonym 10.5pt
+    body_font_size = 11.0
+    title_font_size = 8.5
+    pseudonym_font_size = 11.5
+    leading = 5.8 * mm
+
     for i, (title, body) in enumerate(zip(section_titles, paragraphs)):
         sec_y = content_top - i * section_height
 
         # Title
         c.setFillColor(gold)
-        draw_spaced_text(c, W / 2, sec_y, title, "Helvetica-Bold", 7.5, 0.8 * mm)
+        draw_spaced_text(c, W / 2, sec_y, title, "Helvetica-Bold", title_font_size, 0.8 * mm)
 
         # Body — wrap text
         if body:
             c.setFillColor(dark)
-            c.setFont("Times-Roman", 9.5)
+            c.setFont("Times-Roman", body_font_size)
             text_width = W - 2 * margin - 10 * mm
-            leading = 5 * mm
             ty = sec_y - 6 * mm
 
             # Simple word-wrap
@@ -816,7 +823,7 @@ def _render_meridian_pdf_bytes(pseudonym: str, date_str: str, constitution_text:
             line = ""
             for word in words:
                 test = f"{line} {word}".strip()
-                if c.stringWidth(test, "Times-Roman", 9.5) < text_width:
+                if c.stringWidth(test, "Times-Roman", body_font_size) < text_width:
                     line = test
                 else:
                     if line:
@@ -830,14 +837,14 @@ def _render_meridian_pdf_bytes(pseudonym: str, date_str: str, constitution_text:
                 if i == 4 and pseudonym in line:
                     # Split at pseudonym
                     before = line[:line.rfind(pseudonym)]
-                    c.setFont("Times-Roman", 9.5)
+                    c.setFont("Times-Roman", body_font_size)
                     c.setFillColor(dark)
-                    bw = c.stringWidth(before, "Times-Roman", 9.5)
-                    pw = c.stringWidth(pseudonym, "Times-BoldItalic", 10.5)
+                    bw = c.stringWidth(before, "Times-Roman", body_font_size)
+                    pw = c.stringWidth(pseudonym, "Times-BoldItalic", pseudonym_font_size)
                     total = bw + pw
                     start_x = W / 2 - total / 2
                     c.drawString(start_x, ty, before)
-                    c.setFont("Times-BoldItalic", 10.5)
+                    c.setFont("Times-BoldItalic", pseudonym_font_size)
                     c.setFillColor(gold)
                     c.drawString(start_x + bw, ty, pseudonym)
                 else:
@@ -1084,9 +1091,13 @@ def _delivery_expired(delivery: dict) -> bool:
 @app.route("/collect/<token>")
 def collect_page(token):
     """Landing page for a delivery link."""
+    # Case H: normalise token to lowercase so email-client uppercasing doesn't
+    # misroute to the "invalid" path.
+    token = token.lower()
     delivery = get_delivery(token)
     if delivery is None:
-        return render_template("collect.html", status="expired"), 404
+        # Case A: token does not exist — distinct from expired.
+        return render_template("collect.html", status="invalid"), 404
     if _delivery_expired(delivery):
         return render_template("collect.html", status="expired"), 410
     if delivery["downloaded"]:
@@ -1110,6 +1121,7 @@ def collect_page(token):
 @limiter.limit("10 per minute")
 def collect_verify(token):
     """Verify that the posted key matches the key bound to this delivery token."""
+    token = token.lower()
     delivery = get_delivery(token)
     if delivery is None:
         return {"valid": False}
@@ -1123,22 +1135,30 @@ def collect_verify(token):
 
 
 def _serve_delivery_pdf(token: str, kind: str):
-    """Serve a portrait or meridian PDF for a valid delivery. Marks the corresponding flag."""
+    """Serve a portrait or meridian PDF for a valid delivery. Marks the corresponding flag.
+
+    Error responses render collect.html in the Scout register rather than raw
+    plain text so the recipient is never dropped into an unstyled browser page.
+    """
     import glob
 
+    token = token.lower()
     delivery = get_delivery(token)
     if delivery is None:
-        return "This link is not valid.", 404
+        # Case A on download routes — token unknown
+        return render_template("collect.html", status="invalid"), 404
     if _delivery_expired(delivery):
-        return "This link has expired.", 410
+        return render_template("collect.html", status="expired"), 410
     if delivery[f"{kind}_downloaded"]:
-        return "This file has already been downloaded.", 410
+        # Case F: already-downloaded re-request, Scout-register message
+        return render_template("collect.html", status="error_collected"), 410
 
     key = delivery["key"]
     matches = sorted(glob.glob(os.path.join(DELIVERIES_DIR, f"{key}_*_{kind}.pdf")))
     if not matches:
+        # Case E: delivery row exists but PDF missing — infra/cleanup gap
         logger.error("Delivery file missing for token=%s key=%s kind=%s", token, key, kind)
-        return "File not found.", 404
+        return render_template("collect.html", status="error_missing"), 404
     path = matches[-1]
     with open(path, "rb") as f:
         data = f.read()

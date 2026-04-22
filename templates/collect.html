@@ -202,17 +202,59 @@
   /* --- Closed message --- */
   .closed {
     font-family: "Cormorant Garant", serif;
-    font-style: italic;
-    font-size: 18px;
-    color: #8A8480;
     text-align: center;
     max-width: 460px;
-    line-height: 1.6;
     margin-top: 28px;
     opacity: 0;
     transition: opacity 0.6s ease 0.2s;
   }
   .closed.visible { opacity: 1; }
+  .closed .closed-primary {
+    font-style: italic;
+    font-size: 18px;
+    color: #8A8480;
+    line-height: 1.6;
+  }
+  /* Keep-your-Meridian-safe line — sits below the primary closed line,
+     smaller register, muted so the eye lands on the primary message first. */
+  .closed .closed-safe {
+    font-size: 14px;
+    color: #6A6560;
+    line-height: 1.6;
+    margin-top: 14px;
+    font-style: normal;
+  }
+
+  /* Returning-user cue — shown on the valid page when one file is already
+     marked downloaded on page load. */
+  .returning-note {
+    font-family: "Cormorant Garant", serif;
+    font-style: italic;
+    font-size: 14px;
+    color: #8A8480;
+    text-align: center;
+    max-width: 420px;
+    margin: 0 auto 32px;
+    line-height: 1.6;
+  }
+
+  /* Rate-limit notice — hidden by default, fades in when server returns 429
+     on /verify. Distinct register from the shake animation (which implies
+     wrong key) so the user understands this is about timing, not correctness. */
+  .rate-limit-note {
+    font-family: "Cormorant Garant", serif;
+    font-style: italic;
+    font-size: 14px;
+    color: #B8965A;
+    text-align: center;
+    max-width: 380px;
+    margin: -48px auto 48px;
+    line-height: 1.6;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    min-height: 1.6em;
+  }
+  .rate-limit-note.visible { opacity: 0.85; }
 
   @media (max-width: 540px) {
     body { padding: 48px 20px 36px; }
@@ -227,8 +269,14 @@
 <body>
   <div class="wordmark">Scout</div>
 
-  {% if status == "expired" %}
+  {% if status == "invalid" %}
+    <div class="message">This link is not valid.</div>
+  {% elif status == "expired" %}
     <div class="message">This link has expired.</div>
+  {% elif status == "error_missing" %}
+    <div class="message">Something didn't arrive as it should. Reach out to the person who gave you your key.</div>
+  {% elif status == "error_collected" %}
+    <div class="message">This document has already been collected.</div>
   {% elif status == "closed" %}
     <div class="buttons">
       <div class="download-btn done">
@@ -264,8 +312,15 @@
         <div class="done-text">Downloaded</div>
       </div>
     </div>
-    <div class="closed visible">Both documents have been saved. This link is now closed.</div>
+    <div class="closed visible">
+      <div class="closed-primary">Both documents have been saved. This link is now closed.</div>
+      <div class="closed-safe">Both documents are yours. No copy exists anywhere else — not on this server, not with Scout. Save them somewhere you will find them.</div>
+    </div>
   {% else %}
+    {% if portrait_done or meridian_done %}
+    <div class="returning-note">One document has already been collected from this link. Enter your key to collect the other.</div>
+    {% endif %}
+
     <form class="key-entry" id="key-form" autocomplete="off">
       <label>Enter your session key to unlock</label>
       <div class="key-input-row">
@@ -273,6 +328,8 @@
         <button type="submit" class="key-submit" aria-label="Verify">&rarr;</button>
       </div>
     </form>
+
+    <div class="rate-limit-note" id="rate-limit-note">Too many attempts. Wait a moment before trying again.</div>
 
     <div class="buttons">
       <a class="download-btn {% if portrait_done %}done{% endif %}" id="portrait-btn"
@@ -327,7 +384,10 @@
       </a>
     </div>
 
-    <div class="closed" id="closed-message">Both documents have been saved. This link is now closed.</div>
+    <div class="closed" id="closed-message">
+      <div class="closed-primary">Both documents have been saved. This link is now closed.</div>
+      <div class="closed-safe">Both documents are yours. No copy exists anywhere else — not on this server, not with Scout. Save them somewhere you will find them.</div>
+    </div>
 
     <script>
       (function() {
@@ -338,6 +398,7 @@
         const pBtn = document.getElementById("portrait-btn");
         const mBtn = document.getElementById("meridian-btn");
         const closed = document.getElementById("closed-message");
+        const rateLimitNote = document.getElementById("rate-limit-note");
         let activated = false;
         let verifying = false;
 
@@ -370,18 +431,34 @@
           input.focus();
         }
 
+        function showRateLimit() {
+          // G fix — on 429 we do NOT shake (shake implies wrong key).
+          // Muted amber note tells the user this is about timing, not correctness.
+          rateLimitNote.classList.add("visible");
+        }
+
+        function clearRateLimit() {
+          rateLimitNote.classList.remove("visible");
+        }
+
         form.addEventListener("submit", async function(e) {
           e.preventDefault();
           if (verifying || activated) return;
           const key = input.value.trim();
           if (!key) { shake(); return; }
           verifying = true;
+          clearRateLimit();
           try {
             const res = await fetch("/collect/" + TOKEN + "/verify", {
               method: "POST",
               headers: {"Content-Type": "application/json"},
               body: JSON.stringify({key: key}),
             });
+            // Case G — 429 from rate limiter: different UX from wrong key.
+            if (res.status === 429) {
+              showRateLimit();
+              return;
+            }
             const data = await res.json();
             if (data && data.valid) {
               activate();

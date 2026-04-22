@@ -23,31 +23,8 @@ Three sections:
 
 ## 1. Active bugs
 
-### A10 — Portrait PDF cover: compass north needle clipped
-The compass north needle on the portrait cover PDF is
-slightly clipped at the top. Visual only; layout
-otherwise correct. Needs the cover canvas or SVG
-viewport widened by a few points.
-
-### A12 — Compass animation shifts position on message length
-During the generation waiting screen, the rotating
-messages change length. When they do, the compass
-animation's horizontal position shifts with them. The
-container needs a fixed width so the compass stays
-centred while the text cycles.
-
-### A08 — Portrait paragraphs break across pages in WeasyPrint
-Occasionally a portrait paragraph is split across a page
-boundary mid-paragraph rather than breaking at the
-paragraph boundary. Needs `page-break-inside: avoid` on
-paragraph elements in the WeasyPrint template, or
-equivalent.
-
-### A11 — Meridian body font too small
-The auto-fit routine that sizes the Meridian body text
-scales too conservatively — even short Meridians come
-out smaller than the target register. Tune the auto-fit
-bounds upward, or set a minimum body size.
+*(Sprint 2 closed A08, A10, A11, A12 on 2026-04-22 — entries removed.
+The Sprint 2 commit sits on master; Pope holds the deploy gate.)*
 
 ---
 
@@ -96,15 +73,19 @@ retained on the VPS post-delivery.
 ### Background generation during settling — parked
 Per DEC-SCOUT-012.
 
-### Six delivery edge cases — not implemented (item 13)
-Six delivery edge cases have been designed on paper but
-are not yet implemented. Review before the next batch of
-public sessions.
+### Six delivery edge cases — shipped 2026-04-22
+*(Sprint 2. A token-not-found distinct from expired, D
+returning-user partial-download cue, E file-missing
+Scout-register page, F already-collected re-request
+Scout-register page, G rate-limit-on-verify muted
+surface, H token case-insensitive lookup. Tests in
+tests/test_collect.py. Committed, awaiting deploy.)*
 
-### "Keep your Meridian safe" message after download — item 14
-A post-download message reminding the person to store
-their Meridian somewhere safe has been designed but not
-shipped.
+### "Keep your Meridian safe" message after download — shipped 2026-04-22
+*(Sprint 2. Two-line closed block in collect.html:
+primary line retained, secondary muted line below with
+the safe-keeping copy. Rendered in both the `closed`
+status branch and the valid-with-JS-fade-in branch.)*
 
 ### Scout → MTN handshake button — item 19
 A one-click handshake that moves a spine from Scout to

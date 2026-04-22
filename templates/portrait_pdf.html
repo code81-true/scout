@@ -119,8 +119,15 @@
     margin: 0 0 8pt 0;
   }
 
+  /* A08 — belt-and-braces against mid-paragraph page breaks:
+     apply the no-break rule to the <p> itself as well, and bump
+     orphans/widows past the body-level default of 3. */
   .body-content .para-wrap p {
     margin: 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    orphans: 4;
+    widows: 4;
   }
 
   /* Shadow passage */
@@ -136,6 +143,10 @@
 
   .shadow-passage p {
     margin: 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    orphans: 4;
+    widows: 4;
   }
 
   /* Surprise passage */
@@ -151,6 +162,10 @@
 
   .surprise-passage p {
     margin: 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    orphans: 4;
+    widows: 4;
   }
 
   /* Final line — pseudonym rendered in gold */
@@ -197,7 +212,7 @@
 
 <!-- Cover page -->
 <div class="cover">
-  <svg class="cover-compass" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+  <svg class="cover-compass" viewBox="-10 -10 260 260" xmlns="http://www.w3.org/2000/svg">
     <circle cx="120" cy="120" r="110" fill="none" stroke="#B8965A" stroke-width="1"/>
     <circle cx="120" cy="120" r="103" fill="none" stroke="#B8965A" stroke-width="0.4"/>
     <g stroke="#B8965A" stroke-width="0.4">
