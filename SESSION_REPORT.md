@@ -4,6 +4,33 @@ Permanent changelog. Newest entry first.
 
 ---
 
+## 2026-04-22, transcript retention during beta — DEC-SCOUT-017
+**Trigger:** git push
+
+### Shipped
+- `scout/database.py` — `cleanup_session()` body is now a no-op (explicit `return`). The historical `DELETE FROM transcripts WHERE key = ?` is gone. Docstring rewritten to explain the change and point to DEC-SCOUT-017. Public `delete_transcript()` function kept intact as an API primitive for future authorised operator use.
+- `app.py` — `/burn` simplified. The `delete_transcript(key)` call is gone. The flat-file `os.remove(transcript_path)` block and its `try/except FileNotFoundError` wrapper are gone. `cleanup_session(key)` call retained as a no-op for call-site stability (cheap; no behaviour).
+- `DECISIONS.md` — DEC-SCOUT-017 written with full reasoning. All three disabled deletion points enumerated explicitly so there is no ambiguity about the scope of retention.
+- `STATUS.md` — entry 54 added. Date-stamped.
+
+### Deployed
+- Not yet deployed. Pope deploys.
+
+### Decisions Made
+- **DEC-SCOUT-017** — Transcripts retained during beta. Three deletion points disabled (cleanup_session body, delete_transcript call in /burn, flat-file os.remove in /burn). Public `delete_transcript()` function kept as API primitive. Decision self-supersedes on v2.0 commercial launch when deletion returns per SOUL.md §Custody.
+
+### Blockers Resolved
+- None directly. This unblocks portrait-altitude review and regression diagnosis on any real cohort session from 2026-04-22 onwards — previously those investigations had to fight against transcript deletion that fired on every /burn.
+
+### New Blockers
+- **None operationally, but one register-level tension surfaced.** SOUL.md §What Scout must never compromise #2 — "Custody. The output file lives with the person. Not on a server. Not in a database." — describes the output (Portrait, Meridian). The transcript is not the output, and retaining it server-side for operator diagnostic use is not the same as retaining the spine. DEC-SCOUT-017 explicitly notes the commitment stays narrow (no exposure, no export, no training, no other use). Worth reconciling the SOUL.md language on the next documentation pass so the distinction is codified.
+
+### PM Note
+- Pope spotted on review that changing only `cleanup_session()` would leave the stated intent ~33% achieved — `delete_transcript()` and the flat-file `os.remove()` both still fired from /burn. I flagged it, Pope confirmed the full three-point scope, and the commit reflects that. This is a rare "caught it before commit" moment — worth noting that the attention-error pattern (HANDOVER.md) can live on the CC side too when instructions are narrowly phrased. Next time, the move is to trace the intent to every call site before starting, not after.
+- Scout's SQLite now grows monotonically in the transcripts table. Real cohort transcripts are small (<100 exchanges typical, ~50KB JSON). At 50 sessions the table is ~2.5MB — a non-issue. If the beta stretches past 500 sessions the retention policy should be revisited.
+
+---
+
 ## 2026-04-22, P0 regression fix — generate_yaml_sections uses YAML_EXTRACTOR_PROMPT
 **Trigger:** git push (emergency fix, Pope deploys immediately)
 

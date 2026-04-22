@@ -269,17 +269,14 @@ def burn():
             outcome = "sufficient"
         set_outcome(key, outcome)
 
-    # Transition to delivered and clean up transcript
+    # Transition to delivered. Transcript is retained — DEC-SCOUT-017.
+    # Transcripts are kept during the beta phase for quality review and
+    # regression diagnosis. Historical deletion calls (delete_transcript,
+    # cleanup_session's body, and the flat-file os.remove block) have all
+    # been disabled. The public delete_transcript() primitive is kept
+    # intact in scout/database.py for future authorised operator use.
     transition_state(key, "delivered")
-    delete_transcript(key)
-    cleanup_session(key)
-
-    # Delete flat-file transcript backup
-    transcript_path = os.path.join(TRANSCRIPT_DIR, f"{key}_transcript.json")
-    try:
-        os.remove(transcript_path)
-    except FileNotFoundError:
-        pass
+    cleanup_session(key)  # no-op; retained for call-site stability
 
     return {"success": True}
 

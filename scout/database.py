@@ -292,11 +292,14 @@ def get_stale_closing_sessions(timeout_seconds: float = 90.0) -> list[str]:
 
 
 def cleanup_session(key: str) -> None:
-    """Delete transcript only. Sessions row is permanent history."""
-    conn = _connect()
-    conn.execute("DELETE FROM transcripts WHERE key = ?", (key,))
-    conn.commit()
-    conn.close()
+    """Historically deleted the transcript row on session burn. Now a no-op.
+
+    Transcripts retained during beta phase for quality review and regression diagnosis.
+    DEC-SCOUT-017: transcripts deleted only after commercial launch and explicit operator instruction.
+    """
+    # Intentionally does nothing. The sessions row is kept permanently per
+    # DEC-SCOUT-014; the transcripts row is now also kept per DEC-SCOUT-017.
+    return
 
 
 def create_delivery(key: str, token: str, expires_at: str) -> None:

@@ -279,6 +279,42 @@ safety. Everything else gets met with presence.
 
 ---
 
+### DEC-SCOUT-017 | Transcripts retained during beta
+
+**Date:** 2026-04-22
+**Decision:** During the beta phase, Scout transcripts are
+retained permanently alongside the session row. All three
+deletion points in the `/burn` flow are disabled:
+(1) the `cleanup_session()` body in `scout/database.py` is
+a no-op — the historical `DELETE FROM transcripts WHERE key`
+is commented out;
+(2) the `delete_transcript(key)` call at the top of `/burn`
+is removed from `app.py`;
+(3) the flat-file `os.remove(transcript_path)` block in
+`/burn` is removed from `app.py`.
+The public `delete_transcript()` function in
+`scout/database.py` is kept intact as an API primitive for
+future authorised operator use.
+**Reasoning:** Beta cohort is small (3/50 as of 2026-04-22)
+and every real session carries disproportionate diagnostic
+weight. Portrait altitude review and regression diagnosis
+both need to re-read the transcript against the emitted
+artifacts. Deleting on delivery — the v1.0 custody
+commitment — was correct for the stated register but
+removes the only evidence we have when something goes
+wrong in production. Until the cohort is large enough that
+diagnostic value is saturated and legal/commercial
+requirements take over, retention wins. The commitment
+stays narrow: transcripts are retained server-side only,
+never exposed, never exported, never used for training,
+never used for anything other than Pope's own review. On
+v2.0 commercial launch this decision supersedes itself —
+deletion returns per SOUL.md §Custody.
+**Status:** Active (beta only — supersedes on v2.0
+commercial launch per ROADMAP.md).
+
+---
+
 ### DEC-SCOUT-016 | Decision architecture YAML extraction
 
 **Date:** 2026-04-21
