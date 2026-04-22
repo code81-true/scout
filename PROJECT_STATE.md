@@ -1,6 +1,6 @@
 # PROJECT_STATE.md — Scout
 
-Last updated: 2026-04-22 (Sprint 1 + Sprint 2 shipped, pending deploy)
+Last updated: 2026-04-22 (interview depth fixes committed on top of Sprint 1 + Sprint 2)
 Purpose: single source of truth for the project manager
 overseeing Scout, MTN, and commercialisation in parallel.
 Read once a week. Updated at the end of every CC session.
@@ -92,9 +92,28 @@ master at commit 25d1faa (verified 2026-04-21).
   closed block. A08 paragraph-break fix, A10 cover compass
   viewBox, A11 Meridian font bumps (9.5→11 body), A12
   generation-wait container widths. 10 passing tests. [COMMITTED 2026-04-22]
+- **P0 regression fix — `generate_yaml_sections` uses
+  `YAML_EXTRACTOR_PROMPT`** — scout/engine.py. Sprint 1's
+  Hard Rule C ("never generate spine YAML in conversation")
+  was being applied to the YAML-extraction call path because
+  `SYSTEM_PROMPT` was passed as the system. New short
+  extractor prompt fixes it. [COMMITTED 2026-04-22]
+- **Transcripts retained during beta — DEC-SCOUT-017** —
+  scout/database.py, app.py. Three deletion points in `/burn`
+  disabled: `cleanup_session()` body, `delete_transcript(key)`
+  call, flat-file `os.remove()`. Public `delete_transcript()`
+  function kept as API primitive. Self-supersedes on v2.0. [COMMITTED 2026-04-22]
+- **Interview depth fixes — threading, L6/L7 depth signals,
+  closing gate** — scout/prompt.py only. Fix 1 new Hard Rule:
+  every question must make contact with the prior answer.
+  Fix 2 L6/L7 depth signals tightened to require specific
+  evidence, not category statements. Fix 3 new Section 5
+  entry gate: don't initiate closing unless both L6 and L7
+  have produced their depth signal. Identified from live
+  session 2026-04-22. [COMMITTED 2026-04-22]
 
-Both sprints deploy together via one PRE-DEPLOY CHECKLIST run.
-No new env vars. No database migration.
+All committed items deploy together via one PRE-DEPLOY
+CHECKLIST run. No new env vars. No database migration.
 
 ---
 

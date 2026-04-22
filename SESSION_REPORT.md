@@ -4,6 +4,37 @@ Permanent changelog. Newest entry first.
 
 ---
 
+## 2026-04-22, interview depth fixes — threading, L6/L7 depth signals, closing gate
+**Trigger:** git push
+
+### Shipped
+- `scout/prompt.py` only. No other file touched.
+- **Fix 1 — turn-by-turn threading.** New Hard Rule inserted between "never accept the first answer" and "never give advice". Copy: "Before asking the next question, make contact with what was just said. Not a summary. Not a reflection. A question that could only exist because of that specific answer. If the next question could have been asked regardless of what the person just said — it is not the next question. Stay until you find the one that could only come from this conversation, in this moment, from what was just said." This addresses the gap noted in the STOP 1 audit: the priority stack implied threading via "unresolved emotional charge / contradiction / absence," but no Hard Rule made it turn-by-turn discipline. The reflection-ration rule (one per five exchanges) is preserved — this is a question-construction rule, not a reflection rule.
+- **Fix 2a — Layer 6 depth signal tightening.** Second paragraph added to the L6 Depth signal block. Requires a specific person, moment, or external cost — not a category of difficulty. "I tend to avoid conflict" is not the signal; "My business partner stopped bringing ideas to me after what happened in March" is. This stops the prompt being satisfied by generic shadow-like prose.
+- **Fix 2b — Layer 7 depth signal tightening.** Parallel second paragraph added to the L7 Depth signal block. "I want to be free" is not the signal; "I am afraid I will get to sixty and realise I optimised for the wrong thing" is. Both tightenings raise the bar from "something has been named" to "something specific has been named in unpolished language."
+- **Fix 3 — closing sequence gate.** New block inserted at the top of Section 5, immediately before `## The closing acknowledgement`. Scout must not initiate the closing sequence unless both L6 and L7 have produced their depth signal. Distinguishes touched (territory mentioned) vs opened (specific-and-unspoken named). Includes exact go-back wording: "Before we finish — there is something we only touched on earlier. [name it]. I want to go there properly." This gates the entry to the entire closing sequence (Reading A at STOP 1) — not the literal closing line which fires too late.
+- `STATUS.md`, `PROJECT_STATE.md` — entries added, dates stamped, committed-not-deployed list extended.
+
+### Deployed
+- Not yet deployed. Pope deploys immediately after push.
+
+### Decisions Made
+- **Fix 3 placement — Reading A (top of Section 5).** Flagged at STOP 1 that "before the closing transition line" could be read as either the entry of the closing sequence (before the closing acknowledgement) or the literal line delivery inside Case A. Pope confirmed Reading A: gate at structural entry. A gate at the literal-line site would fire too late — Scout would already have begun the closing sequence in the user's experience.
+- **No new numbered DEC entry.** These three fixes are prompt refinements within the existing interview philosophy (SOUL.md) — not a design change. DEC-SCOUT-015/016 stand; no new decision needed.
+
+### Blockers Resolved
+- Production session 2026-04-22 surfaced three problems: (1) Scout asked questions that did not build on the prior answer; (2) L6 and L7 were closed on generic-category statements rather than specific ones; (3) the closing sequence fired before either layer had been opened. All three addressed in this commit.
+
+### New Blockers
+- None.
+
+### PM Note
+- Token budget: SYSTEM_PROMPT grew from ~12,700 → ~13,100 tokens (under the 15,000 ceiling, tiny fraction of the 200K context window). `MAX_TOKENS = 5000` on chat responses unchanged — confirmed this at Pope's request before commit.
+- This is the third commit of 2026-04-22 awaiting deploy (after the P0 regression fix at `08d8350` and the transcript-retention fix at `87f0c5f`). All four pending items — Sprint 1, Sprint 2, P0 fix, transcript retention, these depth fixes — deploy together via one PRE-DEPLOY CHECKLIST run. No new env vars, no schema migration, no new routes. All prompt/engine changes only.
+- Portrait altitude post-fix verification still pending across next three real cohort sessions. The depth fixes landing today will compound with the altitude directive — first post-deploy session will be the real test of whether Scout + Chronicler now produce portraits at the Boss/David bar.
+
+---
+
 ## 2026-04-22, transcript retention during beta — DEC-SCOUT-017
 **Trigger:** git push
 
