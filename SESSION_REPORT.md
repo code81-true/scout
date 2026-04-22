@@ -4,6 +4,32 @@ Permanent changelog. Newest entry first.
 
 ---
 
+## 2026-04-22, P0 regression fix — generate_yaml_sections uses YAML_EXTRACTOR_PROMPT
+**Trigger:** git push (emergency fix, Pope deploys immediately)
+
+### Shipped
+- `scout/engine.py` — new `YAML_EXTRACTOR_PROMPT` constant (short extractor-register system prompt). `generate_yaml_sections()` now passes `YAML_EXTRACTOR_PROMPT` as the system rather than `SYSTEM_PROMPT`. `cache_control` removed from this call site only — the extractor prompt is ~400 chars, caching would add no meaningful benefit. `send_message()` (line 52) and `send_message_stream()` (line 365) remain unchanged — both still use `SYSTEM_PROMPT` with `cache_control`, which is correct because those calls run in interview mode.
+- `STATUS.md` — entry 53 documenting the regression and fix.
+
+### Deployed
+- Not yet deployed by this commit. Pope will deploy immediately after push.
+
+### Decisions Made
+- **Splitting interview system prompt from extraction system prompt.** The Scout interview prompt (with Hard Rule C: "never generate spine YAML in the conversation window") is the right register for chat. A different register is needed for server-side YAML extraction. These are two different jobs and need two different system prompts. Worth recording in DECISIONS.md next session pass.
+
+### Blockers Resolved
+- **P0 regression** — Sprint 1 introduced Hard Rule C to SYSTEM_PROMPT, and `generate_yaml_sections()` was passing that same SYSTEM_PROMPT to the extraction call. Model obeyed the rule → refused → empty spine → empty portrait/meridian. The STOP 3 isolated Sonnet test on 2026-04-21 actually already proved this was the failure mode (I ran it with an ad-hoc system prompt that was not SYSTEM_PROMPT and it produced clean YAML; I did not reconcile that success back to the production call path). Fix matches the STOP 3 shape: short extractor prompt, no interview constraints.
+
+### New Blockers
+- None.
+
+### PM Note
+- The regression was latent from the moment Sprint 1 shipped. It did not manifest in local tests because (a) the STOP 3 verification ran via an ad-hoc Sonnet call that bypassed SYSTEM_PROMPT, not through `generate_yaml_sections()`, and (b) TEST- mode's pre-existing YAML refusal pattern masked the behaviour in the TEST chat-through-`/generate` path. I should have reconciled the "isolated Sonnet works" result against "production `/generate` path" — the gap was real and is what just bit production.
+- This is a Sprint 1/Sprint 2 post-fix item. The fix is prompt-only, one function touched, one constant added. No schema change, no route change, no new env var.
+- Lesson for the testing protocol: "isolated call test" ≠ "production call path test." The isolated test confirmed the schema could be produced; it did not confirm that the actual server code would produce it. Next time, the verification bar is "exercise the exact function the server calls."
+
+---
+
 ## 2026-04-22, end of session — Sprint 2 shipped: delivery edge cases, Meridian safe message, A08 A10 A11 A12 fixes
 **Trigger:** git push
 

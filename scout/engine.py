@@ -14,6 +14,21 @@ TEST_MODEL = "claude-haiku-4-5-20251001"
 MAX_TOKENS = 5000
 TEMPERATURE = 1.0
 
+# YAML extraction runs with its own short system prompt rather than the full
+# Scout interview prompt. Sprint 1 added Hard Rule C to SYSTEM_PROMPT
+# ("never generate the spine YAML inside the conversation window"), and the
+# model correctly obeyed it when generate_yaml_sections() passed SYSTEM_PROMPT
+# as the system — refusing to produce YAML and emitting a refusal message
+# instead. The extractor prompt below is the correct register for the task.
+YAML_EXTRACTOR_PROMPT = (
+    "You are a structured data extractor. Your job is to read a conversation "
+    "transcript and extract information into YAML format exactly as "
+    "instructed. You produce only YAML output. You do not conduct interviews. "
+    "You do not apply interview constraints. You extract and structure what "
+    "is present in the transcript. Never fabricate. An honest empty list is "
+    "always better than invented content."
+)
+
 
 def create_client() -> anthropic.Anthropic:
     """Create an Anthropic client. Reads ANTHROPIC_API_KEY from env."""
@@ -237,7 +252,9 @@ def generate_yaml_sections(
             model=model or MODEL,
             max_tokens=4000,
             temperature=TEMPERATURE,
-            system=[{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
+            # Extractor prompt — see YAML_EXTRACTOR_PROMPT note above.
+            # No cache_control — prompt is short and doesn't benefit from caching.
+            system=YAML_EXTRACTOR_PROMPT,
             messages=messages,
         )
         yaml_parts.append(response.content[0].text)
