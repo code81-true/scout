@@ -1,3 +1,7 @@
+> This is the shared product philosophy document for Scout
+> and MyTrueNorth. System-specific implementation decisions
+> are in ARCHITECTURE.md.
+
 # SOUL.md — Why Scout Exists
 
 This document is not a specification. It is the reason
@@ -21,6 +25,41 @@ expose contradictions, blind spots, and patterns the
 person cannot see from inside their own life.
 
 That is the whole job. Nothing more is permitted.
+
+---
+
+## How We Build — Development Principles
+
+These principles govern how Scout and MTN are engineered.
+They were learned from production failures and apply to
+every CC session in both repos.
+
+**Prompt changes are transformative, not additive.**
+Every instruction added to a prompt changes how the model
+weighs every existing instruction. No prompt change is
+purely additive. When adding to a prompt, ask: "Does this
+make the model busier? Which existing behaviours might
+lose weight?" Re-examine progression thresholds, depth
+signals, and pacing gates whenever you add extraction
+targets or listening instructions.
+
+**Test the production code path, not an isolated call.**
+Verification must exercise the exact function the server
+calls, with the exact prompts it sends. "Isolated API call
+works" ≠ "production path works." If you verify a schema
+via an ad-hoc call that bypasses the server's system prompt,
+you have verified nothing about production behaviour.
+
+**Sprint specs include Invariants.**
+Every sprint that modifies a system prompt includes an
+"Invariants" section listing behaviours that must not
+degrade. The developer checks these post-build. The PM
+checks post-deploy.
+
+**The contract precedes the code.**
+SCHEMA_CONTRACTS.md defines what Scout emits and what MTN
+accepts. When output changes, update the contract first.
+Then implement. Neither side builds to a recalled spec.
 
 ## The three layers
 

@@ -1,5 +1,18 @@
 # Scout — AI Interview Engine
 
+## Read OPERATING_DECISIONS.md for cross-cutting rules that
+govern how Scout and MTN interact. These decisions apply
+to every session.
+
+## Read SCHEMA_CONTRACTS.md before writing any code that
+modifies Scout's YAML output. This is the interface
+contract with MTN. Update this file FIRST when output
+changes — code follows the contract.
+
+## Read BRIDGE.md if present at session start. It carries
+context from MTN and the PM that is relevant to this
+session's work.
+
 ## What this is
 Scout is a single-session AI interview engine that builds a 
 spine.yaml — a personal constitution for the MyTrueNorth 
