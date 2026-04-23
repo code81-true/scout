@@ -1,6 +1,6 @@
 # PROJECT_STATE.md — Scout
 
-Last updated: 2026-04-22 (interview depth fixes committed on top of Sprint 1 + Sprint 2)
+Last updated: 2026-04-23 (all pending commits now deployed; VPS HEAD matches master)
 Purpose: single source of truth for the project manager
 overseeing Scout, MTN, and commercialisation in parallel.
 Read once a week. Updated at the end of every CC session.
@@ -29,7 +29,12 @@ the spine is delivered.
 
 Everything below is confirmed running in production on the
 Hetzner VPS (178.104.57.52, Ubuntu 24.04). VPS HEAD matches
-master at commit 25d1faa (verified 2026-04-21).
+master at commit `ead7f58` (verified 2026-04-23 via SSH
+`git log` on `/home/scout`). Five commits deployed today in
+a single PRE-DEPLOY CHECKLIST run: Sprint 1 (`ea43ede`),
+Sprint 2 (`f920d6c`), P0 YAML extractor fix (`08d8350`),
+transcript retention (`87f0c5f`), interview depth fixes
+(`ead7f58`).
 
 - Interview engine with seven-layer arc [LIVE]
 - Settling conversation after interview close (DEC-SCOUT-006) [LIVE]
@@ -44,8 +49,9 @@ master at commit 25d1faa (verified 2026-04-21).
   (DEC-SCOUT-004) [LIVE]
 - YAML parsing pass removed from prompt.py; YAML generated
   server-side only (DEC-SCOUT-005) [LIVE]
-- Session row retained after delivery; transcript deleted
-  (DEC-SCOUT-014) [LIVE]
+- Transcripts retained during beta — three deletion points
+  in `/burn` disabled (DEC-SCOUT-017) [LIVE]
+- Session row retained after delivery (DEC-SCOUT-014) [LIVE]
 - 12-character mixed-case alphanumeric keys; old keys still
   valid (DEC-SCOUT-013) [LIVE]
 - Single-use key gate — `KEY:status:recipient` format [LIVE]
@@ -59,10 +65,35 @@ master at commit 25d1faa (verified 2026-04-21).
   landing page, POST `/collect/<token>/verify` (10/min rate
   limit, returns `{valid: true|false}` only), GET
   `/collect/<token>/portrait` and `/meridian` (per-file
-  one-shot downloads) [LIVE]
+  one-shot downloads). Six edge cases handled — distinct
+  not-valid vs expired, Scout-register error pages for file
+  missing and re-request, rate-limit muted surface,
+  case-insensitive token lookup, returning-user cue [LIVE]
 - `/generate` saves canonical `*_delivery.pdf` to spines/ at
   session end so admin fast path fires for every completed
   session [LIVE]
+- Three-tier mental health handling in CONSTRAINT 10
+  (acknowledge / slow / close-for-safety) — DEC-SCOUT-015 [LIVE]
+- Decision architecture YAML extraction — heuristics,
+  failure_modes (enriched four-part with north_watch),
+  context_triggers, conditional sensitive_areas under
+  north_instructions — DEC-SCOUT-016 [LIVE]
+- Pre-session framing before Layer 1 [LIVE]
+- Chronicler portrait altitude directive ("win is not
+  'I didn't know that' but 'I've never heard it said
+  like that'") [LIVE]
+- Interview depth discipline — turn-by-turn threading
+  Hard Rule, L6/L7 depth signals tightened, closing gate
+  at Section 5 entry [LIVE]
+- Separate interview vs extraction system prompts —
+  `YAML_EXTRACTOR_PROMPT` (DEC-SCOUT-018) [LIVE]
+- Portrait PDF paragraph-break protection on `<p>`, cover
+  compass viewBox expanded (A08/A10 closed) [LIVE]
+- Meridian PDF font bumps — body 11pt, titles 8.5pt,
+  pseudonym 11.5pt (A11 closed) [LIVE]
+- Generation-wait compass fixed-width container (A12 closed) [LIVE]
+- "Keep your Meridian safe" two-line closed block on
+  collect page [LIVE]
 - Maintenance mode via `.env` toggle [LIVE]
 - Rate limiting on /auth (5/min/IP) [LIVE]
 - robots.txt + noindex meta (no search indexing) [LIVE]
@@ -76,62 +107,19 @@ master at commit 25d1faa (verified 2026-04-21).
 
 ## 3. Committed but not yet deployed
 
-- **Sprint 1 — portrait altitude fix, three-tier mental health,
-  decision architecture YAML extraction** — prompt.py,
-  engine.py, chronicler.py. No new env vars. No database
-  migration. Prompt-and-engine changes only. See DEC-SCOUT-015
-  and DEC-SCOUT-016. [COMMITTED 2026-04-21]
-- **Sprint 2 — delivery edge cases + Meridian safe message +
-  A08/A10/A11/A12 fixes** — app.py, templates/collect.html,
-  templates/portrait_pdf.html, templates/index.html,
-  tests/test_collect.py. No new env vars. No database
-  migration. Six edge cases (A token-not-found, D returning-user
-  cue, E file-missing Scout-register, F already-collected
-  Scout-register, G rate-limit muted surface, H token
-  case-insensitive). Two-line "Keep your Meridian safe"
-  closed block. A08 paragraph-break fix, A10 cover compass
-  viewBox, A11 Meridian font bumps (9.5→11 body), A12
-  generation-wait container widths. 10 passing tests. [COMMITTED 2026-04-22]
-- **P0 regression fix — `generate_yaml_sections` uses
-  `YAML_EXTRACTOR_PROMPT`** — scout/engine.py. Sprint 1's
-  Hard Rule C ("never generate spine YAML in conversation")
-  was being applied to the YAML-extraction call path because
-  `SYSTEM_PROMPT` was passed as the system. New short
-  extractor prompt fixes it. [COMMITTED 2026-04-22]
-- **Transcripts retained during beta — DEC-SCOUT-017** —
-  scout/database.py, app.py. Three deletion points in `/burn`
-  disabled: `cleanup_session()` body, `delete_transcript(key)`
-  call, flat-file `os.remove()`. Public `delete_transcript()`
-  function kept as API primitive. Self-supersedes on v2.0. [COMMITTED 2026-04-22]
-- **Interview depth fixes — threading, L6/L7 depth signals,
-  closing gate** — scout/prompt.py only. Fix 1 new Hard Rule:
-  every question must make contact with the prior answer.
-  Fix 2 L6/L7 depth signals tightened to require specific
-  evidence, not category statements. Fix 3 new Section 5
-  entry gate: don't initiate closing unless both L6 and L7
-  have produced their depth signal. Identified from live
-  session 2026-04-22. [COMMITTED 2026-04-22]
-
-All committed items deploy together via one PRE-DEPLOY
-CHECKLIST run. No new env vars. No database migration.
+None. VPS HEAD matches master (`ead7f58`) as of 2026-04-23.
+New work will populate this section as commits land on
+master but await the PRE-DEPLOY CHECKLIST.
 
 ---
 
 ## 4. Known issues (live)
 
-Active bugs affecting real users *today*. A08/A10/A11/A12 all
-closed in Sprint 2 but the fixes are not live until deploy —
-what's listed below is what the currently-deployed VPS still
-exhibits.
+No active bugs affecting real users. A08/A10/A11/A12 were
+closed in Sprint 2 and deployed 2026-04-23. KNOWN_ISSUES.md
+active-bugs section is empty.
 
-- **A08** — Portrait paragraphs occasionally break mid-paragraph
-  across page boundaries in WeasyPrint. [degraded — fix committed 2026-04-22, awaiting deploy]
-- **A11** — Meridian body font scales too small on short
-  Meridians. [degraded — fix committed 2026-04-22, awaiting deploy]
-- **A10** — Portrait PDF cover: compass north needle slightly
-  clipped at top on A4 print. [cosmetic — fix committed 2026-04-22, awaiting deploy]
-- **A12** — Compass animation horizontal position shifts with
-  message length. [cosmetic — fix committed 2026-04-22, awaiting deploy]
+New issues surface here first if found during real sessions.
 
 ---
 
@@ -141,7 +129,7 @@ Four sprints, in order. Sprint 1 is the current in-flight
 work from the April 21 project update. Dependencies on MTN
 are flagged.
 
-### Sprint 1 — Three-tier mental health + decision architecture + portrait altitude (SHIPPED, DEPLOY PENDING)
+### Sprint 1 — Three-tier mental health + decision architecture + portrait altitude (LIVE)
 
 **Theme.** Replaced binary pause-or-continue CONSTRAINT 10 with
 a three-tier response (acknowledge / slow / close-for-safety).
@@ -178,14 +166,14 @@ register is unchanged.
   transitions interviewing → generating → /generate fires.
 - ✓ All prompt additions confirmed present in SYSTEM_PROMPT and
   CHRONICLER_PROMPT via string-check.
-- ⧗ Deploy to VPS via PRE-DEPLOY CHECKLIST [PENDING]
+- ✓ Deployed to VPS via PRE-DEPLOY CHECKLIST on 2026-04-23
 - ⧗ First post-deploy production session confirms in-session
   behaviour (Component 0 framing delivery, Tier 1/2/3 handling,
   portrait altitude lands)
 - ⧗ MTN Pydantic models updated to accept new sections
   (Component 5) before any post-Sprint-1 spine is bridged [BLOCKED ON MTN]
 
-### Sprint 2 — Portrait polish + delivery edge cases (SHIPPED, DEPLOY PENDING)
+### Sprint 2 — Portrait polish + delivery edge cases (LIVE)
 
 **Theme.** Polish around the live admin + delivery flow.
 No interview-register changes. No YAML schema changes. No MTN
@@ -213,7 +201,7 @@ dependencies.
 - ✓ "Keep your Meridian safe" message in both closed and
   valid branches of collect.html
 - ✓ Full test suite passes (10/10 in tests/test_collect.py)
-- ⧗ Deploy to VPS via PRE-DEPLOY CHECKLIST [PENDING]
+- ✓ Deployed to VPS via PRE-DEPLOY CHECKLIST on 2026-04-23
 - ⧗ Portrait altitude verification across next three cohort
   sessions post-deploy [PENDING — carries from Sprint 1]
 
@@ -339,9 +327,9 @@ built yet. Every item is gated on legal or external work.
   generation time. First-cohort feedback (2026-04-21) from
   JRMTWFU4FL and GHR7U6GEGU identified a portrait altitude
   issue — now scheduled for Sprint 1 fix.
-- **Portrait altitude fix status.** Pending. Not yet in code.
-  Identified from first cohort feedback on 2026-04-21.
-  Scheduled for Sprint 1.
+- **Portrait altitude fix status.** Shipped in Sprint 1
+  (`ea43ede`, chronicler.py). Deployed 2026-04-23. Post-fix
+  verification pending across next three real cohort sessions.
 - **Beta feedback log.** No dedicated file exists yet.
   Feedback is captured in STATUS.md for now. A dedicated
   log may be worth creating once the cohort grows beyond
@@ -352,9 +340,7 @@ built yet. Every item is gated on legal or external work.
 ## 9. Decisions in effect
 
 Active decisions from DECISIONS.md. Parked (DEC-SCOUT-012)
-excluded. Two further decisions (DEC-SCOUT-015 three-tier
-mental health, DEC-SCOUT-016 decision architecture YAML) are
-planned for Sprint 1 commit and not yet in DECISIONS.md.
+excluded. 17 active decisions in total.
 
 - **DEC-SCOUT-001** — Full transcript on every API call.
   No summarisation, no rolling window. [2026-04-06]
@@ -383,44 +369,53 @@ planned for Sprint 1 commit and not yet in DECISIONS.md.
   prompt (system prompt only). [2026-04-11]
 - **DEC-SCOUT-013** — 12-character mixed-case alphanumeric
   keys. Old keys remain valid. [2026-04-19]
-- **DEC-SCOUT-014** — After delivery, transcripts are
-  deleted; sessions row retained as permanent history. [2026-04-19]
-
-**Pending (Sprint 1 commit).**
+- **DEC-SCOUT-014** — After delivery, sessions row retained
+  as permanent history. (Transcripts row retention
+  superseded by DEC-SCOUT-017 during beta.) [2026-04-19]
 - **DEC-SCOUT-015** — Three-tier mental health response
   replaces binary CONSTRAINT 10. Tier detection in Scout's
-  judgment. Close only for immediate safety. [PENDING]
+  judgment. Close only for immediate safety. [2026-04-21]
 - **DEC-SCOUT-016** — Decision architecture YAML extraction:
   heuristics, enriched failure_modes with north_watch,
   context_triggers with north_watch. Interview register
-  unchanged. [PENDING]
+  unchanged. [2026-04-21]
+- **DEC-SCOUT-017** — Transcripts retained during beta.
+  Three deletion points in `/burn` disabled. Public
+  `delete_transcript()` function kept as API primitive.
+  Self-supersedes on v2.0 commercial launch. [2026-04-22]
+- **DEC-SCOUT-018** — Interview prompt and extraction prompt
+  must be separate system prompts.
+  `generate_yaml_sections()` uses `YAML_EXTRACTOR_PROMPT`
+  (not `SYSTEM_PROMPT`) so interview constraints do not
+  bleed into extraction calls. [2026-04-22]
 
 ---
 
 ## 10. What the manager needs to know right now
 
-1. **Sprint 1 is shipped on master, deploy pending.** Portrait
-   altitude fix, three-tier mental health, decision
-   architecture YAML extraction (DEC-SCOUT-015, -016). No
-   database migration, no new env vars — prompt-and-engine
-   only. Deploy is a straightforward PRE-DEPLOY CHECKLIST run.
-   Ask about deploy window.
-2. **MTN Pydantic update blocks any new spine bridge.** The
-   moment Sprint 1 hits production, every spine will include
-   heuristics, failure_modes, context_triggers, and
-   (conditionally) sensitive_areas. The current MTN loader
-   cannot accept these. Do not load any post-Sprint-1 spine
-   into MTN until MTN's Pydantic models are updated. Ask
-   about MTN session start date.
-3. **Portrait altitude regression is closed in code.**
-   Shipped today from first-cohort feedback (JRMTWFU4FL,
-   GHR7U6GEGU, 2026-04-21). Deploy + one production session
-   will confirm it lands. Until deployed, do not send any new
-   portraits to beta users.
-4. **Beta cohort at 3/50.** Scout still has fewer real
+1. **MTN Pydantic update blocks any new spine bridge.** Every
+   spine generated on the live VPS now includes heuristics,
+   failure_modes, context_triggers, and (conditionally)
+   sensitive_areas per DEC-SCOUT-016. The current MTN loader
+   cannot accept these sections. Do not load any new spine
+   into MTN until MTN's Pydantic models are updated. See
+   SCHEMA_CONTRACTS.md at repo root for the exact field
+   shape MTN must match. Ask about MTN session start date.
+2. **Portrait altitude regression fix is live.** Shipped in
+   Sprint 1 on 2026-04-21, deployed 2026-04-23. Chronicler
+   now carries the altitude directive. Verification pending
+   across the next three real cohort sessions — any post-
+   deploy portrait can now be compared against the Boss/David
+   bar and the directive language.
+3. **Beta cohort at 3/50.** Scout still has fewer real
    sessions than it has design decisions. Portrait tuning
    and altitude verification both need more real sessions.
    Ask about recruitment plan.
+4. **Transcripts now retained for the beta.** DEC-SCOUT-017
+   disables all three `/burn` deletion points during the
+   beta phase. Every session's transcript persists in SQLite
+   for quality review. Self-supersedes on v2.0 commercial
+   launch per SOUL.md §Custody.
 5. **Legal review has not started.** v2.0 commercial launch
    blocks on it — terms, privacy, GDPR, DPA. Long lead-time
    item. Ask about engagement date.

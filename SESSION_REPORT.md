@@ -4,6 +4,38 @@ Permanent changelog. Newest entry first.
 
 ---
 
+## 2026-04-23, deploy confirmed + documentation corrections + SCHEMA_CONTRACTS.md
+**Trigger:** git push (documentation-only, no code changes)
+
+### Shipped
+- `DECISIONS.md` — **DEC-SCOUT-018** added: Interview prompt and extraction prompt must be separate system prompts. `generate_yaml_sections()` (and all future generation calls) use `YAML_EXTRACTOR_PROMPT` — never `SYSTEM_PROMPT`. Records the root cause Sprint 1 + P0 regression: interview constraints bled into extraction calls through a shared system prompt.
+- `PROJECT_STATE.md` — seven section corrections: Section 2 VPS HEAD updated to `ead7f58` with all newly-live items enumerated; Section 3 emptied; Section 4 active-bugs list emptied (A08/A10/A11/A12 closed and now live); Section 5 Sprint 1 and Sprint 2 headers retagged `LIVE`; Section 8 portrait altitude status rewritten to reflect deployed state with verification pending; Section 9 rebuilt with 17 active decisions (pending block removed, 015/016/017/018 added to active list); Section 10 manager priorities reordered with MTN Pydantic update promoted to #1.
+- `SCHEMA_CONTRACTS.md` — new file at repo root. Authoritative contract for Scout's spine YAML output, verified against `engine.py` on VPS 2026-04-23 by the PM. Corrects wrong field names from the 22-April draft (which was built from a developer's conversation report, not from source). Correction table included at the bottom; invalidates MTN Session 7's Pydantic model changes that were built to the incorrect contract. Update protocol: Scout changes output → this file updates first → PM propagates to MTN repo and PM project → MTN implements against this file.
+- `STATUS.md` — entry 56 added with full cross-reference to the three fixes above.
+
+### Deployed
+- All five pending code commits (`ea43ede`, `f920d6c`, `08d8350`, `87f0c5f`, `ead7f58`) confirmed LIVE on VPS at `ead7f58`, verified 2026-04-23 via `ssh root@178.104.57.52 "cd /home/scout && git log --oneline -3"`. Pope ran the PRE-DEPLOY CHECKLIST between yesterday's last push and today's session. This commit is documentation-only and does not need deploy.
+
+### Decisions Made
+- **DEC-SCOUT-018** — Interview prompt and extraction prompt must be separate system prompts. Already implemented in `08d8350` (the P0 fix); today's commit formalises it as a design decision in DECISIONS.md. Every future generation call must use `YAML_EXTRACTOR_PROMPT` (or its successor for future output types) rather than borrowing `SYSTEM_PROMPT`. The architectural principle is: interview prompts carry behavioural constraints for conversation; extraction prompts carry neutral data-extraction instructions. The two are not interchangeable.
+
+### Blockers Resolved
+- Stale VPS HEAD reference in PROJECT_STATE.md Section 2 (was claiming `25d1faa`, verified today at `ead7f58`).
+- Stale "DEC-SCOUT-015/016 pending" block in Section 9 (both had been in DECISIONS.md since 2026-04-21).
+- Stale "portrait altitude fix pending" in Section 8 (shipped 2026-04-21, deployed 2026-04-23).
+- Missing DEC entry for the prompt-split architectural decision — now captured as DEC-SCOUT-018.
+- Missing SCHEMA_CONTRACTS.md at repo root — now present and committed.
+
+### New Blockers
+- **MTN Session 7's Pydantic work must be redone.** Per SCHEMA_CONTRACTS.md §Correction History, the 22-April contract that MTN built against had wrong field names for heuristics, failure_modes, context_triggers. The 23-April contract (verified from Scout's engine.py) is the correct one. No spine bridge can proceed until MTN rebuilds its Pydantic models against the corrected contract.
+
+### PM Note
+- The PROJECT_STATE.md corrections happened because the weekly manager read would otherwise have shown stale state across multiple sections. Specifically: Section 2 implying nothing was deployed since 2026-04-21, Section 9 implying DEC-015/016 were not yet written. Both were factually wrong as of 2026-04-22. Caught today at the PM's request.
+- The SCHEMA_CONTRACTS.md correction is a lesson worth capturing: PM-level contracts must be verified against code, not against session notes or developer recollection. DEC-PM-001 in SCHEMA_CONTRACTS.md enforces this going forward.
+- Going forward, PROJECT_STATE.md Section 3 changes whenever any commit lands that is not immediately deployed — and clears back to empty when deploy happens. Section 2's VPS HEAD line is updated on every verified deploy.
+
+---
+
 ## 2026-04-22, interview depth fixes — threading, L6/L7 depth signals, closing gate
 **Trigger:** git push
 

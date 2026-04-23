@@ -315,6 +315,29 @@ commercial launch per ROADMAP.md).
 
 ---
 
+### DEC-SCOUT-018 | Interview prompt and extraction prompt must be separate system prompts
+
+**Date:** 2026-04-22
+**Decision:** `generate_yaml_sections()` and all future
+generation calls use their own system prompt
+(`YAML_EXTRACTOR_PROMPT`) — never `SYSTEM_PROMPT`. The
+interview prompt contains Hard Rules and behavioural
+constraints that apply to conversation only. Any API call
+that produces structured output must use a neutral
+extractor register that does not apply interview
+constraints.
+**Reasoning:** Sprint 1 added Hard Rule C to
+`SYSTEM_PROMPT` ("never generate YAML in the conversation
+window"). `generate_yaml_sections()` was passing
+`SYSTEM_PROMPT` as the system prompt for extraction
+calls. The model obeyed Hard Rule C and refused to
+generate YAML. Portrait and Meridian were built from an
+empty spine. Root cause: interview constraints bled into
+extraction calls through shared system prompt.
+**Status:** Active.
+
+---
+
 ### DEC-SCOUT-016 | Decision architecture YAML extraction
 
 **Date:** 2026-04-21
