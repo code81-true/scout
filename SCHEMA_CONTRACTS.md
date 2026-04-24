@@ -87,11 +87,15 @@ Top-level section. List of objects. May be empty list.
 heuristics:
   - id: str                    # snake_case identifier
     statement: str             # the rule as the person would state it
-    evidence: str              # specific transcript moment
+    evidence: str | null       # specific transcript moment
     confidence: Literal["high", "medium", "low"]
     self_type: Literal["present", "cast"]
-    invocation_note: str       # direct instruction to North
+    invocation_note: str | null  # direct instruction to North
 ```
+
+**Field note:** Both `evidence` and `invocation_note` may be
+null on sparse sessions — the model omits rather than
+fabricates when evidence is thin.
 
 **If nothing surfaced:** `heuristics: []`
 
@@ -190,6 +194,15 @@ which were built to the incorrect contract.
 4. **DEC-PM-001 enforcement:** This file must be verified
    against actual code or actual YAML output. Never from
    conversation, memory, or session notes.
+5. **Actual output is the highest authority.** Once a real
+   spine exists from a production session, the spine YAML file
+   itself is the primary reference for resolving [VERIFY]
+   markers and confirming field names. A real spine shows what
+   Scout actually produced — not what engine.py asked the model
+   to produce, not what a developer recalls. When a spine file
+   and engine.py disagree, the spine file wins because that is
+   what MTN will actually receive. Engine.py is secondary.
+   Developer interpretation of engine.py is tertiary.
 
 This file is the contract. Code follows the contract.
 The contract does not follow the code.
