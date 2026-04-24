@@ -35,7 +35,10 @@ scout/
 ├── README.md
 ├── .env                  # ANTHROPIC_API_KEY, FLASK_SECRET_KEY,
 │                         # MAINTENANCE_MODE, MAINTENANCE_MESSAGE,
-│                         # MAINTENANCE_RETURN_MINUTES
+│                         # MAINTENANCE_RETURN_MINUTES,
+│                         # DELETE_TRANSCRIPTS_ON_BURN
+│                         #   (false during beta and development,
+│                         #    true at commercial launch — DEC-SCOUT-017)
 ├── requirements.txt
 ├── scout/
 │   ├── __init__.py

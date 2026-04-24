@@ -269,14 +269,27 @@ def burn():
             outcome = "sufficient"
         set_outcome(key, outcome)
 
-    # Transition to delivered. Transcript is retained — DEC-SCOUT-017.
-    # Transcripts are kept during the beta phase for quality review and
-    # regression diagnosis. Historical deletion calls (delete_transcript,
-    # cleanup_session's body, and the flat-file os.remove block) have all
-    # been disabled. The public delete_transcript() primitive is kept
-    # intact in scout/database.py for future authorised operator use.
+    # Transition to delivered.
     transition_state(key, "delivered")
     cleanup_session(key)  # no-op; retained for call-site stability
+
+    # DEC-SCOUT-017 (updated): transcript deletion is config-controlled
+    # with a deliverable gate. Env var DELETE_TRANSCRIPTS_ON_BURN defaults
+    # to "false" (fail-safe retention during beta and development). At
+    # commercial launch the VPS .env sets it to "true". Even when the
+    # flag is true, deletion only fires after all three deliverables are
+    # confirmed on disk — the transcript is the only diagnostic evidence
+    # left if a deliverable is missing, so we never delete ahead of
+    # confirmed delivery.
+    delete_flag = os.getenv("DELETE_TRANSCRIPTS_ON_BURN", "false").lower() == "true"
+    if delete_flag:
+        if _deliverables_complete(key):
+            delete_transcript(key)
+        else:
+            logger.warning(
+                "Transcript retained for %s — deliverables incomplete, deletion skipped.",
+                key,
+            )
 
     return {"success": True}
 
@@ -409,6 +422,26 @@ def _save_transcript_backup(key: str, transcript: list[dict]) -> None:
             json.dump(transcript, f, ensure_ascii=False, indent=2)
     except Exception as exc:
         logger.error("Failed to save transcript backup for %s: %s", key, exc)
+
+
+def _deliverables_complete(key: str) -> bool:
+    """Return True if all three deliverables exist on disk for this key.
+
+    Required files (glob by date prefix):
+      - spines/{key}_*.yaml
+      - spines/{key}_*_portrait_delivery.pdf
+      - spines/{key}_*_meridian_delivery.pdf
+
+    Used by /burn (DEC-SCOUT-017) as the gate for transcript deletion.
+    Deletion only happens when all three files are present on disk — the
+    transcript is the only diagnostic evidence left if a deliverable is
+    missing, so we must never delete ahead of confirmed delivery.
+    """
+    import glob
+    yaml_hit = bool(glob.glob(os.path.join(SPINE_DIR, f"{key}_*.yaml")))
+    portrait_hit = bool(glob.glob(os.path.join(SPINE_DIR, f"{key}_*_portrait_delivery.pdf")))
+    meridian_hit = bool(glob.glob(os.path.join(SPINE_DIR, f"{key}_*_meridian_delivery.pdf")))
+    return yaml_hit and portrait_hit and meridian_hit
 
 
 @app.route("/generate", methods=["POST"])

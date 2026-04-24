@@ -4,6 +4,35 @@ Permanent changelog. Newest entry first.
 
 ---
 
+## 2026-04-24, DELETE_TRANSCRIPTS_ON_BURN flag with deliverable gate
+**Trigger:** git push
+
+### Shipped
+- `app.py` — new `_deliverables_complete(key)` helper that globs for `{key}_*.yaml`, `{key}_*_portrait_delivery.pdf`, and `{key}_*_meridian_delivery.pdf` in `spines/`. Returns True only when all three are present. `/burn` rewritten: reads `DELETE_TRANSCRIPTS_ON_BURN` via `os.getenv("DELETE_TRANSCRIPTS_ON_BURN", "false").lower() == "true"` — fail-safe default is retention. When the flag is true AND deliverables are complete, `delete_transcript(key)` fires. When the flag is true but deliverables are incomplete, deletion is skipped and a warning logged ("Transcript retained for {key} — deliverables incomplete, deletion skipped."). When the flag is false, deletion never runs — current beta behaviour.
+- `scout/database.py` — `cleanup_session()` stays as a permanent no-op. Deletion logic lives in `/burn`, not in cleanup. Public `delete_transcript()` primitive remains intact.
+- `CLAUDE.md` — DELETE_TRANSCRIPTS_ON_BURN added to the .env var list with the note "false during beta and development, true at commercial launch — DEC-SCOUT-017".
+- `DECISIONS.md` — DEC-SCOUT-017 amended with `modified 2026-04-24` tag. Decision rewritten to reflect config-controlled + deliverable-gated behaviour. Reasoning updated to explain why config flag + gate is safer than the hardcoded disable: the flag flips cleanly at commercial launch without a code change, and the gate ensures a broken or partial generation never loses the transcript it would need for investigation.
+- `STATUS.md` — entry 57 added.
+
+### Deployed
+- Not yet deployed. Pope must add `DELETE_TRANSCRIPTS_ON_BURN=false` to the VPS `.env` before running the PRE-DEPLOY CHECKLIST. If the env var is absent on the VPS, default is retention — no behavioural change vs current live. The new gate logic only activates when the flag is set to true.
+
+### Decisions Made
+- **DEC-SCOUT-017 amended.** Hardcoded retention replaced with `DELETE_TRANSCRIPTS_ON_BURN` env flag + deliverable gate. Default remains retention. Flip to deletion only happens at v2.0 commercial launch, and even then only when all three deliverables (YAML, portrait PDF, Meridian PDF) are confirmed on disk. The decision entry in DECISIONS.md retains the original 2026-04-22 date with a `modified 2026-04-24` marker in the amended body.
+
+### Blockers Resolved
+- **Commercial-launch flip-switch.** Prior to this commit, flipping transcript deletion back on at commercial launch would have required a code change (reverting or re-adding the `delete_transcript` call to `/burn`). Now it's a single env-var flip.
+- **Loss-on-partial-generation risk.** Prior to this commit, if the flag were flipped on but a generation step had silently failed (e.g. the WeasyPrint render errored on deploy), the transcript would be deleted and we'd lose the only evidence. The deliverable gate prevents that — incomplete delivery means the transcript stays.
+
+### New Blockers
+- None.
+
+### PM Note
+- The deploy gate stays with Pope until `DELETE_TRANSCRIPTS_ON_BURN=false` is explicitly added to the VPS `.env`. The fail-safe default means even if Pope forgets, the live behaviour doesn't change (transcripts continue to be retained). The env var needs to be present so the flag is visible in `.env` as a concrete thing to flip at commercial launch — not merely an implicit default.
+- Going forward, DECISIONS.md modifications use a `modified YYYY-MM-DD` tag in the entry rather than a second numbered decision. Avoids renumbering history while keeping the evolution visible.
+
+---
+
 ## 2026-04-23, deploy confirmed + documentation corrections + SCHEMA_CONTRACTS.md
 **Trigger:** git push (documentation-only, no code changes)
 

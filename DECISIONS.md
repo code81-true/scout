@@ -279,22 +279,38 @@ safety. Everything else gets met with presence.
 
 ---
 
-### DEC-SCOUT-017 | Transcripts retained during beta
+### DEC-SCOUT-017 | Transcripts retained during beta (config-controlled with deliverable gate)
 
-**Date:** 2026-04-22
-**Decision:** During the beta phase, Scout transcripts are
-retained permanently alongside the session row. All three
-deletion points in the `/burn` flow are disabled:
-(1) the `cleanup_session()` body in `scout/database.py` is
-a no-op — the historical `DELETE FROM transcripts WHERE key`
-is commented out;
-(2) the `delete_transcript(key)` call at the top of `/burn`
-is removed from `app.py`;
-(3) the flat-file `os.remove(transcript_path)` block in
-`/burn` is removed from `app.py`.
-The public `delete_transcript()` function in
-`scout/database.py` is kept intact as an API primitive for
-future authorised operator use.
+**Date:** 2026-04-22 (original), **modified 2026-04-24**
+(replaced hardcoded retention with `DELETE_TRANSCRIPTS_ON_BURN`
+env flag + deliverable gate).
+
+**Decision:** Transcript deletion is config-controlled and
+gated on verified delivery.
+
+- Env var: `DELETE_TRANSCRIPTS_ON_BURN`.
+- Default when absent or unset: `false`. Read via
+  `os.getenv("DELETE_TRANSCRIPTS_ON_BURN", "false").lower() == "true"`
+  — fail-safe: if the env var is never added to the VPS,
+  transcripts are retained.
+- When `false`: `/burn` does not call `delete_transcript`.
+  The transcript row persists in SQLite. This is the beta
+  and development default.
+- When `true`: `/burn` verifies all three deliverables
+  exist on disk before calling `delete_transcript(key)`.
+  Required files (glob by date prefix):
+  `spines/{key}_*.yaml`,
+  `spines/{key}_*_portrait_delivery.pdf`,
+  `spines/{key}_*_meridian_delivery.pdf`.
+  If any file is missing, deletion is skipped and a
+  warning logged: *"Transcript retained for {key} —
+  deliverables incomplete, deletion skipped."*
+- `cleanup_session()` in `scout/database.py` remains a
+  permanent no-op. Deletion logic lives in `/burn`, not
+  in cleanup.
+- The public `delete_transcript()` function stays intact
+  in `scout/database.py` as the underlying API primitive.
+
 **Reasoning:** Beta cohort is small (3/50 as of 2026-04-22)
 and every real session carries disproportionate diagnostic
 weight. Portrait altitude review and regression diagnosis
@@ -302,16 +318,21 @@ both need to re-read the transcript against the emitted
 artifacts. Deleting on delivery — the v1.0 custody
 commitment — was correct for the stated register but
 removes the only evidence we have when something goes
-wrong in production. Until the cohort is large enough that
-diagnostic value is saturated and legal/commercial
-requirements take over, retention wins. The commitment
-stays narrow: transcripts are retained server-side only,
-never exposed, never exported, never used for training,
-never used for anything other than Pope's own review. On
-v2.0 commercial launch this decision supersedes itself —
-deletion returns per SOUL.md §Custody.
-**Status:** Active (beta only — supersedes on v2.0
-commercial launch per ROADMAP.md).
+wrong in production. The 2026-04-24 amendment replaces the
+hardcoded disable with a config flag so the switch can
+happen cleanly at commercial launch without a code change;
+the deliverable gate is belt-and-braces so that even with
+the flag flipped true, a broken or partial generation
+never loses the transcript it would need to investigate.
+The commitment stays narrow: transcripts are retained
+server-side only, never exposed, never exported, never
+used for training, never used for anything other than
+Pope's own review.
+
+**Status:** Active. Default `DELETE_TRANSCRIPTS_ON_BURN=false`
+during beta and development. Flipped to `true` at v2.0
+commercial launch. VPS .env must include the flag
+explicitly — absence defaults to retention.
 
 ---
 
