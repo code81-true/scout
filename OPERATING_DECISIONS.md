@@ -30,6 +30,11 @@ SCHEMA_CONTRACTS.md.
 must include the relevant section of SCHEMA_CONTRACTS.md
 verbatim. No developer builds to a recalled spec.
 
+**Clarification (23 April 2026):** The consuming side never
+specifies what the producing side emits. Information flows
+producer → PM → consumer. Never consumer → PM →
+producer-assumed-to-agree.
+
 ---
 
 ### DEC-PM-002 — Beta recruitment held pending depth fix verification
@@ -115,6 +120,31 @@ thresholds, depth signals, and pacing gates whenever extraction
 targets or listening instructions are added.
 
 **Applies to:** Both repos. Any prompt modification.
+
+---
+
+### DEC-SHARED-004 — Prompt deploys require verification before beta exposure
+**Date:** 23 April 2026
+**Trigger:** Sprint 1 depth regression reached the VPS and
+was only caught because Pope ran a production session. If a
+beta user had run that session instead, the warm network
+would have lost one non-renewable contact. DEC-PM-002 was
+imposed as a one-time hold. This decision makes it permanent.
+
+**Decision:** Any deploy that modifies Scout's interview prompt
+(prompt.py) or MTN's system prompt (system.txt) requires a
+verification session before beta users are exposed. The
+verification confirms that invariants from the sprint spec
+held. This is not a gate on deployment — it is a gate on
+beta exposure. Deploy freely. Verify before inviting users.
+
+**Verification bar:** For Scout, a production session where
+the interview threads, pursues shadows, and produces a
+portrait that clears the SOUL.md standard. For MTN, a
+Telegram conversation where North's register operates above
+surface-level reflection.
+
+**Applies to:** Both repos. Any prompt-modifying deploy.
 
 ---
 
