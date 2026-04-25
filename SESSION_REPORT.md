@@ -4,6 +4,31 @@ Permanent changelog. Newest entry first.
 
 ---
 
+## 2026-04-25, P0 stitcher indentation fix
+**Trigger:** git push (emergency fix; Pope deploys immediately after)
+
+### Shipped
+- `scout/engine.py` — `_stitch_yaml_sections()` rewritten. Old logic shifted only root-level keys (no leading whitespace) by two spaces and left already-indented children alone. Result: child lines arriving from the model at column 2 ended up at the same depth as their parent key, becoming YAML siblings of `spine:` rather than children of their section. PyYAML returned `spine.meta` as `None`. New logic shifts every non-empty line by two spaces — preserving the model's relative indentation while pushing the entire section into the `spine:` namespace. Empty lines pass through unchanged. Docstring updated with the dated note.
+
+### Deployed
+- Not yet deployed. Pope deploys immediately. The buggy spine for key NlF6dc4mdobt (2026-04-25, the session that surfaced the bug) is on disk at `/home/scout/spines/NlF6dc4mdobt_2026-04-25.yaml`. After Pope deploys, regeneration via admin dashboard Generate & Deliver overwrites the file with the corrected nested structure. Verify with the command in the brief.
+
+### Decisions Made
+- None. Bug fix in one function. No design change. No new env var. No schema change.
+
+### Blockers Resolved
+- **P0 stitcher indentation bug.** Production session NlF6dc4mdobt's spine had all section bodies parse as missing because of YAML structural collapse — section keys present but their children flattened into siblings of `spine:`. Fix lands the section bodies where they belong. SCHEMA_CONTRACTS.md (already updated 2026-04-25 with field structure verified from a separate good spine) remains the authoritative shape; this fix is the stitcher catching up so future spines emit that shape consistently.
+
+### New Blockers
+- None.
+
+### PM Note
+- Verification approach: real-session regeneration would have required pulling the production transcript locally, which the sandbox correctly blocks under SOUL.md custody rules. Instead the fix was verified via a deterministic before/after demo (`test_output/stitcher_demo.py`) on synthetic input shaped per SCHEMA_CONTRACTS.md. Old logic returns `spine.meta` as NoneType; new logic returns a dict with `session_date` and `schema_version`. Same input, two stitchers, two outcomes — proves the fix is correct in the abstract.
+- Real-session verification (the actual command from the brief) executes post-deploy. Pope deploys → regenerates NlF6dc4mdobt via admin dashboard → runs the `yaml.safe_load(...)` check. Until then, the on-disk spine is the broken one.
+- Lesson worth keeping: the YAML stitcher had been in the codebase since the early days (DEC-SCOUT-001 era) and never had a structural test. The bug only manifested when the model started returning sections with non-trivial nesting (added in Sprint 1 for the new YAML schema). The class of bug — code that's "always worked" because input shape was simple — deserves a regression test next time the schema evolves. Adding one is a small follow-up worth tracking.
+
+---
+
 ## 2026-04-24, DELETE_TRANSCRIPTS_ON_BURN flag with deliverable gate
 **Trigger:** git push
 

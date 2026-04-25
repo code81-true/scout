@@ -318,7 +318,18 @@ def generate_yaml_sections(
 
 
 def _stitch_yaml_sections(parts: list[str]) -> str:
-    """Stitch YAML section responses into a single document under spine:."""
+    """Stitch YAML section responses into a single document under spine:.
+
+    Indentation rule: every non-empty line in each section is shifted by
+    two spaces so that the section becomes a child of `spine:`. This
+    preserves each section's internal relative indentation. Empty lines
+    pass through unchanged.
+
+    Earlier behaviour indented only root-level keys (no leading
+    whitespace), which left children at the same depth as their parent
+    key — making them YAML siblings of `spine` rather than children of
+    the section. Fixed 2026-04-25.
+    """
     import re
 
     cleaned: list[str] = []
@@ -336,12 +347,14 @@ def _stitch_yaml_sections(parts: list[str]) -> str:
             stripped = line.strip()
             if stripped == "spine:" or stripped == "spine: {}":
                 continue
-            # If line is a root-level key (no leading whitespace),
-            # indent it under spine:
-            if line and not line[0].isspace():
-                lines.append("  " + line)
-            else:
+            if not stripped:
+                # Empty line — pass through unchanged
                 lines.append(line)
+            else:
+                # All non-empty lines get two extra spaces. Root-level keys
+                # become children of spine:; children of those keys retain
+                # their relative depth and remain children of their parent.
+                lines.append("  " + line)
         lines.append("")  # blank line between sections
 
     return "\n".join(lines).rstrip() + "\n"
