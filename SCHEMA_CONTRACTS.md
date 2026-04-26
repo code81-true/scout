@@ -1,9 +1,10 @@
 # SCHEMA_CONTRACTS.md
 ## Spine YAML Schema — The Interface Contract Between Scout and MTN
 
-**Last updated:** 23 April 2026
-**Verified from:** engine.py on Scout VPS (generate_yaml_sections,
-Calls 1–4), 23 April 2026
+**Last updated:** 25 April 2026
+**Verified from:** Real production spine (key NlF6dc4mdobt,
+25 April 2026) per Update Protocol Rule 5 — actual output
+is the highest authority.
 **Authoritative home:** PM project
 **Copied to:** Scout repo root, MTN repo root
 
@@ -21,64 +22,162 @@ MTN updates its models.
 
 ## Existing Sections — Calls 1 and 2
 
-Call 1 produces: meta, purpose, hats.
-Call 2 produces: values, hard_limits.
+Verified from production spine, 25 April 2026.
 
-No explicit field-level schema exists in the engine.py
-extraction directives for these sections. The model is told
-to use "the exact schema defined in your instructions." Field
-names for these sections must be verified from actual spine
-output on a full production session.
+### meta
 
 ```yaml
-meta:                              # [VERIFY from full session]
-  session_date: str
-  key: str
-  session_type: str
-  north_notes: str | null
-
-purpose:                           # [VERIFY from full session]
-  statement: str
-
-hats:                              # [VERIFY from full session]
-  - name: str
-    description: str
-    cost: str | null
-    energy: str | null
-
-values:                            # [VERIFY from full session]
-  - name: str
-    description: str
-
-hard_limits:                       # [VERIFY from full session]
-  - str
+meta:
+  session_date: str            # "2026-04-25"
+  schema_version: str          # "1.0"
 ```
 
-**These [VERIFY] markers will be resolved from the first full
-production session spine generated this weekend.**
+**Field note:** `key` and `session_type` fields were not
+present in this spine. `schema_version` was present instead.
+[VERIFY on next production session — may vary by session.]
+
+### purpose
+
+```yaml
+purpose:
+  stated_reason: str           # what the person said they came for
+  actual_concern: str          # what Scout observed underneath
+  evidence: str                # transcript evidence
+```
+
+**Field note:** Three-part structure. Not a single `statement`
+field as previously assumed.
+
+### hats
+
+```yaml
+hats:
+  self_described:
+    - label: str               # role name as the person said it
+      feeling: str             # how they feel about the role
+  observed_roles:
+    - label: str               # role Scout observed but person didn't name
+      evidence: str            # transcript evidence
+```
+
+**Field note:** Two-tier structure — `self_described` and
+`observed_roles`. Not a flat list. Not `name`/`description`/
+`cost`/`energy` as previously assumed.
+
+### values
+
+```yaml
+values:
+  - value: str                 # the value as identified
+    evidence: str              # transcript evidence
+    gravity: str               # how heavily it operates
+```
+
+**Field note:** Fields are `value`, `evidence`, `gravity`.
+Not `name`/`description` as previously assumed.
+
+### hard_limits
+
+```yaml
+hard_limits:
+  - limit: str                 # the non-negotiable line
+    evidence: str              # transcript evidence
+    cost_when_tested: str      # what it costs to hold
+```
+
+**Field note:** Three-field object structure. Not a flat list
+of strings as previously assumed.
 
 ---
 
-## Existing Sections — Call 3 (partial)
+## Existing Sections — Call 3
 
-Call 3 also produces: shadows, long_game, relationships.
-Same situation as Calls 1 and 2 — no explicit field-level
-schema in the extraction directives.
+Verified from production spine, 25 April 2026.
+
+### shadows
 
 ```yaml
-shadows:                           # [VERIFY from full session]
-
-long_game:                         # [VERIFY from full session]
-
-relationships:                     # [VERIFY from full session]
+shadows:
+  - str                        # prose paragraph, no sub-fields
 ```
+
+Flat list of strings confirmed.
+
+### long_game
+
+```yaml
+long_game:
+  vision: str                  # what they're building toward
+  gap: str                     # distance between now and vision
+  what_would_need_to_change: str
+  beneath_the_vision: str      # what the vision is really about
+  core_fear: str               # what they're most afraid of
+```
+
+**Field note:** Five named fields. Not a flat structure as
+previously assumed.
+
+### relationships
+
+```yaml
+relationships:
+  - name: str                  # person's name or role
+    role: str                  # relationship type
+    dynamic: str               # how the relationship operates
+    cost_or_gift: str          # what it costs or gives
+```
+
+Four-field object confirmed.
+
+---
+
+## Existing Sections — Call 4
+
+Verified from production spine, 25 April 2026.
+
+### north_instructions
+
+```yaml
+north_instructions:
+  session_quality: str         # Scout's assessment of the session
+  what_happened: str           # summary of the session arc
+  geographical_psychospiritual_context: str
+  return_points:
+    - str                      # list of strings — threads to pick up
+```
+
+**Field note:** Four fields. `return_points` is a list of
+strings. No `north_moments` field observed — previous spec
+was wrong.
+
+### intellectual_diet
+
+```yaml
+intellectual_diet:
+  stated_sources: list         # may be empty list
+  ghost_library: str           # influences present but not named
+  interpretation: str          # what the diet reveals
+```
+
+**Field note:** Three-field structure. Not a flat list as
+previously assumed.
+
+### unresolved
+
+```yaml
+unresolved:
+  - zone: str                  # area of unresolved tension
+    content: str               # what remains open
+```
+
+Two-field object per entry confirmed.
 
 ---
 
 ## Sprint 1 Sections — Call 3
 
-Verified from engine.py on VPS, 23 April 2026. These are the
-literal field names the model is instructed to produce.
+Verified from engine.py on VPS, 23 April 2026. Confirmed
+operational in production spine, 25 April 2026.
 
 ### heuristics
 Top-level section. List of objects. May be empty list.
@@ -95,7 +194,8 @@ heuristics:
 
 **Field note:** Both `evidence` and `invocation_note` may be
 null on sparse sessions — the model omits rather than
-fabricates when evidence is thin.
+fabricates when evidence is thin. Production spine confirmed
+all fields populated on 4 entries.
 
 **If nothing surfaced:** `heuristics: []`
 
@@ -112,7 +212,9 @@ failure_modes:
     north_watch: str | null    # direct instruction to North
 ```
 
-**Field note:** `interrupts` is PLURAL.
+**Field note:** `interrupts` is PLURAL. Production spine
+confirmed `interrupts` null on two of three entries (honest
+null working correctly).
 
 ### context_triggers
 Top-level section. List of objects. May be empty list.
@@ -145,7 +247,8 @@ north_instructions:
 
 **If no Tier 2 handling occurred:** `sensitive_areas` is omitted
 entirely from the spine. MTN must handle both "missing" and
-"present but empty list."
+"present but empty list." Production spine confirmed: absent
+(no Tier 2 handling occurred).
 
 ---
 
@@ -166,14 +269,30 @@ entirely from the spine. MTN must handle both "missing" and
 
 ## Correction History
 
+**25 April 2026 — All [VERIFY] markers resolved.** Production
+spine (key NlF6dc4mdobt) provided the actual field names for
+all pre-Sprint-1 sections. Nearly every section differed from
+what was previously assumed. Per Update Protocol Rule 5, the
+spine output is the highest authority.
+
+| Section | Previously assumed | Actual (from spine) |
+|---------|-------------------|---------------------|
+| meta | session_date, key, session_type, north_notes | session_date, schema_version |
+| purpose | statement (single field) | stated_reason, actual_concern, evidence |
+| hats | flat list with name/description/cost/energy | two-tier: self_described + observed_roles |
+| values | name, description | value, evidence, gravity |
+| hard_limits | flat list of strings | limit, evidence, cost_when_tested |
+| long_game | unstructured | vision, gap, what_would_need_to_change, beneath_the_vision, core_fear |
+| relationships | unstructured | name, role, dynamic, cost_or_gift |
+| north_instructions | north_moments | session_quality, what_happened, geographical_psychospiritual_context, return_points |
+| intellectual_diet | unstructured | stated_sources, ghost_library, interpretation |
+| unresolved | unstructured | zone, content |
+
 **23 April 2026 — Full Sprint 1 correction.** Original contract
 (22 April) was built from a developer's conversation report,
-not from engine.py. Multiple field names were wrong. Corrected
-against engine.py source code verified on Scout VPS. This
-correction invalidates MTN Session 7's Pydantic model changes,
-which were built to the incorrect contract.
+not from engine.py. Corrected against engine.py source code.
 
-| Field | Was (wrong) | Is (correct, from engine.py) |
+| Field | Was (wrong) | Is (correct) |
 |-------|-------------|------------------------------|
 | heuristics fields | domain, rule, source_layer | id, statement, evidence, self_type, invocation_note |
 | heuristics confidence | "stated" / "inferred" | "high" / "medium" / "low" |
