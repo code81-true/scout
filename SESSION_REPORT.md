@@ -4,6 +4,35 @@ Permanent changelog. Newest entry first.
 
 ---
 
+## 2026-04-29, PRE_DEPLOY.md and SESSION_REPORTING.md split out of CLAUDE.md
+**Trigger:** git push (documentation-only, no code changes)
+
+### Shipped
+- `PRE_DEPLOY.md` — new file at repo root. Full eight-step VPS deploy checklist extracted verbatim from CLAUDE.md, including Steps 1–8, the "If anything goes wrong" block, and the one-block copy-paste version for Steps 3–8 after Steps 1–2 pass. Three-line header at the top identifies the file purpose and notes that it is referenced by CLAUDE.md. 74 lines total (3-line header + 1 blank + 70 lines of extracted content).
+- `SESSION_REPORTING.md` — new file at repo root. Session Reporting Rule extracted verbatim from CLAUDE.md, including the trigger conditions, the full format block (Trigger / Shipped / Deployed / Decisions Made / Blockers Resolved / New Blockers / PM Note), and the closing rule "This file is read by the project PM in MTN_SCOUT_MARKET. Never delete previous entries. The history is the audit trail." Three-line header at the top mirrors the PRE_DEPLOY.md pattern. 42 lines total (3-line header + 1 blank + 38 lines of extracted content).
+- `CLAUDE.md` — both extracted blocks replaced with concise pointer paragraphs. The `## PRE-DEPLOY CHECKLIST — MANDATORY` heading stays; its body becomes "Full checklist lives in PRE_DEPLOY.md. Run it before every deploy that touches user-facing code. No exceptions. No shortcuts." The `## Session Reporting Rule` heading stays; its body becomes "After every git push, deployment to VPS, or milestone completion, append a new entry to SESSION_REPORT.md. Format and trigger conditions defined in SESSION_REPORTING.md. Newest entry goes at the top. Never delete previous entries." CLAUDE.md drops from 256 → 155 lines (~39% smaller).
+- `STATUS.md` — entry 62 added. Header date stamp updated to today's split.
+
+### Deployed
+- Not yet deployed. Documentation-only; no VPS action required.
+
+### Decisions Made
+- **Pure extraction, no content changes.** Pope's instruction was explicit: every word moves exactly as written; nothing is rewritten or updated. Both new files contain the original content verbatim, with only a three-line header prepended.
+- **Both new files use a `# header / # purpose / # Referenced by CLAUDE.md` triple-line header.** Pope's chosen format. Three H1 lines at the top is unusual markdown but matches the instruction verbatim.
+
+### Blockers Resolved
+- **CLAUDE.md size and read-cost.** Each new CC session reads CLAUDE.md first. Cutting 101 lines (PRE-DEPLOY 70 + Session Reporting 38, replaced by ~7 lines of pointers) reduces the read cost meaningfully without losing any operational guidance — the underlying content is one click away in dedicated files.
+
+### New Blockers
+- None.
+
+### PM Note
+- This split was deferred when the CLAUDE.md refactor landed earlier today (entry 61 / commit `63affdf`); Pope chose to do it as a separate clean commit. The two operations are now distinct in git history: one for content cleanup, one for file splits.
+- Content-preservation check passed: 256 lines in pre-split CLAUDE.md = 155 lines in post-split CLAUDE.md + 70 lines in PRE_DEPLOY.md + 38 lines in SESSION_REPORTING.md – 7 lines of new pointer text inserted into CLAUDE.md = 256. No content lost.
+- Pattern worth keeping: extract long, self-contained operational documents into dedicated files referenced from CLAUDE.md. This keeps CLAUDE.md as the read-on-arrival contract while preserving full content where it can be edited without touching the contract.
+
+---
+
 ## 2026-04-29, CLAUDE.md refactor — stale content removed, review gates updated, env vars section added
 **Trigger:** git push (documentation-only, no code changes)
 
