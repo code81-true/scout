@@ -13,63 +13,38 @@ changes — code follows the contract.
 context from MTN and the PM that is relevant to this
 session's work.
 
+## Read SESSION_REPORT.md to understand what was shipped in
+previous sessions. Newest entry first. Do not repeat work
+that is already committed.
+
 ## What this is
-Scout is a single-session AI interview engine that builds a 
-spine.yaml — a personal constitution for the MyTrueNorth 
-system. It interviews one person, one time, and produces 
-a structured YAML file that lives only in their custody.
-
-## Current objective
-PR 1 — The Brain only. Pure Python. Terminal only.
-No frontend. No database. No auth. Just Scout interviewing.
-
-## Stack
-- Python 3.12+
-- Anthropic API (claude-sonnet-4-5)
-- Single context window — full transcript every call
-- No frameworks beyond what is necessary
-
-## Project structure (to be built by CC)
-scout/
-├── CLAUDE.md
-├── README.md
-├── .env                  # ANTHROPIC_API_KEY, FLASK_SECRET_KEY,
-│                         # MAINTENANCE_MODE, MAINTENANCE_MESSAGE,
-│                         # MAINTENANCE_RETURN_MINUTES,
-│                         # DELETE_TRANSCRIPTS_ON_BURN
-│                         #   (false during beta and development,
-│                         #    true at commercial launch — DEC-SCOUT-017)
-├── requirements.txt
-├── scout/
-│   ├── __init__.py
-│   ├── prompt.py         # Scout system prompt
-│   ├── engine.py         # Context window loop
-│   └── session.py        # Session state (in memory only)
-└── run_session.py        # Entry point — python run_session.py
-
-## PR 1 success condition
-A real person can sit down, run python run_session.py,
-complete all seven layers, and receive a draft spine.yaml
-in the terminal at the end. Scout must feel like a 
-calibrated witness — not a chatbot.
+Scout is a two-hour single-session interview engine, live at scout.regtool.org
+behind an invitation-key gate. Each session produces three artifacts: a spine.yaml
+that feeds MyTrueNorth, a Portrait PDF, and a Meridian PDF — the latter two
+delivered to the recipient bound to the key.
 
 ## Key constraints
-- One question per Scout response. Never two.
-- Never use the word "why"
-- Full transcript sent on every API call — no summarisation
-- Banned phrases: absolutely, certainly, of course, 
-  great question, I can hear that, thank you for sharing
-- Health data must not appear in the output YAML
-
-## Anthropic API
-- Model: claude-sonnet-4-5
-- Max tokens per response: 300 (Scout is concise)
-- Temperature: 1.0 (natural variation in language)
+- Full transcript sent on every API call — no summarisation. See DEC-SCOUT-001.
+- Health data must not appear in the output YAML.
+- Scout's interview rules (banned phrases, "why" prohibition, one-question-per-turn,
+  and all other conversation discipline) are enforced in scout/prompt.py.
+  See SOUL.md for the philosophy behind them.
 
 ## Working arrangement
-- Always cd to C:\Users\Manmo\Projectns\scout\ first
+- Always cd to C:\Users\Manmo\Projectns\Scout\ first
 - Activate venv before any python commands
 - Never assume correct directory
+
+## Environment variables
+All env vars live in `.env` on the VPS only — never committed to git, never logged.
+
+- `ANTHROPIC_API_KEY` — Anthropic API credential.
+- `FLASK_SECRET_KEY` — Flask session signing key.
+- `MAINTENANCE_MODE` — `true` blocks the landing page and routes; `false` is normal operation.
+- `MAINTENANCE_MESSAGE` — copy shown on the maintenance page.
+- `MAINTENANCE_RETURN_MINUTES` — estimated return time displayed under the message.
+- `DELETE_TRANSCRIPTS_ON_BURN` — `false` during beta and development, `true` at
+  commercial launch. See DEC-SCOUT-017.
 
 ## Human Review Gates — STOP and ask before proceeding
 
@@ -81,18 +56,19 @@ Wait for explicit approval.
 ### STOP points:
 
 1. SYSTEM PROMPT CONTENT
-   Before writing scout/prompt.py — paste the full proposed
-   Scout system prompt for review. This is the brain.
-   Do not proceed until Pope approves it word for word.
+   Before changing scout/prompt.py — paste the proposed diff
+   for review. This is the brain. Do not proceed until Pope
+   approves it word for word.
 
 2. API CALL STRUCTURE
-   Before writing engine.py — show the exact structure of 
+   Before changing engine.py — show the exact structure of
    the API call: model, temperature, max_tokens, how the
    transcript is assembled. Wait for approval.
 
 3. YAML SCHEMA
-   Before writing the parsing pass — show the full proposed
-   spine.yaml schema. Every field. Wait for approval.
+   Before changing the spine.yaml schema — update
+   SCHEMA_CONTRACTS.md first, then show the diff. Code follows
+   the contract. Wait for approval.
 
 4. ANY FILE DELETION
    Never delete any file without explicit instruction.
@@ -106,10 +82,11 @@ Wait for explicit approval.
    The only permitted external call is to api.anthropic.com.
    Any other network call requires explicit approval first.
 
-7. BEFORE FIRST REAL SESSION
-   Before running a live session with a real person —
-   show Pope the complete run_session.py flow end to end.
-   Wait for approval.
+7. BEFORE LIFTING MAINTENANCE
+   Before lifting maintenance mode after any prompt change
+   that has not been verified in production — wait. Run a
+   TEST- key session first. Lift only after the smoke test
+   passes. See DEC-SHARED-004 in OPERATING_DECISIONS.md.
 
 8. ANYTHING THAT FEELS LIKE A BIG DECISION
    If CC is unsure whether something needs review — it does.
@@ -239,13 +216,6 @@ The access/ directory is sensitive territory.
 - Never commit anything from access/ except keys_generate.py
 - If uncertain whether something belongs in access/ — it doesn't
 - Keys, credentials, tokens, secrets — VPS .env only, never git
-
-## Next session priorities (as of 2026-04-07)
-1. First real user session — monitor and note any issues
-2. Post-session Chronicler output review
-3. Gunicorn production WSGI server — replace Flask dev server
-4. SSH key authentication on VPS — replace password auth
-5. Prompt compression — CC analysis report ready, awaiting implementation
 
 ## Session Reporting Rule
 

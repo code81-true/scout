@@ -4,6 +4,39 @@ Permanent changelog. Newest entry first.
 
 ---
 
+## 2026-04-29, CLAUDE.md refactor — stale content removed, review gates updated, env vars section added
+**Trigger:** git push (documentation-only, no code changes)
+
+### Shipped
+- `CLAUDE.md` — refactored after a structured audit. Six section removals, seven rewrites, one insertion, one pointer added.
+  - **Removals:** `## Current objective` (PR 1 framing), `## Stack` (ARCHITECTURE.md §Stack is authoritative), `## Project structure (to be built by CC)` (codebase is the truth), `## PR 1 success condition` (PR 1 closed in April), `## Anthropic API` (`max_tokens: 300` was 22+ days stale; current is 5000; ARCHITECTURE.md §Model allocation is the live spec), `## Next session priorities (as of 2026-04-07)` (STATUS.md is the live tracker; items 3 and 4 already done).
+  - **Rewrites:** `## What this is` → two accurate sentences naming Portrait + Meridian + spine.yaml as the three artifacts (was "personal constitution" — superseded by DEC-SCOUT-007); `## Key constraints` → removed prompt.py-duplicating items (banned phrases, "why" rule, one-question rule), kept full transcript rule + health-data rule + pointer to scout/prompt.py and SOUL.md; `## Working arrangement` → path case fix (`scout\` → `Scout\`); review gates 1, 2, 3 → "Before writing X" → "Before changing X" (files exist; gate 3 defers to SCHEMA_CONTRACTS.md per DEC-PM-001; parsing pass framing removed per DEC-SCOUT-005); review gate 7 → "Before first real session" (long past) → "Before lifting maintenance after any unverified prompt change" with reference to DEC-SHARED-004.
+  - **Insertion:** new `## Environment variables` section after `## Working arrangement` listing all six `.env` vars one-line-each with the VPS-only-never-in-git note. The list was previously embedded as comments inside the project-tree ASCII diagram; extracted to a proper section.
+  - **Top-pointer addition:** `## Read SESSION_REPORT.md to understand what was shipped in previous sessions. Newest entry first. Do not repeat work that is already committed.` — sits below the existing OPERATING_DECISIONS / SCHEMA_CONTRACTS / BRIDGE pointers.
+  - **Untouched:** all original top-of-file pointers, gates 4–6 and 8, `## What CC can do without asking`, `## Status tracking`, `## STATUS.md Rules`, full PRE-DEPLOY CHECKLIST (kept inline — split to PRE_DEPLOY.md deferred), `## Security Rules`, `## Session Reporting Rule`.
+- `STATUS.md` — entry 61 added with full change list. Header date stamp bumped to 2026-04-29.
+
+### Deployed
+- Not yet deployed. Documentation-only; no VPS action required.
+
+### Decisions Made
+- **Defer split of PRE-DEPLOY.md.** The audit recommended splitting the eight-step checklist (~70 lines) into a dedicated PRE_DEPLOY.md. Pope chose to keep it inline for now. Re-evaluate if CLAUDE.md grows again.
+- **No PROMPT_RULES.md created.** Conversation rules already live canonically in scout/prompt.py and philosophically in SOUL.md. Adding a third location would create a sync problem. CLAUDE.md now points to those two files instead.
+- **Audit-confirmed cuts.** Six removals, seven rewrites, one insertion — all approved exactly as proposed at STOP 1.
+
+### Blockers Resolved
+- **Stale read-on-arrival contract.** Every new CC session reads CLAUDE.md first. The pre-refactor file declared Scout was "PR 1, terminal only, no frontend, no auth, no database" — every one of those statements was wrong by April 2026 production reality. The model would absorb that framing before reading the live docs. Fix lands an accurate, current contract.
+
+### New Blockers
+- None.
+
+### PM Note
+- File goes from 287 → 256 lines (~11% smaller). The bigger win is content quality, not size: the file no longer contradicts ARCHITECTURE.md, DECISIONS.md, or HANDOVER.md, and the removed sections were actively misleading rather than just redundant. Future-CC sessions arriving cold will now read a CLAUDE.md that matches today's Scout, not April-7th Scout.
+- The new `## Read SESSION_REPORT.md` pointer raises the chance that future CC sessions consult the changelog before duplicating work — useful for the period when several documentation refactors are active in parallel across Scout, MTN, and the PM project.
+- The audit identified TESTING_STANDARDS.md and SESSION_PROTOCOL.md as candidates considered and rejected for now. Verification rigour lives in DEC-SHARED-002 (OPERATING_DECISIONS.md); CC operating rules are best kept consolidated in CLAUDE.md rather than fragmented.
+
+---
+
 ## 2026-04-26, spine regeneration and verification — stitcher fix confirmed working in production
 **Trigger:** post-deploy verification of `31df371`
 
