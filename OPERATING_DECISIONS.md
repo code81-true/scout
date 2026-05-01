@@ -37,44 +37,188 @@ producer-assumed-to-agree.
 
 ---
 
-### DEC-PM-002 — Beta recruitment held pending depth fix verification
+### DEC-PM-002 — Beta recruitment hold
 **Date:** 22 April 2026
+**Status:** LIFTED — 1 May 2026
+
 **Trigger:** Post-Sprint-1 production session showed Scout
 rushing interviews — shallow threading, generic depth signals
 clearing the bar, closing sequence firing before shadows opened.
-Portrait and Meridian mediocre. User experience degraded from
-pre-Sprint-1 baseline.
 
 **Decision:** No new Scout keys issued until a post-fix
 production session confirms interview depth has been restored.
-The warm network is finite and non-renewable — one bad
-experience per person is all you get.
 
-**Status:** ACTIVE. Three depth fixes deployed (turn-by-turn
-threading Hard Rule, L6/L7 depth signal tightening, closing
-sequence gate). Awaiting verification session.
+**Lift condition met:** Two production sessions cleared the bar
+(NlF6dc4mdobt on 25 April, 1JNQrG6CnglM on 1 May). Sprint 3
+barrier toolkit and diagnostic arc verified in production.
+Extraction prompt locked to SCHEMA_CONTRACTS.md. Beta
+recruitment is open.
 
-**Lift condition:** A production session where the user reports
-the interview went deep, the portrait clears the SOUL.md bar
-("I've never heard it said like that"), and the Meridian does
-not flag insufficient depth in its own closing line.
+---
+
+### DEC-PM-003 — Translation lives in bridge.py only
+**Date:** 1 May 2026
+**Trigger:** Scout's YAML output and MTN's operating format
+don't map 1:1. A translation layer is needed. Three options
+considered: loader-side reshaping, separate script, or bridge.py.
+
+**Decision:** Three independent layers. No exceptions.
+Scout (producer) → bridge.py (translator + transport) → MTN
+(consumer). Scout evolves its interview and extraction without
+knowing MTN exists. MTN evolves its operating format without
+knowing Scout exists. bridge.py is the only code that knows
+both schemas. When either side changes, bridge.py updates.
+Neither product touches the other.
+
+---
+
+### DEC-PM-004 — Silence thresholds from failure_mode density
+**Date:** 1 May 2026
+**Trigger:** Silence threshold for hats needs to be derived
+automatically, not hardcoded. People with intense focus on a
+hat should have shorter thresholds.
+
+**Decision:** Derive from failure_mode and context_trigger
+density per hat. High (3+ matches): 3 days. Medium (1-2): 7
+days. Low (0): 14 days. Automated, grounded in what the user
+said to Scout, no operator judgment required.
+
+---
+
+### DEC-PM-005 — Forward compatibility protocol
+**Date:** 1 May 2026
+**Trigger:** Scout prompt changes could produce new spine
+fields that break bridge.py. Need a protocol that lets both
+sides evolve independently.
+
+**Decision:** Three rules. (1) bridge.py treats every mapped
+input field as optional — present → use, absent → default.
+(2) bridge.py ignores unmapped fields silently — no crash,
+no warning. (3) Scout changes never assume bridge.py awareness
+— Scout deploys independently, bridge.py catches up on its
+own schedule. Rules 6-8 added to SCHEMA_CONTRACTS.md Update
+Protocol in both repos.
+
+---
+
+### DEC-PM-006 — Two-tier hats
+**Date:** 1 May 2026
+**Trigger:** Scout produces self_described hats (user named)
+and observed_roles (Scout noticed). Both should be operational
+but treated differently to preserve trust.
+
+**Decision:** observed_roles become operational hats with
+`confirmed: false`. North introduces them conversationally
+before activating: "Scout noticed you seem to carry [X] as a
+role. Does that feel right?" User confirms → `confirmed: true`,
+full tracking begins. User rejects → hat removed.
+self_described hats are `confirmed: true` with immediate full
+tracking.
+
+---
+
+### DEC-PM-007 — Caller.py amendment for ops scripts
+**Date:** 1 May 2026
+**Trigger:** bridge.py needs to call the Anthropic API for
+Sonnet translation but can't import caller.py without pulling
+in service dependencies.
+
+**Decision:** caller.py is the mandatory path for all runtime
+API calls made on behalf of a user inside the FastAPI service.
+Ops scripts (bridge.py, admin tools, migration scripts) may
+call the Anthropic API directly. Criteria: if the call happens
+during a user's live session → caller.py. If operator-initiated
+with no user waiting → direct call. All direct calls log model,
+token count, and cost to stdout. Amends original caller.py
+standing rule.
+
+---
+
+### DEC-PM-008 — Spine evolution
+**Date:** 1 May 2026
+**Trigger:** Operating spine fields start empty at translation
+time (cooling, weekly_minimum, etc.) and need to fill through
+use. Question: how do updates happen?
+
+**Decision:** Operating spine evolves continuously from
+conversation evidence. Subtle changes (new hard limit from
+clear evidence, silence threshold adjustment) apply
+automatically. Quarterly review presents accumulated evolution
+as a summary — "here's how we've evolved" — not as a list of
+approval requests. User is a witness. User intervenes only if
+something feels wrong. Amends DEC-009: ceremony means
+visibility of change, not permission to change.
+
+---
+
+### DEC-PM-009 — Cooling protocol replaces static never
+**Date:** 1 May 2026
+**Trigger:** The static `never` list was a permanent
+behavioural prohibition. In reality, North should never
+permanently abandon a topic — that makes it a people-pleaser.
+
+**Decision:** Pushback triggers a cooling period. First
+pushback: 14 days. Second: 30 days. Third: dormant (North
+stops initiating, user can reactivate). North never permanently
+deletes — it gives space. The `never` field is replaced by
+`cooling: list` in the Pydantic model. Runtime implementation
+is a future session.
+
+---
+
+### DEC-PM-010 — Weekly review shows the full board
+**Date:** 1 May 2026
+**Trigger:** `weekly_minimum` as static engagement frequencies
+is prescriptive and nagging. Better to show the full picture
+and let the user draw conclusions.
+
+**Decision:** All hats surfaced every week with engagement
+level. Quiet hats noted without judgment. The review accepts
+uneven attention as natural — wave patterns differ per person.
+Purpose is awareness, not correction.
+
+---
+
+### DEC-PM-011 — Spine lineage
+**Date:** 1 May 2026
+**Trigger:** After translation, the operating spine contains
+Sonnet-inferred fields the person never said. Which spine is
+the source of truth?
+
+**Decision:** The Scout spine is the constitutional record —
+what the person said at a point in time. Immutable. Archived.
+Never modified. The operating spine is derived and evolves
+through use. A second Scout session merges new constitutional
+input into the existing operating spine — does not replace it.
+Runtime state (cooling, engagement, confirmed hats) preserved
+across sessions.
+
+---
+
+### DEC-PM-012 — Tone calibration
+**Date:** 1 May 2026
+**Trigger:** How should North's tone be determined? People's
+stated preference for feedback style is unreliable — everyone
+says "be honest" but not everyone means it.
+
+**Decision:** Scout's interview behaviour is the primary tone
+signal. Scout already calibrates in real time — sharp with
+people who engage directly, softer with people who need it. A
+future closeout question confirms the register established
+during the session. bridge.py passes through when present,
+derives from session arc when absent. No second-guessing
+demonstrated tolerance. The closeout question is confirmatory,
+not qualifying.
 
 ---
 
 ### DEC-SHARED-001 — Sprint specs include Invariants section
 **Date:** 22 April 2026
-**Trigger:** Sprint 1 added listening targets to Scout's prompt
-without specifying that interview depth, threading quality, and
-depth-before-closing must not degrade. The model optimised for
-breadth of extraction over depth of pursuit. No one noticed
-because the spec didn't say depth had to hold.
 
 **Decision:** Every sprint or session brief that modifies a
-system prompt (Scout's prompt.py or MTN's system.txt) must
-include an "Invariants" section listing the behaviours that
-must not degrade. The developer checks these post-build. The
-PM checks post-deploy via a production session or structured
-verification.
+system prompt must include an "Invariants" section listing the
+behaviours that must not degrade. The developer checks post-
+build. The PM checks post-deploy via production verification.
 
 **Applies to:** Both repos. Any prompt-modifying work.
 
@@ -82,20 +226,11 @@ verification.
 
 ### DEC-SHARED-002 — Verification tests production code path
 **Date:** 22 April 2026
-**Trigger:** Sprint 1 added Hard Rule C ("never generate YAML
-in conversation") to SYSTEM_PROMPT. The YAML extraction function
-generate_yaml_sections() used SYSTEM_PROMPT as its system prompt.
-Model obeyed → refused to generate YAML → empty spine → empty
-portrait. The STOP 3 verification tested an isolated Sonnet call
-that bypassed SYSTEM_PROMPT entirely. The bug was latent until
-first production session.
 
-**Decision:** Verification of any code change must exercise the
-actual function the server calls, not an isolated API call that
-bypasses the production code path. "Isolated call works" ≠
-"production path works." The verification bar is: the exact
-code path the server uses, with the exact prompts it sends,
-produces the expected output.
+**Decision:** Verification must exercise the actual function
+the server calls, not an isolated API call that bypasses the
+production code path. "Isolated call works" ≠ "production
+path works."
 
 **Applies to:** Both repos. Any change that affects API call
 behaviour.
@@ -104,20 +239,12 @@ behaviour.
 
 ### DEC-SHARED-003 — Prompt changes are transformative, not additive
 **Date:** 22 April 2026
-**Trigger:** Sprint 1 added four new listening targets to
-Scout's prompt. The additions were individually correct. But
-collectively they changed how the model weighed every existing
-instruction — shifting optimisation from "go deep on fewer
-things" to "cover more things adequately." This was not
-anticipated because the additions were treated as incremental.
 
 **Decision:** Every instruction added to a prompt changes how
 the model weighs every existing instruction. No prompt change
-is purely additive. When reviewing a prompt modification, ask:
-"Does this change make the model busier? If so, which existing
-behaviours might lose weight?" Re-examine progression
-thresholds, depth signals, and pacing gates whenever extraction
-targets or listening instructions are added.
+is purely additive. When reviewing modifications, ask: "Does
+this make the model busier? Which existing behaviours might
+lose weight?"
 
 **Applies to:** Both repos. Any prompt modification.
 
@@ -125,24 +252,10 @@ targets or listening instructions are added.
 
 ### DEC-SHARED-004 — Prompt deploys require verification before beta exposure
 **Date:** 23 April 2026
-**Trigger:** Sprint 1 depth regression reached the VPS and
-was only caught because Pope ran a production session. If a
-beta user had run that session instead, the warm network
-would have lost one non-renewable contact. DEC-PM-002 was
-imposed as a one-time hold. This decision makes it permanent.
 
-**Decision:** Any deploy that modifies Scout's interview prompt
-(prompt.py) or MTN's system prompt (system.txt) requires a
-verification session before beta users are exposed. The
-verification confirms that invariants from the sprint spec
-held. This is not a gate on deployment — it is a gate on
-beta exposure. Deploy freely. Verify before inviting users.
-
-**Verification bar:** For Scout, a production session where
-the interview threads, pursues shadows, and produces a
-portrait that clears the SOUL.md standard. For MTN, a
-Telegram conversation where North's register operates above
-surface-level reflection.
+**Decision:** Any deploy that modifies an interview or system
+prompt requires a verification session before beta users are
+exposed. Deploy freely. Verify before inviting users.
 
 **Applies to:** Both repos. Any prompt-modifying deploy.
 
