@@ -323,6 +323,26 @@ not from engine.py. Corrected against engine.py source code.
    what MTN will actually receive. Engine.py is secondary.
    Developer interpretation of engine.py is tertiary.
 
+6. **Forward compatibility — bridge.py treats every mapped input
+   field as optional.** If a Scout field is present, bridge.py uses
+   it. If absent, bridge.py defaults gracefully. No field absence
+   crashes the translation. Scout can deploy new fields independently
+   — bridge.py handles both old and new spines without updates.
+   (DEC-PM-005)
+
+7. **Forward compatibility — bridge.py ignores unmapped fields.**
+   A new Scout section that bridge.py has no mapping for passes
+   silently. No crash, no warning. When PM decides the field should
+   become operational, PM scopes a bridge.py update to add the
+   mapping. Scout deploys first, bridge.py catches up on its own
+   schedule. (DEC-PM-005)
+
+8. **Scout changes never assume bridge.py awareness.** Scout's
+   extraction prompt produces whatever the interview warrants.
+   Scout does not shape its YAML to match MTN's operating format.
+   Scout's only contract is this file — it emits the fields defined
+   here, in the shapes defined here. (DEC-PM-005)
+
 This file is the contract. Code follows the contract.
 The contract does not follow the code.
 
