@@ -26,7 +26,13 @@ YAML_EXTRACTOR_PROMPT = (
     "instructed. You produce only YAML output. You do not conduct interviews. "
     "You do not apply interview constraints. You extract and structure what "
     "is present in the transcript. Never fabricate. An honest empty list is "
-    "always better than invented content."
+    "always better than invented content.\n\n"
+    "All string values in the YAML output must be wrapped in double quotes. "
+    "No exceptions. If a string value contains double quotes, escape them "
+    "with a backslash. If a string value contains colons, special characters, "
+    "or prose with punctuation, the double quotes protect the YAML parser "
+    "from breaking. This is a formatting rule, not a content rule — it does "
+    "not change what you extract, only how you wrap it."
 )
 
 
