@@ -4,6 +4,47 @@ Permanent changelog. Newest entry first.
 
 ---
 
+## 2026-05-01, Sprint 3 deployed and verified — pipeline operational end-to-end
+**Trigger:** deploy + verification session + pipeline test
+
+### Shipped
+- **Sprint 3 prompt enhancement** — `scout/prompt.py` SECTION 4B "When the Conversation Needs Help" inserted between Layer 7 and the closing sequence. Six barrier-breaking techniques with conditional framing (surfacing a contradiction without naming it, grounding to specifics, handling a first vulnerable disclosure, demonstrating real listening in the opening, asking about behaviour rather than belief, plus the privacy-response technique merged into CONSTRAINT 7). Five-phase diagnostic arc (state audit, energy mapping, fear probe with worst-case → likelihood → recovery sequence, cost accounting, reframe-and-surface) — all framed as fallback probes that fire only when organic conversation has not covered the territory.
+- **CONSTRAINT 7 factual correction per DEC-SCOUT-017** — replaced the stale "interview transcript is deleted after delivery" line with the current beta-retention copy ("during this beta period the transcript is retained for quality review only — never shared, never exported, never used for anything else"). Added brevity instructions: answer briefly, return to interview, one response, do not over-explain. The constraint now reflects production reality.
+- **Extraction prompt lockdown** — all four extraction calls in `generate_yaml_sections()` now use locked YAML templates with exact field names from SCHEMA_CONTRACTS.md. Negative examples explicitly forbid the field names Sonnet had previously invented (e.g. `archetype_primary`, `boundary` instead of `limit`, `temperament` instead of `session_quality`). The Sprint 1 sections (heuristics, failure_modes, context_triggers, sensitive_areas) were already correct and were preserved untouched as the reference pattern.
+- **YAML truncation fix** — `YAML_EXTRACTOR_PROMPT` gains a formatting paragraph requiring every string value to be wrapped in double quotes, with internal double quotes escaped via backslash. Closes the truncation class that surfaced in 2026-04-26 (NlF6dc4mdobt) and again in the first 1JNQrG6CnglM re-extraction attempt.
+- **deploy.sh fixed** — branch reference changed from `master` to `main`. Pre-fix, deploys were silently shipping the wrong branch.
+- **Git reconciliation** — three-way split between local, GitHub, and VPS resolved. All three locations now sit on `main` at the same commit (`080ff9f`). `master` retired. Pipeline is one-directional: Local → GitHub → VPS. No direct VPS commits.
+- **SCHEMA_CONTRACTS.md** — Update Protocol rules 6, 7, 8 added per DEC-PM-005 (forward compatibility: bridge.py treats mapped fields as optional, ignores unmapped fields, never assumes Scout shapes its YAML to MTN's operating format).
+- **STATUS.md, KNOWN_ISSUES.md, DECISIONS.md** — all updated to reflect this state. YAML truncation entry removed from KNOWN_ISSUES.md §3 per the fix-then-delete rule. DEC-SCOUT-019, DEC-SCOUT-020, DEC-SCOUT-021 added to DECISIONS.md.
+
+### Deployed
+- VPS at commit `080ff9f` on `main`. All three locations (local, GitHub, VPS) synced. Health check returns 200.
+
+### Decisions Made
+- **DEC-SCOUT-019** — Extraction prompt field name lockdown. The contract precedes the code; extraction directives are now literal manifestations of SCHEMA_CONTRACTS.md.
+- **DEC-SCOUT-020** — YAML quoting discipline in extractor prompt. Closes the truncation class.
+- **DEC-SCOUT-021** — Branch name is `main` everywhere. `master` retired. Deployment pipeline is one-directional.
+- **DEC-PM-002 LIFTED** — beta recruitment is open. Two production sessions (NlF6dc4mdobt 2026-04-25 and 1JNQrG6CnglM 2026-05-01) cleared the altitude bar; the verification gate that paused beta recruitment is satisfied.
+
+### Blockers Resolved
+- **Sprint 3 verification.** Key 1JNQrG6CnglM session: threading was fluid with smooth hat transitions, at least one barrier technique fired naturally (Scout dug into incomplete phrases), fear probe territory was covered organically and captured in the portrait, the closing depth gate held (Scout did not close early), and the portrait cleared the altitude bar with three moments above the user's existing self-model. All eight Sprint 3 invariants confirmed in production behaviour.
+- **Pipeline operational end-to-end.** Scout spine for 1JNQrG6CnglM successfully bridged through `bridge.py` into MTN. The Scout → Portrait/Meridian + Scout → bridge.py → MTN pipeline now works as a single integrated flow.
+- **Field name drift class closed.** Prior to lockdown, ten of fourteen sections diverged between SCHEMA_CONTRACTS.md and what Sonnet emitted. Post-lockdown, the corrected spine matches the contract section-for-section, field-for-field.
+- **YAML truncation class closed.** First re-extraction of 1JNQrG6CnglM truncated at line 37 from an unquoted nested-quote value. Second re-extraction (after the quoting discipline rule was added) produced clean parseable YAML. Same fix path the 2026-04-26 entry had recommended — applied this sprint.
+- **Branch confusion closed.** All three locations on `main`. `deploy.sh` references `main`. No more silently-shipping-the-wrong-branch failures.
+
+### New Blockers
+- None operational. One operational note (not a blocker): the VPS reports "System restart required" — 23 pending updates. Schedule during a quiet window. Tracked in KNOWN_ISSUES.md §1.
+- Some legacy untracked files on the VPS (`keygen.py` deleted, leftover portrait files, contents of `spines/`) need cleanup in the next code-touching session. Cosmetic; no operational impact.
+
+### PM Note
+- This is the milestone where Scout has transitioned from "interviews work" to "the full pipeline works." The portrait and Meridian artifacts have been clearing their bar for some weeks; what landed today is that the spine is now in a shape MTN can consume, and the bridge actually consumes it. DEC-PM-002 lifts as a direct consequence — beta recruitment was paused on this exact dependency.
+- Completed sessions to date: four (Boss / K7M3WNPX4R, JRMTWFU4FL, GHR7U6GEGU, 1JNQrG6CnglM). The 25 April and 1 May sessions are the two that cleared the altitude bar without caveats.
+- `spine_validator.py` is the next CC session. Permanent post-extraction validation against SCHEMA_CONTRACTS.md, integrated into `generate_yaml_sections()` so a contract violation is caught at source rather than at bridge time. This is defensive plumbing in the same register as the existing `yamlDropped` filter and the YAML recovery path — it stays in place even when the extraction prompt is correct.
+- The session's other parked items (mid-interview reflection, tone closeout question, prompt compression at v1.1) remain parked. Mid-interview reflection ships after the barrier toolkit is proven across multiple sessions, not just one.
+
+---
+
 ## 2026-04-29, PRE_DEPLOY.md and SESSION_REPORTING.md split out of CLAUDE.md
 **Trigger:** git push (documentation-only, no code changes)
 

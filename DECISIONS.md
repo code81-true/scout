@@ -398,3 +398,84 @@ on production-mode transcript (2026-04-21): all six
 top-level keys present, full schema honored, empty list
 and null honoured, no invented content.
 **Status:** Active.
+
+---
+
+### DEC-SCOUT-019 | Extraction prompt field name lockdown
+
+**Date:** 2026-05-01
+**Decision:** All four extraction call directives in
+`generate_yaml_sections()` use locked YAML templates with
+exact field names from SCHEMA_CONTRACTS.md. The model
+fills in values, not field names. Templates are rendered
+as fenced YAML blocks inside the directive text. Negative
+examples explicitly name forbidden field-name candidates
+the model previously invented (e.g. `archetype_primary`,
+`resilience_score`, `boundary` instead of `limit`,
+`temperament` instead of `session_quality`).
+**Reasoning:** Sprint 3 verification produced a spine
+where ten of fourteen sections diverged from
+SCHEMA_CONTRACTS.md because the pre-Sprint-1 directives
+were one-line prose ("Generate only the X and Y sections")
+with no schema reference. Sonnet exercised latitude on
+field naming and the resulting spine could not be parsed
+by bridge.py. Sprint 1 sections (heuristics,
+failure_modes, context_triggers) had been stable because
+their directives already used bulleted field templates —
+the same fix pattern applied to Calls 1 and 2 closes the
+drift class. The contract precedes the code (DEC-PM-001
+in OPERATING_DECISIONS.md); the extraction prompt is now
+a literal manifestation of the contract.
+**Status:** Active.
+
+---
+
+### DEC-SCOUT-020 | YAML quoting discipline in extractor prompt
+
+**Date:** 2026-05-01
+**Decision:** `YAML_EXTRACTOR_PROMPT` includes a
+formatting paragraph requiring all string values in the
+YAML output to be wrapped in double quotes, with internal
+double quotes escaped using a backslash. The rule applies
+to every extraction call. Values containing colons,
+nested quotes, or prose with punctuation are protected
+from the YAML parser by the wrapping. The instruction
+explicitly notes this is a formatting rule, not a content
+rule — extraction targets do not change, only how the
+extracted content is wrapped.
+**Reasoning:** PyYAML failed mid-parse during the first
+re-extraction attempt on key 1JNQrG6CnglM at line 37 —
+an unquoted string value containing nested quotes broke
+block-mapping parsing. The recovery path truncated to 36
+valid lines, dropping all sections after Calls 1 and 2.
+Same root cause as the 2026-04-26 issue surfaced during
+NlF6dc4mdobt regeneration. Locking field names (DEC-SCOUT-019)
+did not solve formatting; the formatting rule is
+orthogonal to schema lockdown and needed its own
+explicit instruction. After this rule was added,
+re-extraction of 1JNQrG6CnglM produced clean parseable
+YAML and bridge.py successfully translated the spine into
+MTN. Closes the YAML-truncation known issue.
+**Status:** Active.
+
+---
+
+### DEC-SCOUT-021 | Branch name is `main` everywhere
+
+**Date:** 2026-05-01
+**Decision:** Local working tree, GitHub origin, and VPS
+checkout all use `main` as the canonical branch. `master`
+is retired. `deploy.sh` references `main` only. The
+deployment pipeline is one-directional: Local → GitHub →
+VPS. No direct VPS commits.
+**Reasoning:** Pre-2026-05-01 the three locations had
+drifted: local was on `main`, GitHub had both `main` and
+`master`, VPS was tracking `master`. `deploy.sh` referenced
+`master`, so deploys silently shipped older code than
+what was on `main`. The three-way split was reconciled in
+this sprint and the historical `master` branch is no
+longer maintained. Single canonical branch removes a
+class of "deployed code is not the code I committed"
+failures and enforces the one-direction pipeline as the
+only path to production.
+**Status:** Active.

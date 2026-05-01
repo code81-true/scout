@@ -26,6 +26,12 @@ Three sections:
 *(Sprint 2 closed A08, A10, A11, A12 on 2026-04-22 — entries removed.
 The Sprint 2 commit sits on master; Pope holds the deploy gate.)*
 
+### VPS system restart pending
+The VPS reports "System restart required" — 23 pending updates as
+of 2026-05-01. Not urgent. Restart will briefly take Scout offline,
+so schedule during a quiet maintenance window. No code change
+needed; this is operational hygiene only.
+
 ---
 
 ## 2. Parked features (deliberate deferrals)
@@ -140,26 +146,6 @@ closes with different phrasing, the trigger does not
 fire. A 90-second fallback timer catches the case and
 still moves the session forward, so no session is ever
 stranded — but the primary trigger is imperfect.
-
-### YAML truncation on unquoted values containing special characters
-The YAML extraction model occasionally emits string values
-that need quoting but doesn't quote them — typically values
-containing both nested quotes and unquoted prose, e.g.
-`user_says: "time with my wife" is non-negotiable value`.
-PyYAML reads the leading `"time with my wife"` as a quoted
-key, then errors on the trailing scalar. The existing
-recovery path in `generate_yaml_sections()` truncates to
-the last valid line and saves the partial spine — the tail
-sections after the bad line are lost. Surfaced 2026-04-26
-during regeneration of `NlF6dc4mdobt` (file truncated from
-~20.5k to 14.3k chars). Severity contained: live sessions
-keep the partial spine rather than fail outright. Fix path:
-tighten output formatting instructions in
-`YAML_EXTRACTOR_PROMPT` to require full quoting of any
-value containing nested quotes, colons, or special
-characters. Scheduled for next sprint, not an emergency
-hotfix because defensive recovery prevents catastrophic
-failure.
 
 ---
 
