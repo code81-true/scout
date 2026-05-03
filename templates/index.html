@@ -31,7 +31,7 @@
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding: 40px 24px;
+    padding: 60px 24px;
   }
 
   .landing-statement {
@@ -53,7 +53,7 @@
     font-weight: 400;
     font-size: clamp(96px, 14vw, 172px);
     line-height: 1.0;
-    margin-bottom: 40px;
+    margin-bottom: 56px;
     cursor: crosshair;
     transition: letter-spacing 0.8s ease-in-out;
     background: linear-gradient(
@@ -85,14 +85,16 @@
     animation-delay: 0.5s;
   }
 
-  @keyframes guide-breathe-anim {
-    0%, 100% { color: #B8965A; }
-    50% { color: #C49060; }
+  @keyframes guide-glow-anim {
+    0%, 100% { text-shadow: 0 0 8px rgba(184,150,90,0.2), 0 0 20px rgba(184,150,90,0.05); }
+    50% { text-shadow: 0 0 12px rgba(184,150,90,0.5), 0 0 30px rgba(184,150,90,0.15); }
   }
 
-  .guide-breathe {
-    animation: guide-breathe-anim 3s ease-in-out infinite;
+  .guide-glow {
+    animation: guide-glow-anim 3s ease-in-out infinite;
   }
+
+  .guide-link .u { text-decoration: underline; text-underline-offset: 3px; }
 
   .unlock-hint {
     font-family: "Cormorant Garant", serif;
@@ -138,40 +140,30 @@
   .guide-link {
     font-family: "Cormorant SC", serif;
     font-size: 13px;
-    letter-spacing: 0.15em;
-    color: #8A8078;
+    letter-spacing: 0.18em;
+    color: #B8965A;
     cursor: pointer;
-    margin-bottom: 48px;
+    margin-bottom: 56px;
     text-decoration: none;
     transition: color 0.3s, opacity 0.8s ease-in-out;
   }
 
-  .guide-link:hover { color: #7a7570; }
+  .guide-link:hover { color: #C8A468; }
 
   .key-console {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 16px;
+    gap: 20px;
     width: 100%;
-    max-width: 280px;
+    max-width: 300px;
   }
 
   .key-label {
     font-family: "Cormorant SC", serif;
     font-size: 12px;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.3em;
     color: #7A7068;
-  }
-
-  .age-notice {
-    font-family: 'Cormorant Garant', serif;
-    font-size: 12px;
-    font-style: italic;
-    color: #6A6560;
-    text-align: center;
-    margin-bottom: 20px;
-    line-height: 1.6;
   }
 
   .key-input {
@@ -182,7 +174,7 @@
     font-family: "Cormorant Garant", Georgia, serif;
     font-size: 19px;
     text-align: center;
-    padding: 8px 0;
+    padding: 12px 0;
     width: 100%;
     outline: none;
     letter-spacing: 0.3em;
@@ -206,26 +198,18 @@
   .reveal-btn {
     font-family: "Cormorant SC", serif;
     font-size: 12px;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.2em;
     color: #8A8078;
     background: transparent;
     border: 1px solid #3A3028;
-    padding: 10px 32px;
+    padding: 12px 44px;
     cursor: pointer;
     transition: color 0.3s, border-color 0.3s;
   }
 
   .reveal-btn:hover {
-    color: #8a8580;
-    border-color: #4a4540;
-  }
-
-  .colophon-landing {
-    margin-top: 32px;
-    font-family: "Cormorant SC", serif;
-    font-size: 11px;
-    letter-spacing: 0.2em;
-    color: #4A4540;
+    color: #B8965A;
+    border-color: #5A4A38;
   }
 
   /* ========================================
@@ -235,7 +219,7 @@
   #guide {
     flex-direction: column;
     overflow-y: auto;
-    padding: 60px 24px 80px;
+    padding: 80px 24px 80px;
   }
 
   .guide-back {
@@ -245,42 +229,42 @@
     color: #6A6560;
     cursor: pointer;
     text-decoration: none;
-    margin-bottom: 60px;
+    margin-bottom: 72px;
     align-self: flex-start;
     transition: color 0.3s;
   }
 
-  .guide-back:hover { color: #7a7570; }
+  .guide-back:hover { color: #B8965A; }
 
   .guide-content {
-    max-width: 600px;
+    max-width: 580px;
     margin: 0 auto;
   }
 
   .guide-section-title {
     font-family: "Cormorant SC", serif;
     font-size: 13px;
-    letter-spacing: 0.3em;
+    letter-spacing: 0.35em;
     color: #B8965A;
-    margin-bottom: 24px;
+    margin-bottom: 28px;
   }
 
   .guide-body {
     font-family: "Cormorant Garant", Georgia, serif;
     font-weight: 300;
     font-size: 17px;
-    line-height: 1.9;
+    line-height: 2.0;
     color: #8A8480;
-    margin-bottom: 56px;
+    margin-bottom: 64px;
   }
 
-  .guide-body p { margin-bottom: 1.4em; }
+  .guide-body p { margin-bottom: 1.6em; }
 
   .guide-nav {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-top: 48px;
+    margin-top: 56px;
     padding-bottom: 48px;
     gap: 32px;
     position: relative;
@@ -310,8 +294,8 @@
     color: #6A6560;
     font-family: 'Cormorant SC', serif;
     font-size: 11px;
-    letter-spacing: 0.25em;
-    padding: 12px 36px;
+    letter-spacing: 0.3em;
+    padding: 14px 40px;
     cursor: pointer;
     text-transform: uppercase;
     transition: all 0.4s;
@@ -545,7 +529,7 @@
   @media (max-width: 480px) {
     /* --- Landing page --- */
     .wordmark {
-      font-size: 52px !important;
+      font-size: 64px !important;
     }
     .landing-statement {
       font-size: 15px;
@@ -553,41 +537,57 @@
       margin-bottom: 32px;
     }
     .guide-link {
-      font-size: 13px;
-      margin-bottom: 32px;
-    }
-    .age-notice {
-      font-size: 13px;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      margin-bottom: 36px;
+      line-height: 1.8;
+      padding: 0 8px;
     }
     .key-console {
       max-width: 100%;
+      gap: 18px;
       padding: 0 16px;
     }
     .key-input {
       width: 100%;
       font-size: 16px;
+      padding: 10px 0;
     }
     .reveal-btn {
       width: 100%;
       min-height: 48px;
       font-size: 13px;
+      letter-spacing: 0.18em;
+      padding: 12px 32px;
     }
     #landing {
-      padding: 24px 16px;
+      padding: 36px 16px;
     }
 
     /* --- Guide page --- */
     #guide {
-      padding: 32px 20px 60px;
+      padding: 40px 20px 60px;
+    }
+    .guide-back {
+      margin-bottom: 48px;
+    }
+    .guide-section-title {
+      letter-spacing: 0.25em;
+      margin-bottom: 24px;
     }
     .guide-body {
       font-size: 15px;
-      line-height: 1.7;
+      line-height: 1.8;
+      margin-bottom: 44px;
+    }
+    .guide-body p {
+      margin-bottom: 1.4em;
     }
     .guide-content {
       max-width: 100%;
     }
     .guide-nav {
+      margin-top: 40px;
       padding-bottom: 32px;
     }
     .guide-scroll-top {
@@ -596,8 +596,9 @@
       height: 48px;
     }
     .guide-return {
-      padding: 14px 24px;
+      padding: 14px 28px;
       font-size: 12px;
+      letter-spacing: 0.2em;
     }
 
     /* --- Conversation UI --- */
@@ -664,15 +665,13 @@
 <!-- ====== STATE 1 — Landing ====== -->
 <div id="landing" class="state active page-landing">
   <div class="wordmark-wrap"><div class="wordmark">Scout</div></div>
-  <a class="guide-link guide-breathe" id="guide-link">Read this before you enter your key — it will make the difference.</a>
+  <a class="guide-link guide-glow" id="guide-link"><span class="u">Read</span> the session guide <span class="u">first</span>. This is <span class="u">not optional</span>.</a>
   <div class="key-console">
     <div class="key-label breathe">Key</div>
     <input type="password" class="key-input" id="key-input" autocomplete="off" spellcheck="false">
-    <p class="age-notice">Not yet eighteen? Come back later. This will still be here.</p>
     <div class="key-error" id="key-error"></div>
     <button class="reveal-btn breathe-delayed" id="reveal-btn">Reveal</button>
   </div>
-  <div class="colophon-landing">For those who are ready to look.</div>
 </div>
 
 <!-- ====== STATE — Maintenance ====== -->
@@ -686,11 +685,11 @@
 <div id="guide" class="state">
   <a class="guide-back" id="guide-back">&larr; Back</a>
   <div class="guide-content">
-    <p style="font-family:'Cormorant Garant',serif;font-weight:300;font-size:20px;color:#B8965A;text-align:left;margin-bottom:12px;line-height:1.7;">Scout is built to sharpen what everyone wants to blur.</p>
-    <p style="font-family:'Cormorant Garant',serif;font-weight:300;font-size:17px;color:#8A8480;text-align:left;margin-bottom:24px;line-height:1.9;">An examined life is not for everyone. That is why you are here.</p>
-    <hr style="border:none;border-top:0.5px solid #B8965A;opacity:0.3;margin-bottom:32px;">
+    <p style="font-family:'Cormorant Garant',serif;font-weight:300;font-size:20px;color:#B8965A;text-align:left;margin-bottom:16px;line-height:1.7;">Scout is built to sharpen what everyone wants to blur.</p>
+    <p style="font-family:'Cormorant Garant',serif;font-weight:300;font-size:17px;color:#8A8480;text-align:left;margin-bottom:32px;line-height:1.9;">An examined life is not for everyone. That is why you are here.</p>
+    <hr style="border:none;border-top:0.5px solid #B8965A;opacity:0.3;margin-bottom:40px;">
     <div class="guide-body">
-      <p>Set aside two hours. Not ninety minutes. Two hours. The people who got the most from this gave it that.</p>
+      <p>Set aside 90 minutes. No less.</p>
       <p>Scout will sit with you in a conversation that goes somewhere most conversations never reach — following what you say, and sometimes what you don't.</p>
       <p>At the end you will receive two things — a portrait written about you, and a Meridian. Both belong to you alone. Download both before you close the window.</p>
     </div>
@@ -700,7 +699,7 @@
       <p>Once your documents are delivered and you close this window, the conversation is permanently removed. Nothing is retained. Your inner life passes through this system and leaves no trace.</p>
       <p>Your key expires the moment your documents are delivered. It cannot be reused.</p>
     </div>
-    <div class="guide-section-title">What this asks of you</div>
+    <div class="guide-section-title">This matters most — do this</div>
     <div class="guide-body">
       <p>This will only work if you are willing to think carefully, speak plainly, and go into as much detail as the question deserves.</p>
       <p>Scout will not judge you. It will not give you advice. It will not tell you what to do. It will listen without agenda and reflect back what it actually hears — including the things you gestured at without quite landing on.</p>
@@ -713,8 +712,8 @@
       <p>If questions about your relationships or personal life arise during the session — Scout will acknowledge them. But some territory deserves a human specialist, and Scout will say so.</p>
       <p>When you are ready — enter your key.</p>
     </div>
-    <hr style="border:none;border-top:0.5px solid #B8965A;opacity:0.25;width:40px;margin:28px auto 0;">
-    <p style="font-family:'Cormorant Garant',serif;font-weight:300;font-style:italic;font-size:17px;color:#B8965A;letter-spacing:-0.01em;text-align:center;max-width:480px;margin:16px auto 0;">One suffers less not by controlling life more, but by understanding oneself more deeply.</p>
+    <hr style="border:none;border-top:0.5px solid #B8965A;opacity:0.25;width:40px;margin:36px auto 0;">
+    <p style="font-family:'Cormorant Garant',serif;font-weight:300;font-style:italic;font-size:17px;color:#B8965A;letter-spacing:-0.01em;text-align:center;max-width:480px;margin:20px auto 0;">The good life is understanding oneself with no resistance.</p>
     <div class="guide-nav">
       <button class="guide-scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
       <button class="guide-return" onclick="showState('landing')">Return to Scout</button>

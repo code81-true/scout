@@ -4,6 +4,37 @@ Permanent changelog. Newest entry first.
 
 ---
 
+## 2026-05-04, Landing + guide page cosmetic updates — text, spacing, mobile
+**Trigger:** git push
+
+### Shipped
+- **Landing guide link restyled.** Class `guide-breathe` → `guide-glow`; old colour-cycle keyframes replaced with `@keyframes guide-glow-anim` (text-shadow pulse on `rgba(184,150,90, …)`). Visible text replaced with "Read the session guide first. This is not optional." rendered with three `<span class="u">` underlined fragments via a new `.guide-link .u { text-decoration: underline; text-underline-offset: 3px; }` rule. Colour `#8A8078` → `#B8965A` canonical Scout gold; hover `#7a7570` → `#C8A468`; letter-spacing `0.15em` → `0.18em`; margin-bottom `48px` → `56px`.
+- **Age notice removed.** `<p class="age-notice">Not yet eighteen? Come back later. This will still be here.</p>` deleted from the landing HTML, plus its CSS in both the main block and the 480px media query. Adults-only enforcement remains via Scout's in-conversation clarification path (entry 17 / CONSTRAINT 10 / DEC-SCOUT unaffected).
+- **Colophon removed.** `<div class="colophon-landing">For those who are ready to look.</div>` deleted from the landing HTML, plus its CSS. Landing is now `wordmark → guide link → key console`.
+- **Three guide-page text replacements applied** (the fourth, "One thing to know first" → "One important bit", was retained per CC flag — original framing kept because it precedes the mental-health stable-place advisory and matches CONSTRAINT 10's three-tier weight): time-commitment paragraph reduced to "Set aside 90 minutes. No less."; section title "What this asks of you" → "This matters most — do this"; closing quote replaced with "The good life is understanding oneself with no resistance." (supersedes the line set in STATUS.md entry 43, 2026-04-16).
+- **Desktop spacing refinements across landing and guide.** `#landing` padding 40 → 60 vertical; `.wordmark` margin-bottom 40 → 56; `.key-console` gap 16 → 20, max-width 280 → 300; `.key-label` letter-spacing 0.2 → 0.3em; `.key-input` padding 8px 0 → 12px 0; `.reveal-btn` letter-spacing 0.15 → 0.2em, padding 10px 32px → 12px 44px; `.reveal-btn:hover` color → `#B8965A`, border-color → `#5A4A38`; `#guide` top padding 60 → 80; `.guide-back` margin-bottom 60 → 72, hover colour → `#B8965A`; `.guide-content` max-width 600 → 580; `.guide-section-title` letter-spacing 0.3 → 0.35em, margin-bottom 24 → 28; `.guide-body` line-height 1.9 → 2.0, margin-bottom 56 → 64; `.guide-body p` margin-bottom 1.4em → 1.6em; `.guide-nav` margin-top 48 → 56; `.guide-return` letter-spacing 0.25 → 0.3em, padding 12px 36px → 14px 40px; inline guide intro spacing nudges (subtitle margin 12 → 16, body lead 24 → 32, top hr 32 → 40, closing hr 28 → 36, closing quote 16 → 20).
+- **Mobile 480px breakpoint refined within existing v1.0 triage block.** KNOWN_ISSUES.md §2 v1.1 full mobile redesign scope (typography scale, input treatment, generation screen layout) deliberately untouched. Wordmark 52 → 64; `.guide-link` size 13 → 12 plus new letter-spacing/line-height/padding; `.key-console` gap added 18; `.key-input` padding added 10px 0; `.reveal-btn` letter-spacing/padding added; `#landing` padding 24 → 36; `#guide` top padding 32 → 40; new mobile rules for `.guide-back`, `.guide-section-title`, `.guide-body p`, `.guide-nav`; `.guide-body` adds margin-bottom 44; `.guide-return` adds letter-spacing 0.2em; `.age-notice` mobile rule removed alongside the main element.
+- **STATUS.md updated.** New entries 72 (pass 1 — items 1/2/3/5/6 applied; item 4 held) and 73 (pass 2 — three of four held items applied per Pope direction). Cross-references on entries 13 (age notice → SUPERSEDED), 19 (time commitment → MODIFIED), 43 (landing strip-back → MODIFIED), 43 (copy refinements → MODIFIED), 43 (closing line → MODIFIED). Last-updated header rewritten with the 90-min-vs-two-hours rationale captured.
+
+### Deployed
+- Not yet deployed. `templates/index.html` only — no Python, no requirements, no schema, no env var changes. Awaits Pope to run `bash deploy.sh` on the VPS.
+
+### Decisions Made
+- None codified. Cosmetic only. The 90-min-on-the-guide-page-vs-two-hours-in-SOUL-md split was discussed and intentional: SOUL.md "two hours" is design philosophy and stays; the guide-page figure is practical instruction with a safety factor (sessions run 50–60 minutes per current cohort data, so 90 min is a deliberate over-budget). The two numbers serve different audiences — SOUL.md sets the engineering ceiling for the room Scout builds, the guide page sets the calendar block the participant should reserve.
+
+### Blockers Resolved
+- None.
+
+### New Blockers
+- None.
+
+### PM Note
+- SOUL.md "two hours" left untouched. The guide-page 90 minutes is practical instruction with safety factor — no SOUL.md change, no DEC-SHARED-004 verification needed, no prompt or schema changes.
+- "One thing to know first" was kept on a deliberate veto: that section opens the mental-health stable-place advisory, and "One important bit" diminishes a serious safety boundary to a casualism. CONSTRAINT 10 is a three-tier mental-health gate; the framing of the section that introduces it should match its weight. Worth raising with Pope at the next copy review whether the heading needs a different treatment that avoids both extremes.
+- Pre-existing JS issue surfaced during read but not in scope for this commit: the keyInput focus-fade handler in the script tag references `.landing-statement` which was removed from the landing HTML in entry 43 (2026-04-16). The line `document.querySelector('.landing-statement').style.opacity = '0.2';` will throw a null reference error on focus, which short-circuits the rest of the handler so the wordmark and guide link no longer fade either. Worth a one-line defensive fix in the next session — not part of this cosmetic-only commit per Pope brief.
+
+---
+
 ## 2026-05-01, Sprint 3 deployed and verified — pipeline operational end-to-end
 **Trigger:** deploy + verification session + pipeline test
 
