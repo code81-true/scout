@@ -109,7 +109,18 @@
     border-bottom: 1px solid #2A2520;
     letter-spacing: 0.1em;
     text-transform: uppercase;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
   }
+  th:hover { color: #B8965A; }
+  th .sort-arrow {
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 9px;
+    opacity: 0.25;
+  }
+  th.sort-active .sort-arrow { opacity: 1; color: #B8965A; }
   td {
     padding: 8px 10px;
     border-bottom: 1px solid #1a1a1a;
@@ -142,6 +153,45 @@
     font-size: 11px;
     cursor: pointer;
     margin-left: 4px;
+  }
+  .pipeline {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+  }
+  .pipeline .stage {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid #4A4540;
+    background: transparent;
+    padding: 0;
+    cursor: default;
+  }
+  .pipeline .stage.done {
+    background: #B8965A;
+    border-color: #B8965A;
+  }
+  .pipeline form { display: inline; margin: 0; }
+  .pipeline button.stage {
+    cursor: pointer;
+  }
+  .pipeline button.stage:hover {
+    border-color: #B8965A;
+  }
+  .archive-form { display: inline; }
+  .archive-form button {
+    background: transparent;
+    border: 1px solid #4A2520;
+    color: #8A4040;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .archive-form button:hover {
+    background: rgba(138, 64, 64, 0.1);
+    border-color: #8A4040;
   }
 </style>
 </head>
@@ -214,26 +264,45 @@
   {% endif %}
 
   <h2>All Keys</h2>
-  <table>
+  <table id="keys-table">
+    <thead>
     <tr>
-      <th>Key</th>
-      <th>Status</th>
-      <th>State</th>
-      <th>Outcome</th>
-      <th>Recipient</th>
-      <th>Notes</th>
-      <th>Deliver</th>
-      <th>First used</th>
-      <th>Override</th>
+      <th data-sort="text">Key<span class="sort-arrow">▲</span></th>
+      <th data-sort="text">Status<span class="sort-arrow">▲</span></th>
+      <th data-sort="text">State<span class="sort-arrow">▲</span></th>
+      <th data-sort="number">Pipeline<span class="sort-arrow">▲</span></th>
+      <th data-sort="text">Outcome<span class="sort-arrow">▲</span></th>
+      <th data-sort="text">Recipient<span class="sort-arrow">▲</span></th>
+      <th data-sort="text">Notes<span class="sort-arrow">▲</span></th>
+      <th data-sort="number">Deliver<span class="sort-arrow">▲</span></th>
+      <th data-sort="text" data-default-sort="desc">First used<span class="sort-arrow">▲</span></th>
+      <th data-sort="text">Override<span class="sort-arrow">▲</span></th>
+      <th data-sort="text">Archive<span class="sort-arrow">▲</span></th>
     </tr>
+    </thead>
+    <tbody>
     {% for k in keys %}
     <tr>
       <td class="key-cell">{{ k.key }}</td>
       <td class="status-{{ k.status }}">{{ k.status }}</td>
       <td>{{ k.state or '—' }}</td>
+      <td data-value="{{ k.pipeline.count }}">
+        <span class="pipeline">
+          <span class="stage{% if k.pipeline.session %} done{% endif %}" title="Session — interview happened"></span>
+          <span class="stage{% if k.pipeline.spine %} done{% endif %}" title="Spine — YAML extracted"></span>
+          <span class="stage{% if k.pipeline.portrait %} done{% endif %}" title="Portrait — PDF generated"></span>
+          <span class="stage{% if k.pipeline.meridian %} done{% endif %}" title="Meridian — PDF generated"></span>
+          <form method="POST" title="Bridged — spine sent to MTN. Click to toggle.">
+            <input type="hidden" name="action" value="set_bridged">
+            <input type="hidden" name="key" value="{{ k.key }}">
+            <input type="hidden" name="bridged" value="{{ '0' if k.pipeline.bridged else '1' }}">
+            <button type="submit" class="stage{% if k.pipeline.bridged %} done{% endif %}" aria-label="Toggle bridged"></button>
+          </form>
+        </span>
+      </td>
       <td>{{ k.outcome or '—' }}</td>
       <td>{{ k.recipient or '—' }}</td>
-      <td>
+      <td data-value="{{ k.notes or '' }}">
         <form class="outcome-form" method="POST">
           <input type="hidden" name="action" value="set_note">
           <input type="hidden" name="key" value="{{ k.key }}">
@@ -241,7 +310,7 @@
           <button type="submit">Save</button>
         </form>
       </td>
-      <td>
+      <td data-value="{{ 1 if k.status in ('active', 'used') and k.has_transcript else 0 }}">
         {% if k.status in ('active', 'used') and k.has_transcript %}
         <form class="outcome-form" method="POST" action="/admin-7x9k2m/generate">
           <input type="hidden" name="key" value="{{ k.key }}">
@@ -251,8 +320,8 @@
         —
         {% endif %}
       </td>
-      <td>{{ k.first_used[:10] if k.first_used else '—' }}</td>
-      <td>
+      <td data-value="{{ k.first_used or '' }}">{{ k.first_used[:10] if k.first_used else '—' }}</td>
+      <td data-value="{{ k.outcome or '' }}">
         <form class="outcome-form" method="POST">
           <input type="hidden" name="action" value="set_outcome">
           <input type="hidden" name="key" value="{{ k.key }}">
@@ -268,9 +337,74 @@
           <button type="submit">Set</button>
         </form>
       </td>
+      <td data-value="{{ k.key }}">
+        <form class="archive-form" method="POST" onsubmit="return confirm('Archive key {{ k.key }}? This removes it from the admin table.');">
+          <input type="hidden" name="action" value="archive">
+          <input type="hidden" name="key" value="{{ k.key }}">
+          <button type="submit">Archive</button>
+        </form>
+      </td>
     </tr>
     {% endfor %}
+    </tbody>
   </table>
 </div>
+<script>
+(function() {
+  const table = document.getElementById('keys-table');
+  if (!table) return;
+  const headers = table.querySelectorAll('thead th');
+  const tbody = table.querySelector('tbody');
+
+  let sortIdx = -1;
+  let sortDir = 1;
+
+  function cellValue(cell) {
+    if (cell.dataset.value !== undefined) return cell.dataset.value;
+    const input = cell.querySelector('input[type="text"]');
+    if (input) return input.value;
+    return cell.textContent.trim();
+  }
+
+  function sortBy(idx, dir) {
+    sortIdx = idx;
+    sortDir = dir;
+    const type = headers[idx].dataset.sort || 'text';
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort(function(a, b) {
+      const av = cellValue(a.cells[idx]);
+      const bv = cellValue(b.cells[idx]);
+      if (type === 'number') {
+        return dir * (parseFloat(av || '0') - parseFloat(bv || '0'));
+      }
+      const aEmpty = !av || av === '—';
+      const bEmpty = !bv || bv === '—';
+      if (aEmpty && !bEmpty) return 1;
+      if (!aEmpty && bEmpty) return -1;
+      return dir * av.localeCompare(bv);
+    });
+    rows.forEach(function(r) { tbody.appendChild(r); });
+    headers.forEach(function(h, i) {
+      h.classList.toggle('sort-active', i === idx);
+      const arrow = h.querySelector('.sort-arrow');
+      if (arrow) arrow.textContent = (i === idx && dir === -1) ? '▼' : '▲';
+    });
+  }
+
+  headers.forEach(function(h, i) {
+    h.addEventListener('click', function() {
+      const newDir = (sortIdx === i) ? -sortDir : 1;
+      sortBy(i, newDir);
+    });
+  });
+
+  // Default sort: First used descending
+  let defaultIdx = -1;
+  headers.forEach(function(h, i) {
+    if (h.dataset.defaultSort) defaultIdx = i;
+  });
+  if (defaultIdx !== -1) sortBy(defaultIdx, -1);
+})();
+</script>
 </body>
 </html>

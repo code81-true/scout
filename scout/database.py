@@ -69,6 +69,16 @@ def init_db() -> None:
     except sqlite3.OperationalError:
         conn.execute("ALTER TABLE sessions ADD COLUMN notes TEXT DEFAULT NULL")
         logger.info("Migration: added notes column to sessions")
+    try:
+        conn.execute("SELECT bridged FROM sessions LIMIT 1")
+    except sqlite3.OperationalError:
+        conn.execute("ALTER TABLE sessions ADD COLUMN bridged INTEGER DEFAULT 0")
+        logger.info("Migration: added bridged column to sessions")
+    try:
+        conn.execute("SELECT archived FROM sessions LIMIT 1")
+    except sqlite3.OperationalError:
+        conn.execute("ALTER TABLE sessions ADD COLUMN archived INTEGER DEFAULT 0")
+        logger.info("Migration: added archived column to sessions")
     conn.commit()
     conn.close()
     logger.info("Database initialised at %s", DB_PATH)
@@ -207,13 +217,51 @@ def has_transcript(key: str) -> bool:
 
 
 def get_all_sessions() -> list[dict]:
-    """Return all sessions ordered by creation date descending."""
+    """Return all sessions ordered by creation date descending.
+
+    Includes archived sessions; admin callers filter them in the view layer
+    so that keys.txt entries with no surviving session row are still listed.
+    """
     conn = _connect()
     rows = conn.execute(
-        "SELECT key, state, outcome, recipient, notes, created_at, pseudonym FROM sessions ORDER BY created_at DESC"
+        "SELECT key, state, outcome, recipient, notes, created_at, pseudonym, "
+        "bridged, archived "
+        "FROM sessions ORDER BY created_at DESC"
     ).fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+
+def set_bridged(key: str, bridged: bool) -> None:
+    """Mark a session as bridged (spine sent to MTN) or unmark it."""
+    conn = _connect()
+    now = datetime.now(timezone.utc).isoformat()
+    conn.execute(
+        "INSERT INTO sessions (key, state, bridged, created_at, state_changed_at) "
+        "VALUES (?, 'pending', ?, ?, ?) "
+        "ON CONFLICT(key) DO UPDATE SET bridged = excluded.bridged",
+        (key, 1 if bridged else 0, now, now),
+    )
+    conn.commit()
+    conn.close()
+
+
+def archive_session(key: str) -> None:
+    """Soft-delete a session — hides it from the admin table.
+
+    The row stays in the database. Files are moved out of the spine
+    directory by the calling route. Re-running has no additional effect.
+    """
+    conn = _connect()
+    now = datetime.now(timezone.utc).isoformat()
+    conn.execute(
+        "INSERT INTO sessions (key, state, archived, created_at, state_changed_at) "
+        "VALUES (?, 'pending', 1, ?, ?) "
+        "ON CONFLICT(key) DO UPDATE SET archived = 1",
+        (key, now, now),
+    )
+    conn.commit()
+    conn.close()
 
 
 def save_transcript(key: str, transcript: list[dict]) -> None:

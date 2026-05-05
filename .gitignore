@@ -18,5 +18,7 @@ sessions/
 sessions/flask_sessions/
 sessions/transcripts/
 deliveries/
+archive/
+spines/
 test_output/
 run_local.bat

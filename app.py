@@ -17,6 +17,7 @@ from flask_limiter.util import get_remote_address
 from flask_session import Session as FlaskSessionExt
 
 from scout.database import (
+    archive_session,
     cleanup_session,
     create_delivery,
     create_session,
@@ -35,6 +36,7 @@ from scout.database import (
     mark_downloaded,
     mark_started,
     save_transcript,
+    set_bridged,
     set_note,
     set_outcome,
     set_recipient,
@@ -59,10 +61,12 @@ TRANSCRIPT_DIR = os.getenv("TRANSCRIPT_DIR", "sessions/transcripts")
 FLASK_SESSION_DIR = os.getenv("FLASK_SESSION_DIR", "sessions/flask_sessions")
 SPINE_DIR = os.getenv("SPINE_DIR", "spines")
 DELIVERIES_DIR = os.getenv("DELIVERIES_DIR", "deliveries")
+ARCHIVE_DIR = os.getenv("ARCHIVE_DIR", "archive")
 os.makedirs(TRANSCRIPT_DIR, exist_ok=True)
 os.makedirs(FLASK_SESSION_DIR, exist_ok=True)
 os.makedirs(SPINE_DIR, exist_ok=True)
 os.makedirs(DELIVERIES_DIR, exist_ok=True)
+os.makedirs(ARCHIVE_DIR, exist_ok=True)
 
 app.config["SESSION_TYPE"] = "filesystem"
 app.config["SESSION_FILE_DIR"] = FLASK_SESSION_DIR
@@ -960,6 +964,17 @@ def admin_dashboard():
             if key:
                 set_note(key, note)
 
+        if action == "set_bridged":
+            key = request.form.get("key", "").strip()
+            value = request.form.get("bridged", "0") == "1"
+            if key:
+                set_bridged(key, value)
+
+        if action == "archive":
+            key = request.form.get("key", "").strip()
+            if key:
+                _archive_key(key)
+
     return render_template("admin.html",
         keys=_read_keys_with_db(),
         stats=get_session_stats(),
@@ -968,8 +983,79 @@ def admin_dashboard():
     )
 
 
+def _pipeline_state(key: str, db_session: dict | None) -> dict:
+    """Compute pipeline progress for one key. Pure file/db inspection.
+
+    Stage 1 (session) is read from the database state — `generating` or
+    `delivered` means the interview happened. Stages 2-4 check for the
+    canonical artifact files in SPINE_DIR. Stage 5 (bridged) is operator-set
+    via the admin page.
+    """
+    import glob
+    state = (db_session or {}).get("state", "")
+    session_done = state in ("generating", "delivered")
+    spine_done = bool(glob.glob(os.path.join(SPINE_DIR, f"{key}_*.yaml")))
+    portrait_done = bool(glob.glob(os.path.join(SPINE_DIR, f"{key}_*_portrait_delivery.pdf")))
+    meridian_done = bool(glob.glob(os.path.join(SPINE_DIR, f"{key}_*_meridian_delivery.pdf")))
+    bridged_done = bool((db_session or {}).get("bridged", 0))
+    return {
+        "session": session_done,
+        "spine": spine_done,
+        "portrait": portrait_done,
+        "meridian": meridian_done,
+        "bridged": bridged_done,
+        "count": sum([session_done, spine_done, portrait_done, meridian_done, bridged_done]),
+    }
+
+
+def _archive_key(key: str) -> None:
+    """Soft-archive a key: move artifact files into ARCHIVE_DIR/{key}/ and
+    flag the session row as archived.
+
+    Glob patterns match every artifact named after the key — yaml, portrait
+    txt, portrait delivery PDF, constitution txt, meridian delivery PDF.
+    The transcript row in SQLite is left intact per DEC-SCOUT-017. Logs
+    every move for audit.
+    """
+    import glob
+    import shutil
+    from datetime import datetime, timezone as tz
+
+    target_dir = os.path.join(ARCHIVE_DIR, key)
+    os.makedirs(target_dir, exist_ok=True)
+
+    patterns = (
+        f"{key}_*.yaml",
+        f"{key}_*_portrait.txt",
+        f"{key}_*_portrait_delivery.pdf",
+        f"{key}_*_constitution.txt",
+        f"{key}_*_meridian_delivery.pdf",
+    )
+    moved: list[str] = []
+    for pattern in patterns:
+        for src in glob.glob(os.path.join(SPINE_DIR, pattern)):
+            dst = os.path.join(target_dir, os.path.basename(src))
+            try:
+                shutil.move(src, dst)
+                moved.append(os.path.basename(src))
+            except OSError as exc:
+                logger.error("Archive move failed for %s: %s", src, exc)
+
+    archive_session(key)
+    timestamp = datetime.now(tz.utc).isoformat()
+    logger.info(
+        "ARCHIVE [%s] key=%s moved=%d files=[%s]",
+        timestamp, key, len(moved), ", ".join(moved) if moved else "none",
+    )
+
+
 def _read_keys_with_db() -> list[dict]:
-    """Read keys.txt and merge with database session data."""
+    """Read keys.txt and merge with database session data.
+
+    Rows flagged archived in the database are filtered out — the underlying
+    keys.txt entry stays, the database row stays, but the admin table no
+    longer surfaces it.
+    """
     lines = _read_keys()
     db_sessions = {s["key"]: s for s in get_all_sessions()}
     result = []
@@ -981,6 +1067,8 @@ def _read_keys_with_db() -> list[dict]:
         status = parts[1]
         file_recipient = parts[2] if len(parts) >= 3 else ""
         db = db_sessions.get(key, {})
+        if db.get("archived", 0):
+            continue
         session_state = db.get("state", "")
         created_at = db.get("created_at", "")
         # first_used is created_at only once the key has been authenticated
@@ -1001,6 +1089,7 @@ def _read_keys_with_db() -> list[dict]:
             "first_used": first_used,
             "state": session_state,
             "has_transcript": transcript_present,
+            "pipeline": _pipeline_state(key, db),
         })
     return result
 
